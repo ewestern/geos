@@ -1,52 +1,67 @@
+{-# LINE 1 "src/GEOS/Internal/Geos.hsc" #-}
 {-# LANGUAGE CPP, ForeignFunctionInterface, EmptyDataDecls #-}
-module Geos.Internal where
+{-# LINE 2 "src/GEOS/Internal/Geos.hsc" #-}
+module Geos.Internal.Geos where
 
 import Foreign
 import Foreign.C
 import Foreign.C.String
 
-#include <GEOS/geos_c.h>
+
+{-# LINE 9 "src/GEOS/Internal/Geos.hsc" #-}
 
 newtype GEOSGeomType = GEOSGeomType { unGEOSGeomType :: CInt }
     deriving (Eq,Show)
 
-#{ enum GEOSGeomType, GEOSGeomType,
-    geos_point = GEOS_POINT
-  , geos_lineString = GEOS_LINESTRING
-  , geos_polygon = GEOS_POLYGON
-  , geos_multiPoint = GEOS_MULTIPOINT
-  , geos_multiLineString = GEOS_MULTIPOINT
-  , geos_multiPolygon = GEOS_MULTIPOLYGON
-  , geos_geometryCollection = GEOS_GEOMETRYCOLLECTION
-}
+geos_point  :: GEOSGeomType
+geos_point  = GEOSGeomType 0
+geos_lineString  :: GEOSGeomType
+geos_lineString  = GEOSGeomType 1
+geos_polygon  :: GEOSGeomType
+geos_polygon  = GEOSGeomType 3
+geos_multiPoint  :: GEOSGeomType
+geos_multiPoint  = GEOSGeomType 4
+geos_multiLineString  :: GEOSGeomType
+geos_multiLineString  = GEOSGeomType 4
+geos_multiPolygon  :: GEOSGeomType
+geos_multiPolygon  = GEOSGeomType 6
+geos_geometryCollection  :: GEOSGeomType
+geos_geometryCollection  = GEOSGeomType 7
+
+{-# LINE 22 "src/GEOS/Internal/Geos.hsc" #-}
 
 newtype GEOSByteOrder = GEOSByteOrder { unGEOSByteOrder :: CInt}
   deriving (Eq, Show)
 
-#{ enum GEOSByteOrder, GEOSByteOrder, 
-    geos_bigEndian = 0
-  , geos_littleEndian = 1 
-}
+geos_bigEndian  :: GEOSByteOrder
+geos_bigEndian  = GEOSByteOrder 0
+geos_littleEndian  :: GEOSByteOrder
+geos_littleEndian  = GEOSByteOrder 1
+
+{-# LINE 30 "src/GEOS/Internal/Geos.hsc" #-}
 data GEOSContextHandle
 data GEOSGeometry
 data GEOSCoordSequence
 data GEOSSTRtree
 data GEOSBufferParams
-
 type GEOSMessageHandler = CString -> IO ()
+
 -- read/write
 data GEOSWKBWriter
 data GEOSWKBReader
 
-{-instance Storable GEOSContextHandler where-}
+
+foreign import ccall 
+  "wrapper"
+  mkMessageHandler :: GEOSMessageHandler -> IO (FunPtr GEOSMessageHandler)  
 
 foreign import ccall unsafe 
   "GEOS/geos_c.h initGEOS_r"
    geos_initGEOS_r :: FunPtr GEOSMessageHandler -> FunPtr GEOSMessageHandler -> IO (Ptr GEOSContextHandle)
 
 foreign import ccall unsafe
-  "GEOS/geos_c.h finishGEOS_r"
-  geos_finishGEOS_r :: Ptr GEOSContextHandle -> IO ()
+  "GEOS/geos_c.h &finishGEOS_r"
+  geos_finishGEOS_r :: FunPtr (Ptr GEOSContextHandle -> IO ())
 
  -- Coord Sequence  -- return 0 on exception
 foreign import ccall unsafe
@@ -54,8 +69,8 @@ foreign import ccall unsafe
   geos_CoordSeqCreate :: Ptr GEOSContextHandle -> CUInt -> CUInt -> IO (Ptr GEOSCoordSequence)  
 
 foreign import ccall unsafe
-  "GEOS/geos_c.h GEOSCoordSeq_destroy_r" 
-  geos_CoordSeqDestroy :: Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> IO ()
+  "GEOS/geos_c.h &GEOSCoordSeq_destroy_r" 
+  geos_CoordSeqDestroy :: FunPtr (Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> IO ())
 
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSCoordSeq_setX_r"
@@ -92,13 +107,30 @@ foreign import ccall unsafe
 --- Geometry Constructors
 
 foreign import ccall unsafe
+  "GEOS/geos_c.h &GEOSGeom_destroy_r"
+  geos_GeomDestroy :: FunPtr (Ptr GEOSContextHandle -> Ptr GEOSGeometry -> IO ())
+
+foreign import ccall unsafe
   "GEOS/geos_c.h GEOSGeom_createPoint_r"
   geos_GeomCreatePoint :: Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> IO (Ptr GEOSGeometry)
 
-
-{-foreign import ccall unsafe-}
-  {-"GEOS/geos_c.h"-}
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSGeom_createEmptyPoint_r"
+  geos_GeomCreateEmptyPoint :: Ptr GEOSContextHandle -> IO (Ptr GEOSGeometry)
   
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSGeom_createLinearRing_r"
+  geos_GeomCreateLinearRing :: Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSGeom_createLineString_r"
+  geos_GeomCreateLineString :: Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSGeom_createEmptyLineString_r"
+  geos_GeomCreateEmptyLineString :: Ptr GEOSContextHandle -> IO (Ptr GEOSGeometry)
+
+
 ---  Readers / Writers
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSWKBReader_create_r"
