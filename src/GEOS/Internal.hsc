@@ -1,44 +1,32 @@
-{-# LINE 1 "src/GEOS/Internal/Geos.hsc" #-}
 {-# LANGUAGE CPP, ForeignFunctionInterface, EmptyDataDecls #-}
-{-# LINE 2 "src/GEOS/Internal/Geos.hsc" #-}
-module Geos.Internal.Geos where
+module GEOS.Internal where
 
 import Foreign
 import Foreign.C
 import Foreign.C.String
 
-
-{-# LINE 9 "src/GEOS/Internal/Geos.hsc" #-}
+#include <GEOS/geos_c.h>
 
 newtype GEOSGeomType = GEOSGeomType { unGEOSGeomType :: CInt }
     deriving (Eq,Show)
 
-geos_point  :: GEOSGeomType
-geos_point  = GEOSGeomType 0
-geos_lineString  :: GEOSGeomType
-geos_lineString  = GEOSGeomType 1
-geos_polygon  :: GEOSGeomType
-geos_polygon  = GEOSGeomType 3
-geos_multiPoint  :: GEOSGeomType
-geos_multiPoint  = GEOSGeomType 4
-geos_multiLineString  :: GEOSGeomType
-geos_multiLineString  = GEOSGeomType 4
-geos_multiPolygon  :: GEOSGeomType
-geos_multiPolygon  = GEOSGeomType 6
-geos_geometryCollection  :: GEOSGeomType
-geos_geometryCollection  = GEOSGeomType 7
-
-{-# LINE 22 "src/GEOS/Internal/Geos.hsc" #-}
+#{ enum GEOSGeomType, GEOSGeomType,
+    geos_point = GEOS_POINT
+  , geos_lineString = GEOS_LINESTRING
+  , geos_polygon = GEOS_POLYGON
+  , geos_multiPoint = GEOS_MULTIPOINT
+  , geos_multiLineString = GEOS_MULTIPOINT
+  , geos_multiPolygon = GEOS_MULTIPOLYGON
+  , geos_geometryCollection = GEOS_GEOMETRYCOLLECTION
+}
 
 newtype GEOSByteOrder = GEOSByteOrder { unGEOSByteOrder :: CInt}
   deriving (Eq, Show)
 
-geos_bigEndian  :: GEOSByteOrder
-geos_bigEndian  = GEOSByteOrder 0
-geos_littleEndian  :: GEOSByteOrder
-geos_littleEndian  = GEOSByteOrder 1
-
-{-# LINE 30 "src/GEOS/Internal/Geos.hsc" #-}
+#{ enum GEOSByteOrder, GEOSByteOrder, 
+    geos_bigEndian = 0
+  , geos_littleEndian = 1 
+}
 data GEOSContextHandle
 data GEOSGeometry
 data GEOSCoordSequence
@@ -130,6 +118,57 @@ foreign import ccall unsafe
   "GEOS/geos_c.h GEOSGeom_createEmptyLineString_r"
   geos_GeomCreateEmptyLineString :: Ptr GEOSContextHandle -> IO (Ptr GEOSGeometry)
 
+--- Topology
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSEnvelope_r"
+  geos_Envelope :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry) 
+  
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSIntersection_r"
+  geos_Intersection :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSIntersection_r"
+  geos_ConvexHull :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSDifference_r"
+  geos_Difference :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSSymDifference_r"
+  geos_SymDifference :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBoundary_r"
+  geos_Boundary :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSUnion_r"
+  geos_Union :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSGetCentroid_r"
+  geos_GetCentroid :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+-----
+--Binary Predicates.
+-----
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSDisjoint_r"
+  geos_Disjoint :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSTouches_r"
+  geos_Touches :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO CChar
+
+--- 650
+  
+--- prepared Geometries
+--688
+--
 
 ---  Readers / Writers
 foreign import ccall unsafe
@@ -137,16 +176,16 @@ foreign import ccall unsafe
   geos_WKBReaderCreate :: Ptr GEOSContextHandle -> IO (Ptr GEOSWKBReader) 
 
 foreign import ccall unsafe
-  "GEOS/geos_c.h GEOSWKBReader_destroy_r"
-  geos_WKBReaderDestroy :: Ptr GEOSContextHandle -> Ptr GEOSWKBReader -> IO ()
+  "GEOS/geos_c.h &GEOSWKBReader_destroy_r"
+  geos_WKBReaderDestroy :: FunPtr (Ptr GEOSContextHandle -> Ptr GEOSWKBReader -> IO ())
 
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSWKBReader_read_r"
-  geos_WKBReaderRead :: Ptr GEOSContextHandle -> Ptr GEOSWKBReader -> CString  -> CSize -> Ptr GEOSGeometry 
+  geos_WKBReaderRead :: Ptr GEOSContextHandle -> Ptr GEOSWKBReader -> CString  -> CSize -> IO (Ptr GEOSGeometry)
 
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSWKBReader_readHEX_r"
-  geos_WKBReaderReadHex :: Ptr GEOSContextHandle -> Ptr GEOSWKBReader -> CString -> CSize -> Ptr GEOSGeometry 
+  geos_WKBReaderReadHex :: Ptr GEOSContextHandle -> Ptr GEOSWKBReader -> CString -> CSize -> IO (Ptr GEOSGeometry)
 
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSWKBWriter_create_r"

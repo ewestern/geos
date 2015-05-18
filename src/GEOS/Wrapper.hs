@@ -1,5 +1,5 @@
-module Geos.Wrapper.Geos where
-import qualified Geos.Internal.Geos as I
+module GEOS.Wrapper where
+import qualified GEOS.Internal as I
 import qualified Data.Text as T
 import Foreign
 import Foreign.C.String
@@ -35,6 +35,9 @@ withHandle (GEOSHandle mv) f = MV.withMVar mv $ \ptr -> withForeignPtr ptr f
 
 withCoordinateSequence :: CoordinateSequence -> (Ptr I.GEOSCoordSequence -> IO a) -> IO a
 withCoordinateSequence (CoordinateSequence cs) f = withForeignPtr cs f
+
+withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
+withGeometry (Geometry g) f = withForeignPtr g f
 
 -- Coordinate Sequence --
 
