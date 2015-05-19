@@ -69,5 +69,3 @@ write = write_ I.geos_WKBWriterWrite
 
 writeHex :: GEOSHandle -> Writer -> Geometry -> IO BC.ByteString
 writeHex = write_ I.geos_WKBWriterWriteHex
---
---- writers: must free GEOSFree

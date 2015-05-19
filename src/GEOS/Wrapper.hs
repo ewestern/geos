@@ -14,6 +14,7 @@ import qualified Control.Concurrent.MVar as MV
 
 
 newtype GEOSHandle = GEOSHandle { _unGEOSHandle :: MVar (ForeignPtr I.GEOSContextHandle) }
+-- possibly give this an Either type
 newtype CoordinateSequence = CoordinateSequence { _unCoordinateSequence :: (ForeignPtr I.GEOSCoordSequence)}
 newtype Geometry = Geometry { _unGeometry :: (ForeignPtr I.GEOSGeometry)}
 
@@ -54,6 +55,15 @@ setSRID h g i = withHandle h $ \hp ->
                     I.geos_SetSRID hp gp $ fromIntegral i
   
 
+getCoordinateSequence :: GEOSHandle -> Geometry ->  IO CoordinateSequence
+getCoordinateSequence h g = do
+  ptr <- throwIfNull "Get CoordinateSequence" $ withHandle h $ \hp ->
+          withGeometry g $ \gp ->
+            I.geos_GetCoordSeq hp gp
+  -- cannot destroy this as caller does not have access
+  fptr <- withHandle h $ \ch -> newForeignPtr (\p -> return ()) ptr
+  return $ CoordinateSequence fptr
+      
 -- Coordinate Sequence --
 
 createCoordinateSequence :: GEOSHandle -> Int -> Int -> IO CoordinateSequence
@@ -87,6 +97,17 @@ getCoordinateSequenceY = getCoordinateSequence_ I.geos_CoordSeqGetY
 
 getCoordinateSequenceZ :: GEOSHandle -> CoordinateSequence -> Int -> IO Double
 getCoordinateSequenceZ = getCoordinateSequence_ I.geos_CoordSeqGetZ
+
+getCoordinateSequenceSize :: GEOSHandle -> CoordinateSequence -> IO Int 
+getCoordinateSequenceSize h c = alloca $ \ptr -> do
+  i <- throwIf (\v -> v == 0) (\_ -> "") $ 
+        withHandle h $ \ch ->
+          withCoordinateSequence c $ \pc ->
+            I.geos_CoordSeqGetSize ch pc ptr
+  s <- peek ptr
+  return $ fromIntegral s
+  
+
 ---
 
 setCoordinateSequenceX :: GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
@@ -97,6 +118,9 @@ setCoordinateSequenceY = setCoordinateSequence_ I.geos_CoordSeqSetY
 
 setCoordinateSequenceZ :: GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
 setCoordinateSequenceZ = setCoordinateSequence_ I.geos_CoordSeqSetZ
+
+------
+--
 
 createGeometry_ :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) -> GEOSHandle -> CoordinateSequence -> IO Geometry
 createGeometry_ f h (CoordinateSequence cs) = do
