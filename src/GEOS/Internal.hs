@@ -63,6 +63,19 @@ foreign import ccall unsafe
   "GEOS/geos_c.h &finishGEOS_r"
   geos_finishGEOS_r :: FunPtr (Ptr GEOSContextHandle -> IO ())
 
+
+-- Info
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSGetSRID_r"
+  geos_GetSRID :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> IO CInt
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSSetSRID_r"
+  geos_SetSRID :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> CInt -> IO ()
+
+
+
  -- Coord Sequence  -- return 0 on exception
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSCoordSeq_create_r"
@@ -204,8 +217,8 @@ foreign import ccall unsafe
   geos_WKBWriterCreate :: Ptr GEOSContextHandle -> IO (Ptr GEOSWKBWriter) 
 
 foreign import ccall unsafe
-  "GEOS/geos_c.h GEOSWKBWriter_destroy_r"
-  geos_WKBWriterDestroy :: Ptr GEOSContextHandle -> Ptr GEOSWKBWriter -> IO ()
+  "GEOS/geos_c.h &GEOSWKBWriter_destroy_r"
+  geos_WKBWriterDestroy :: FunPtr (Ptr GEOSContextHandle -> Ptr GEOSWKBWriter -> IO ())
 
   -- caller owns results
 foreign import ccall unsafe

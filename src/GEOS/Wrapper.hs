@@ -38,6 +38,21 @@ withCoordinateSequence (CoordinateSequence cs) f = withForeignPtr cs f
 
 withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
 withGeometry (Geometry g) f = withForeignPtr g f
+--- Info
+
+getSRID :: GEOSHandle -> Geometry -> IO Int
+getSRID h g = do
+  s <- throwIf (\v -> v == 0) (\_ -> "Get SRID") $
+        withHandle h $ \hp -> 
+          withGeometry g $ \gp ->
+            I.geos_GetSRID hp gp
+  return $ fromIntegral s
+    
+setSRID :: GEOSHandle -> Geometry -> Int -> IO ()
+setSRID h g i = withHandle h $ \hp -> 
+                  withGeometry g $ \gp ->
+                    I.geos_SetSRID hp gp $ fromIntegral i
+  
 
 -- Coordinate Sequence --
 
