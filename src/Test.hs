@@ -2,6 +2,7 @@
 import GEOS.Wrapper
 {-import qualified GEOS.Wrapper as G-}
 import GEOS.Serialize
+import Data.Monoid
 
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
@@ -17,12 +18,17 @@ data Position = Position {
 convertGeometry :: GEOSHandle -> Geometry -> IO (V.Vector Position)
 convertGeometry h g = do
   cs <- getCoordinateSequence h g
+  putStrLn "Get Coord Seq"
   s <- getCoordinateSequenceSize h cs
+  putStrLn $ "Get Seq Size: " <> show s
   let getPosition i = do
       x <- getCoordinateSequenceX h cs i
+      putStrLn $ "Coord x:" <> show x <> " at pos: " <> show i
       y <- getCoordinateSequenceY h cs i
+      putStrLn $ "Coord y:" <> show y <> " at pos: " <> show i
       return $ Position x y Nothing
   v <- V.generateM s getPosition
+  putStrLn "Generate Vector"
   return  v
       
 
@@ -38,10 +44,11 @@ convertGeometry h g = do
 
 main = do
   h <- initializeGEOS putStrLn error 
+  putStrLn "Iniit GEos"
   r <- createReader h
+  putStrLn "Create Reader"
   g <- readHex h r trail
+  putStrLn "Read hex"
   ng <- convertGeometry h g
   print ng
-
-
 
