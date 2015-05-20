@@ -62,7 +62,9 @@ foreign import ccall unsafe
   "GEOS/geos_c.h GEOSSetSRID_r"
   geos_SetSRID :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> CInt -> IO ()
 
-
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSGeom_getCoordSeq_r"
+  geos_GetCoordSeq :: Ptr GEOSContextHandle -> Ptr GEOSGeometry -> IO (Ptr GEOSCoordSequence)
 
  -- Coord Sequence  -- return 0 on exception
 foreign import ccall unsafe
@@ -104,6 +106,14 @@ foreign import ccall unsafe
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSCoordSeq_getOrdinate_r"
   geos_CoordSeqGetOrdinate :: Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> CUInt -> CUInt -> Ptr CDouble -> IO CInt
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSCoordSeq_getSize_r"
+  geos_CoordSeqGetSize :: Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> Ptr CUInt -> IO CInt
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSCoordSeq_getDimensions_r"
+  geos_CoordSeqGetDimensions :: Ptr GEOSContextHandle -> Ptr GEOSCoordSequence -> Ptr CUInt -> IO CInt
 
 --- Geometry Constructors
 
