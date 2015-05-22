@@ -41,11 +41,14 @@ withCoordinateSequence (CoordinateSequence fp) f = withForeignPtr fp f
 
 withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
 withGeometry (Geometry g) f = withForeignPtr g f
+
+throwIfZero :: (Eq a, Num a) => (a -> String) -> IO a -> IO a
+throwIfZero f m = throwIf (\v -> v == 0) f m
 --- Info
 
 getSRID :: GEOSHandle -> Geometry -> IO Int
 getSRID h g = do
-  s <- throwIf (\v -> v == 0) (\_ -> "Get SRID") $
+  s <- throwIfZero (\_ -> "Get SRID") $
         withHandle h $ \hp -> 
           withGeometry g $ \gp ->
             I.geos_GetSRID hp gp
@@ -59,7 +62,7 @@ setSRID h g i = withHandle h $ \hp ->
 
 getType :: GEOSHandle -> Geometry -> IO Int
 getType h g = do
-  i <- throwIf (\v -> v == 0) (\_ -> "Get Type") $
+  i <- throwIfZero (\_ -> "Get Type") $
         withHandle h $ \hp -> 
           withGeometry g $ \gp ->
             I.geos_GeomType hp gp
@@ -104,7 +107,7 @@ createCoordinateSequence h size dim = do
 
 setCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> CDouble -> IO CInt) -> GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
 setCoordinateSequence_ f h cs idx val = do
-  i <- throwIf (\v -> v == 0) (\_ -> "Cannot set coordinate sequence") $ 
+  i <- throwIfZero (\_ -> "Cannot set coordinate sequence") $ 
         withHandle h (\ch -> withCoordinateSequence cs (\ pcs -> f ch pcs (fromIntegral idx) (realToFrac val)))
   return $ fromIntegral i
 
@@ -114,7 +117,7 @@ getCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> C
                           -> Int
                           -> IO Double 
 getCoordinateSequence_ f h cs idx = alloca $ \dptr -> do
-  i <- throwIf (\v -> v == 0) (\_ -> "Cannot get coordinate value") $
+  i <- throwIfZero (\_ -> "Cannot get coordinate value") $
       withHandle h $ \ch -> 
         withCoordinateSequence cs $ \pcs -> f ch pcs (fromIntegral idx) dptr
   d <- peek dptr
@@ -131,7 +134,7 @@ getCoordinateSequenceZ = getCoordinateSequence_ I.geos_CoordSeqGetZ
 
 getCoordinateSequenceSize :: GEOSHandle -> CoordinateSequence -> IO Int 
 getCoordinateSequenceSize h c = alloca $ \ptr -> do
-  i <- throwIf (\v -> v == 0) (\_ -> "Get Coordinate Sequence Size") $ 
+  i <- throwIfZero (\_ -> "Get Coordinate Sequence Size") $ 
         withHandle h $ \ch ->
           withCoordinateSequence c $ \pc ->
             I.geos_CoordSeqGetSize ch pc ptr
@@ -140,7 +143,7 @@ getCoordinateSequenceSize h c = alloca $ \ptr -> do
 
 getCoordinateSequenceDimensions :: GEOSHandle -> CoordinateSequence -> IO Int 
 getCoordinateSequenceDimensions h c = alloca $ \ptr -> do
-  i <- throwIf (\v -> v == 0) (\_ -> "Get Coordinate Sequence Dimensions") $ 
+  i <- throwIfZero (\_ -> "Get Coordinate Sequence Dimensions") $ 
         withHandle h $ \ch ->
           withCoordinateSequence c $ \pc ->
             I.geos_CoordSeqGetDimensions ch pc ptr

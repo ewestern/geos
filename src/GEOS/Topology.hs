@@ -41,3 +41,9 @@ intersection = geo_2 I.geos_Intersection "intersection"
 
 convexHull :: GEOSHandle -> Geometry -> IO Geometry
 convexHull = geo_1 I.geos_ConvexHull "convexHull"
+
+difference :: GEOSHandle -> Geometry -> Geometry -> IO Geometry
+difference = geo_2 I.geos_Difference "difference"
+
+symmetricDifference :: GEOSHandle -> Geometry -> Geometry -> IO Geometry
+symmetricDifference = geo_2 I.geos_SymDiffference "symmetricDifference"
