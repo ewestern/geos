@@ -23,7 +23,7 @@ createReader h = do
     fp <- withHandle h $ \hp -> newForeignPtrEnv I.geos_WKBReaderDestroy hp ptr
     return $ Reader fp
 
-read_ :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry)) 
+read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry)) 
             -> GEOSHandle 
             -> Reader 
             -> BC.ByteString 
@@ -49,7 +49,7 @@ createWriter h = do
   fp <- withHandle h $ \hp -> newForeignPtrEnv I.geos_WKBWriterDestroy hp ptr
   return $ Writer fp
         
-write_ :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSWKBWriter -> Ptr I.GEOSGeometry -> Ptr CSize -> IO CString)
+write_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBWriter -> Ptr I.GEOSGeometry -> Ptr CSize -> IO CString)
           -> GEOSHandle
           -> Writer
           -> Geometry

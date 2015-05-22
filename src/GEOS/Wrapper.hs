@@ -8,17 +8,17 @@ import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.ForeignPtr
 import System.IO.Unsafe
-
-import Control.Concurrent.MVar (MVar)
 import qualified Control.Concurrent.MVar as MV
 
 
-{-newtype GEOSHandle = GEOSHandle { _unGEOSHandle :: ForeignPtr I.GEOSContextHandle }-}
-newtype GEOSHandle = GEOSHandle { _unGEOSHandle :: MVar (ForeignPtr I.GEOSContextHandle) }
--- todo: think of alternative to Either
-newtype CoordinateSequence = CoordinateSequence { 
-  _unCoordinateSequence :: Either (ForeignPtr I.GEOSCoordSequence) (Ptr I.GEOSCoordSequence)
+newtype GEOSHandle = GEOSHandle { 
+  _unGEOSHandle :: ForeignPtr I.GEOSContextHandle_HS 
 }
+
+newtype CoordinateSequence = CoordinateSequence { 
+  _unCoordinateSequence :: ForeignPtr I.GEOSCoordSequence
+}
+
 newtype Geometry = Geometry { _unGeometry :: (ForeignPtr I.GEOSGeometry)}
 
 makeMessageHandler :: (String -> IO ()) -> IO (FunPtr I.GEOSMessageHandler)
@@ -29,19 +29,15 @@ initializeGEOS n e =  do
   -- must freePointer when done
   nh <- makeMessageHandler n
   eh <- makeMessageHandler e
-  ptrC <- I.geos_initGEOS_r nh eh    
-  fptr <- newForeignPtr I.geos_finishGEOS_r ptrC
-  mv <- MV.newMVar fptr
-  return $ GEOSHandle mv
-  {-return $ GEOSHandle fptr-}
+  ptrC <- I.geos_initGEOS nh eh    
+  fptr <- newForeignPtr I.geos_finishGEOS ptrC
+  return $ GEOSHandle fptr
 
-withHandle :: GEOSHandle -> (Ptr I.GEOSContextHandle -> IO a) -> IO a
-{-withHandle (GEOSHandle ptr) f = withForeignPtr ptr f-}
-withHandle (GEOSHandle mv) f = MV.withMVar mv $ \ptr -> withForeignPtr ptr f
+withHandle :: GEOSHandle -> (I.GEOSContextHandle_t -> IO a) -> IO a
+withHandle (GEOSHandle ptr) f = withForeignPtr ptr f
 
 withCoordinateSequence :: CoordinateSequence -> (Ptr I.GEOSCoordSequence -> IO a) -> IO a
-withCoordinateSequence (CoordinateSequence (Left fp)) f = withForeignPtr fp f
-withCoordinateSequence (CoordinateSequence (Right p)) f = f p
+withCoordinateSequence (CoordinateSequence fp) f = withForeignPtr fp f
 
 withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
 withGeometry (Geometry g) f = withForeignPtr g f
@@ -61,42 +57,66 @@ setSRID h g i = withHandle h $ \hp ->
                     I.geos_SetSRID hp gp $ fromIntegral i
   
 
+getType :: GEOSHandle -> Geometry -> IO Int
+getType h g = do
+  i <- throwIf (\v -> v == 0) (\_ -> "Get Type") $
+        withHandle h $ \hp -> 
+          withGeometry g $ \gp ->
+            I.geos_GeomType hp gp
+  return $ fromIntegral i
+
+getTypeId :: GEOSHandle -> Geometry -> IO Int
+getTypeId h g = do
+  i <- throwIfNeg (\_ -> "getTypeId") $
+    withHandle h $ \hp ->
+      withGeometry g $ \gp ->
+        I.geos_GeomTypeId hp gp
+  return $ fromIntegral i
+
+-- this should be combined with clone to make it more flexible
 getCoordinateSequence :: GEOSHandle -> Geometry -> IO CoordinateSequence
 getCoordinateSequence h g = do
   ptr <- throwIfNull "Get CoordinateSequence" $ withHandle h $ \hp ->
           withGeometry g $ \gp ->
             I.geos_GetCoordSeq hp gp
-  -- cannot destroy this as caller does not have access
-  fptr <- withHandle h $ \ch -> newForeignPtrEnv I.geos_CoordSeqDestroy ch ptr
-  return $ CoordinateSequence $ Left fptr
-  {-return $ CoordinateSequence $ Right ptr-}
+  cloned <- throwIfNull "Clone Coordinate Sequence" $ withHandle h $ \hp ->
+          I.geos_CoordSeqClone hp ptr
+  fptr <- withHandle h $ \ch -> newForeignPtrEnv I.geos_CoordSeqDestroy ch cloned
+  return $ CoordinateSequence fptr
       
+getNumCoordinates :: GEOSHandle -> Geometry -> IO Int
+getNumCoordinates h g = do 
+  i <- throwIfNeg (\_ -> "getTypeId") $
+    withHandle h $ \hp ->
+      withGeometry g $ \gp ->
+        I.geos_getNumCoordinates hp gp
+  return $ fromIntegral i
+
+
+--
 -- Coordinate Sequence --
 
 createCoordinateSequence :: GEOSHandle -> Int -> Int -> IO CoordinateSequence
 createCoordinateSequence h size dim = do
     ptr <- throwIfNull "Create Coordinate Sequence" $ withHandle h $ \ptr -> I.geos_CoordSeqCreate ptr (fromIntegral size) (fromIntegral dim) 
     fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_CoordSeqDestroy ch ptr
-    return $ CoordinateSequence $ Left fp
+    return $ CoordinateSequence  fp
 
-setCoordinateSequence_ :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSCoordSequence -> CUInt -> CDouble -> IO CInt) -> GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
+setCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> CDouble -> IO CInt) -> GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
 setCoordinateSequence_ f h cs idx val = do
   i <- throwIf (\v -> v == 0) (\_ -> "Cannot set coordinate sequence") $ 
         withHandle h (\ch -> withCoordinateSequence cs (\ pcs -> f ch pcs (fromIntegral idx) (realToFrac val)))
   return $ fromIntegral i
 
-getCoordinateSequence_ :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSCoordSequence -> CUInt -> Ptr CDouble -> IO CInt) 
+getCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> Ptr CDouble -> IO CInt) 
                           -> GEOSHandle 
                           -> CoordinateSequence
                           -> Int
                           -> IO Double 
 getCoordinateSequence_ f h cs idx = alloca $ \dptr -> do
-  putStrLn $ "Get C D " ++ show idx
   i <- throwIf (\v -> v == 0) (\_ -> "Cannot get coordinate value") $
-      withHandle h (\ch -> 
-        withCoordinateSequence cs $ \pcs -> f ch pcs (fromIntegral idx) dptr)
-
-  putStrLn $ "Coord retrived"
+      withHandle h $ \ch -> 
+        withCoordinateSequence cs $ \pcs -> f ch pcs (fromIntegral idx) dptr
   d <- peek dptr
   return $ realToFrac d
   
@@ -117,7 +137,15 @@ getCoordinateSequenceSize h c = alloca $ \ptr -> do
             I.geos_CoordSeqGetSize ch pc ptr
   s <- peek ptr
   return $ fromIntegral s
-  
+
+getCoordinateSequenceDimensions :: GEOSHandle -> CoordinateSequence -> IO Int 
+getCoordinateSequenceDimensions h c = alloca $ \ptr -> do
+  i <- throwIf (\v -> v == 0) (\_ -> "Get Coordinate Sequence Dimensions") $ 
+        withHandle h $ \ch ->
+          withCoordinateSequence c $ \pc ->
+            I.geos_CoordSeqGetDimensions ch pc ptr
+  s <- peek ptr
+  return $ fromIntegral s
 
 ---
 
@@ -133,7 +161,7 @@ setCoordinateSequenceZ = setCoordinateSequence_ I.geos_CoordSeqSetZ
 ------
 --
 
-createGeometry_ :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) -> GEOSHandle -> CoordinateSequence -> IO Geometry
+createGeometry_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) -> GEOSHandle -> CoordinateSequence -> IO Geometry
 createGeometry_ f h c  = do
    g <- throwIfNull "Create Geometry" $ withCoordinateSequence c $ \pcs -> withHandle h $ \ch -> f ch pcs
    fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g
