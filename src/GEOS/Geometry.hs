@@ -9,6 +9,17 @@ import Data.Monoid ((<>))
 import Control.Applicative ((<$>))
 
 
+convertGeometryToRaw :: GEOSHandle -> Geometry-> R.Geometry
+convertGeometryToRaw h g = case g of
+  PointGeometry pg s -> 
+  LineStringGeometry lsg s ->
+  PolygonGeometry pg s -> 
+  MultiPointGeometry mp s ->
+  MultiLineStringGeometry s ->
+  MultiPolygonGeometry s ->
+
+convertPointFromRaw :: GEOSHandle -> Point -> SRID -> R.Geometry
+convertPointFromRaw h (Point c) s = 
 
 --- Conversions
 --

@@ -6,6 +6,10 @@ import GEOS.Raw.Base
 import Data.Monoid ((<>))
 import Control.Applicative ((<$>))
 
+class Geo a where
+  dimensions :: a -> Int
+
+
 type SRID = Int
 data Geometry = 
     PointGeometry Point SRID
@@ -20,35 +24,46 @@ data Coordinate =
   | Coordinate3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double  deriving (Show, Eq)
 
 
+instance Geo Coordinate where
+  dimensions (Coordinate2 _ _) = 2
+  dimensions (Coordinate3 _ _ _) = 3
+
 type CoordinateSequence = V.Vector Coordinate 
 
 newtype Point = Point {
-  _unPoint :: Coordinate
-} deriving (Show, Eq)
--- A LinearRing is a LineString that is closed
-newtype LinearRing = LinearRing {
-  _unLinearRing :: CoordinateSequence
+  unPoint :: Coordinate
 } deriving (Show, Eq)
 
+instance Geo Point where
+  dimensions = dimensions . unPoint
+
+-- A LinearRing is a LineString that is closed
+newtype LinearRing = LinearRing {
+  unLinearRing :: CoordinateSequence
+} deriving (Show, Eq)
+
+instance Geo LinearRing where
+  dimensions = dimensions . V.head . unLinearRing
+
 newtype LineString = LineString {
-  _unLineString :: CoordinateSequence
+  unLineString :: CoordinateSequence
 } deriving (Show, Eq)
 
 --  in a polygon, the fist LinearRing is the shell, and any following are holes.
 newtype Polygon = Polygon {
-  _unPolygon :: V.Vector LinearRing
+  unPolygon :: V.Vector LinearRing
 } deriving (Show, Eq)
 
 newtype MultiPoint = MultiPoint {
-  _unMultiPoint :: V.Vector Point
+  unMultiPoint :: V.Vector Point
 } deriving (Show, Eq)
 
 newtype MultiLineString = MultiLineString {
-  _unMultiLineString :: V.Vector LineString
+  unMultiLineString :: V.Vector LineString
 } deriving (Show, Eq)
 
 newtype MultiPolygon = MultiPolygon {
-  _unMultiPolygon :: V.Vector Polygon
+  unMultiPolygon :: V.Vector Polygon
 } deriving (Show, Eq)
 
 
