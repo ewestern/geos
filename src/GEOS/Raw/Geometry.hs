@@ -21,6 +21,7 @@ convertToBool :: (Integral a, Eq a)  => a -> Bool
 convertToBool i = case fromIntegral i of
   0 -> False
   1 -> True 
+
 withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
 withGeometry (Geometry g) f = withForeignPtr g f
 
@@ -35,8 +36,8 @@ getSRID h g = unsafePerformIO $ do
             I.geos_GetSRID hp gp
   return $ fromIntegral s
     
-setSRID :: GEOSHandle -> Geometry -> Int -> IO ()
-setSRID h g i = withHandle h $ \hp -> 
+setSRID :: GEOSHandle -> Geometry -> Int -> ()
+setSRID h g i = unsafePerformIO $ withHandle h $ \hp -> 
                   withGeometry g $ \gp ->
                     I.geos_SetSRID hp gp $ fromIntegral i
   
@@ -177,17 +178,20 @@ cloneConstGeometry h g = unsafePerformIO $ do
 createGeometry_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
     -> GEOSHandle 
     -> CoordinateSequence 
-    -> IO Geometry
-createGeometry_ f h c  = do
+    -> Geometry
+createGeometry_ f h c  = unsafePerformIO $ do
    g <- throwIfNull "createGeometry" $ withCoordinateSequence c $ \pcs -> withHandle h $ \ch -> f ch pcs
    fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g
    return $ Geometry fp
 
 -- Geometry Constructors
-createPoint :: GEOSHandle -> CoordinateSequence -> IO Geometry
+createPoint :: GEOSHandle -> CoordinateSequence -> Geometry
 createPoint = createGeometry_ I.geos_GeomCreatePoint
 
-createLineString :: GEOSHandle -> CoordinateSequence -> IO Geometry
+createLinearRing :: GEOSHandle -> CoordinateSequence -> Geometry
+createLinearRing = createGeometry_ I.geos_GeomCreateLinearRing
+
+createLineString :: GEOSHandle -> CoordinateSequence -> Geometry
 createLineString = createGeometry_ I.geos_GeomCreateLineString
 
 

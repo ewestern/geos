@@ -9,17 +9,36 @@ import Data.Monoid ((<>))
 import Control.Applicative ((<$>))
 
 
-convertGeometryToRaw :: GEOSHandle -> Geometry-> R.Geometry
-convertGeometryToRaw h g = case g of
-  PointGeometry pg s -> 
-  LineStringGeometry lsg s ->
-  PolygonGeometry pg s -> 
-  MultiPointGeometry mp s ->
-  MultiLineStringGeometry s ->
-  MultiPolygonGeometry s ->
+{-convertGeometryToRaw :: GEOSHandle -> Geometry-> R.Geometry-}
+{-convertGeometryToRaw h g = case g of-}
+  {-PointGeometry pg s -> -}
+  {-LineStringGeometry lsg s ->-}
+  {-PolygonGeometry pg s -> -}
+  {-MultiPointGeometry mp s ->-}
+  {-MultiLineStringGeometry s ->-}
+  {-MultiPolygonGeometry s ->-}
 
-convertPointFromRaw :: GEOSHandle -> Point -> SRID -> R.Geometry
-convertPointFromRaw h (Point c) s = 
+convertPointToRaw :: GEOSHandle -> Point -> SRID -> R.Geometry
+convertPointToRaw h p@(Point c) s = 
+  let cs = RC.createCoordinateSequence h 1 (dimensions p)
+      geo = setCoordinateSequence h cs 1 c `seq` R.createPoint h cs
+  in R.setSRID
+
+convertLinearRingToRaw :: GEOSHandle -> LinearRing -> SRID -> R.Geometry
+convertLinearRingToRaw h l@(LinearRing cs) s =
+  let csr = RC.createCoordinateSequence h (V.length cs) (dimensions l) 
+  in V.imap (setCoordinateSequence h csr) cs `seq` R.createLinearRing h csr
+  
+convertLineStringToRaw :: GEOSHandle -> LineString -> SRID -> R.Geometry
+convertLineStringToRaw h l@(LineString cs) s =
+  let csr = RC.createCoordinateSequence h (V.length cs) (dimensions l) 
+  in V.imap (setCoordinateSequence h csr) cs `seq` R.createLineString h csr
+
+setCoordinateSequence :: GEOSHandle -> RC.CoordinateSequence -> Int -> Coordinate -> () 
+setCoordinateSequence h cs i (Coordinate2 x y) = 
+  RC.setCoordinateSequenceX h cs i x `seq` RC.setCoordinateSequenceY h cs i y `seq` ()
+setCoordinateSequence h cs  i (Coordinate3 x y z) = 
+  RC.setCoordinateSequenceX h cs i x `seq` RC.setCoordinateSequenceY h cs i y `seq` RC.setCoordinateSequenceZ h cs i z `seq` ()
 
 --- Conversions
 --

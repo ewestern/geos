@@ -11,7 +11,6 @@ newtype CoordinateSequence = CoordinateSequence {
 }
 newtype CoordSeqConst = CoordSeqConst {
   _unCoordSeqConst :: Ptr I.GEOSCoordSequence
-
 }
 
 withCoordSeqConst :: CoordSeqConst -> (Ptr I.GEOSCoordSequence -> IO a) -> IO a
@@ -21,17 +20,11 @@ withCoordinateSequence :: CoordinateSequence -> (Ptr I.GEOSCoordSequence -> IO a
 withCoordinateSequence (CoordinateSequence fp) f = withForeignPtr fp f
 
 
-createCoordinateSequence :: GEOSHandle -> Int -> Int -> IO CoordinateSequence
-createCoordinateSequence h size dim = do
+createCoordinateSequence :: GEOSHandle -> Int -> Int -> CoordinateSequence
+createCoordinateSequence h size dim = unsafePerformIO $ do
     ptr <- throwIfNull "createCoordinateSequence" $ withHandle h $ \ptr -> I.geos_CoordSeqCreate ptr (fromIntegral size) (fromIntegral dim) 
     fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_CoordSeqDestroy ch ptr
     return $ CoordinateSequence  fp
-
-setCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> CDouble -> IO CInt) -> GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
-setCoordinateSequence_ f h cs idx val = do
-  i <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
-        withHandle h (\ch -> withCoordinateSequence cs (\ pcs -> f ch pcs (fromIntegral idx) (realToFrac val)))
-  return $ fromIntegral i
 
 getCoordinateSequenceD_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> Ptr CDouble -> IO CInt) 
                           -> GEOSHandle 
@@ -73,12 +66,26 @@ getCoordinateSequenceDimensions h c = unsafePerformIO $ alloca $ \ptr -> do
   return $ fromIntegral s
 
 ---
+setCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> CDouble -> IO CInt) -> GEOSHandle -> CoordinateSequence -> Int -> Double -> Int  
+setCoordinateSequence_ f h cs idx val = unsafePerformIO $ do
+  i <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
+        withHandle h (\ch -> withCoordinateSequence cs (\ pcs -> f ch pcs (fromIntegral idx) (realToFrac val)))
+  return $ fromIntegral i
 
-setCoordinateSequenceX :: GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
+
+setCoordinateSequenceX :: GEOSHandle -> CoordinateSequence -> Int -> Double -> Int  
 setCoordinateSequenceX = setCoordinateSequence_ I.geos_CoordSeqSetX
 
-setCoordinateSequenceY :: GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
+setCoordinateSequenceY :: GEOSHandle -> CoordinateSequence -> Int -> Double -> Int  
 setCoordinateSequenceY = setCoordinateSequence_ I.geos_CoordSeqSetY
 
-setCoordinateSequenceZ :: GEOSHandle -> CoordinateSequence -> Int -> Double -> IO Int  
+setCoordinateSequenceZ :: GEOSHandle -> CoordinateSequence -> Int -> Double -> Int  
 setCoordinateSequenceZ = setCoordinateSequence_ I.geos_CoordSeqSetZ
+
+setCoordinateSequenceOrd :: GEOSHandle -> CoordinateSequence -> Int -> Int  -> Double -> Int
+setCoordinateSequenceOrd h cs idx dim v = unsafePerformIO $ do
+  i <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
+        withHandle h $ \ch -> 
+          withCoordinateSequence cs $ \pcs -> 
+            I.geos_CoordSeqSetOrdinate ch pcs (fromIntegral idx) (fromIntegral dim) (realToFrac v)
+  return $ fromIntegral i

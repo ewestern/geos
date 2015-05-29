@@ -49,21 +49,35 @@ newtype LineString = LineString {
   unLineString :: CoordinateSequence
 } deriving (Show, Eq)
 
+instance Geo LineString where
+  dimensions = dimensions . V.head . unLineString 
+
 --  in a polygon, the fist LinearRing is the shell, and any following are holes.
 newtype Polygon = Polygon {
   unPolygon :: V.Vector LinearRing
 } deriving (Show, Eq)
 
+instance Geo Polygon where
+  dimensions = dimensions . V.head . unPolygon
+
 newtype MultiPoint = MultiPoint {
   unMultiPoint :: V.Vector Point
 } deriving (Show, Eq)
+
+instance Geo MultiPoint where
+  dimensions = dimensions . V.head . unMultiPoint
 
 newtype MultiLineString = MultiLineString {
   unMultiLineString :: V.Vector LineString
 } deriving (Show, Eq)
 
+instance Geo MultiLineString where
+  dimensions = dimensions . V.head . unMultiLineString
+
 newtype MultiPolygon = MultiPolygon {
   unMultiPolygon :: V.Vector Polygon
 } deriving (Show, Eq)
 
+instance Geo MultiPolygon where
+  dimensions = dimensions . V.head . unMultiPolygon
 
