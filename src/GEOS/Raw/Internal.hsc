@@ -5,7 +5,7 @@ import Foreign
 import Foreign.C
 import Foreign.C.String
 
-#include <GEOS/geos_c.h>
+#include <geos_c.h>
 
 newtype GEOSGeomType = GEOSGeomType { unGEOSGeomType :: CInt }
     deriving (Eq,Show)
@@ -220,6 +220,7 @@ foreign import ccall unsafe
   "GEOS/geos_c.h GEOSGeom_createEmptyPolygon_r"
   geos_GeomCreateEmptyPolygon :: GEOSContextHandle_t -> IO (Ptr GEOSGeometry)
 
+  -- todo: this might not work as a plain pointer
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSGeom_createPolygon_r"
   geos_GeomCreatePolygon :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr (Ptr GEOSGeometry) -> CUInt -> IO (Ptr GEOSGeometry)

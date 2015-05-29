@@ -37,9 +37,10 @@ getSRID h g = unsafePerformIO $ do
   return $ fromIntegral s
     
 setSRID :: GEOSHandle -> Geometry -> Int -> ()
-setSRID h g i = unsafePerformIO $ withHandle h $ \hp -> 
-                  withGeometry g $ \gp ->
-                    I.geos_SetSRID hp gp $ fromIntegral i
+setSRID h g i = unsafePerformIO $ do 
+  withHandle h $ \hp -> 
+    withGeometry g $ \gp ->
+      I.geos_SetSRID hp gp $ fromIntegral i
   
 
 getType :: GEOSHandle -> Geometry -> Int
@@ -194,6 +195,18 @@ createLinearRing = createGeometry_ I.geos_GeomCreateLinearRing
 createLineString :: GEOSHandle -> CoordinateSequence -> Geometry
 createLineString = createGeometry_ I.geos_GeomCreateLineString
 
+-- todo: refactor this to take a vector instead of list
+createPolygon :: GEOSHandle -> Geometry -> [Geometry] -> Int -> Geometry
+createPolygon h o hs nh = unsafePerformIO $ do
+  ptrs <- mapM (\v -> withGeometry v $ return) hs
+  g <- withHandle h $ \hp -> 
+    withGeometry o $ \op -> 
+      withArray ptrs $ \ph -> 
+        I.geos_GeomCreatePolygon hp op ph $ fromIntegral nh
+  fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g
+  return $ Geometry fp
+        
+        
 
 --- Linear Referencing
 --

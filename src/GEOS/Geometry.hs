@@ -1,4 +1,7 @@
-module GEOS.Geometry where
+module GEOS.Geometry (
+
+
+ ) where
 
 import GEOS.Types
 import qualified Data.Vector as V
@@ -7,38 +10,59 @@ import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
 import Control.Applicative ((<$>))
+import GHC.Conc.Sync (pseq)
 
 
-{-convertGeometryToRaw :: GEOSHandle -> Geometry-> R.Geometry-}
-{-convertGeometryToRaw h g = case g of-}
-  {-PointGeometry pg s -> -}
-  {-LineStringGeometry lsg s ->-}
-  {-PolygonGeometry pg s -> -}
-  {-MultiPointGeometry mp s ->-}
-  {-MultiLineStringGeometry s ->-}
-  {-MultiPolygonGeometry s ->-}
+-- Return distance of point 'p' projected on 'g' from origin
+-- of 'g'. Geometry 'g' must be a lineal geometry 
+project :: Geometry -> Geometry -> Double
+project g1 g2 = 
+  let h = initializeGEOS putStrLn error
+      g1'= convertGeometryToRaw h g1
+      g2'= convertGeometryToRaw h g2
+  in R.project h g1' g2'  
+
+
+
+convertGeometryToRaw :: GEOSHandle -> Geometry-> R.Geometry
+convertGeometryToRaw h g = case g of
+    PointGeometry pg s -> convertPointToRaw h pg s 
+    LineStringGeometry lsg s -> convertLineStringToRaw h lsg s
+    PolygonGeometry pg s -> convertPolygonToRaw h pg s 
+    MultiPointGeometry mp s -> error ""
+    MultiLineStringGeometry mls s -> error ""
+    MultiPolygonGeometry mps s -> error ""
+
 
 convertPointToRaw :: GEOSHandle -> Point -> SRID -> R.Geometry
 convertPointToRaw h p@(Point c) s = 
   let cs = RC.createCoordinateSequence h 1 (dimensions p)
-      geo = setCoordinateSequence h cs 1 c `seq` R.createPoint h cs
-  in R.setSRID
+      geo = setCoordinateSequence h cs 1 c `pseq` R.createPoint h cs
+  in  R.setSRID h geo s `pseq` geo
 
 convertLinearRingToRaw :: GEOSHandle -> LinearRing -> SRID -> R.Geometry
 convertLinearRingToRaw h l@(LinearRing cs) s =
   let csr = RC.createCoordinateSequence h (V.length cs) (dimensions l) 
-  in V.imap (setCoordinateSequence h csr) cs `seq` R.createLinearRing h csr
+  in V.imap (setCoordinateSequence h csr) cs `pseq` R.createLinearRing h csr
   
 convertLineStringToRaw :: GEOSHandle -> LineString -> SRID -> R.Geometry
 convertLineStringToRaw h l@(LineString cs) s =
   let csr = RC.createCoordinateSequence h (V.length cs) (dimensions l) 
-  in V.imap (setCoordinateSequence h csr) cs `seq` R.createLineString h csr
+  in V.imap (setCoordinateSequence h csr) cs `pseq` R.createLineString h csr
+
+
+convertPolygonToRaw ::GEOSHandle -> Polygon -> SRID -> R.Geometry
+convertPolygonToRaw h p@(Polygon lrs) s = 
+  let ext = convertLinearRingToRaw h (V.head lrs) s
+      inn = V.toList $ fmap (\v -> convertLinearRingToRaw h v s) $ V.tail lrs
+  in R.createPolygon h ext inn (length inn - 1) 
+
 
 setCoordinateSequence :: GEOSHandle -> RC.CoordinateSequence -> Int -> Coordinate -> () 
 setCoordinateSequence h cs i (Coordinate2 x y) = 
-  RC.setCoordinateSequenceX h cs i x `seq` RC.setCoordinateSequenceY h cs i y `seq` ()
+  RC.setCoordinateSequenceX h cs i x `pseq` RC.setCoordinateSequenceY h cs i y `pseq` ()
 setCoordinateSequence h cs  i (Coordinate3 x y z) = 
-  RC.setCoordinateSequenceX h cs i x `seq` RC.setCoordinateSequenceY h cs i y `seq` RC.setCoordinateSequenceZ h cs i z `seq` ()
+  RC.setCoordinateSequenceX h cs i x `pseq` RC.setCoordinateSequenceY h cs i y `pseq` RC.setCoordinateSequenceZ h cs i z `pseq` ()
 
 --- Conversions
 --
