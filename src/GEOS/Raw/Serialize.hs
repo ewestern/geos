@@ -1,4 +1,12 @@
-module GEOS.Raw.Serialize where
+module GEOS.Raw.Serialize (
+    createReader
+  , createWriter
+  , read
+  , readHex
+  , write
+  , writeHex
+) where
+import Prelude hiding (read)
 import qualified GEOS.Raw.Internal as I
 import GEOS.Raw.Base
 import GEOS.Raw.Geometry
@@ -44,8 +52,8 @@ read = read_ I.geos_WKBReaderRead
 readHex :: GEOSHandle -> Reader -> BC.ByteString -> Geometry
 readHex = read_ I.geos_WKBReaderReadHex
 
-createWriter :: GEOSHandle -> IO Writer
-createWriter h = do
+createWriter :: GEOSHandle -> Writer
+createWriter h = unsafePerformIO $ do
   ptr <- throwIfNull "CreateWriter" $ withHandle h $ \hp -> I.geos_WKBWriterCreate hp 
   fp <- withHandle h $ \hp -> newForeignPtrEnv I.geos_WKBWriterDestroy hp ptr
   return $ Writer fp

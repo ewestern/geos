@@ -47,8 +47,8 @@ getCoordinateSequenceY = getCoordinateSequenceD_ I.geos_CoordSeqGetY
 getCoordinateSequenceZ :: GEOSHandle -> CoordinateSequence -> Int -> Double
 getCoordinateSequenceZ = getCoordinateSequenceD_ I.geos_CoordSeqGetZ
 
-getCoordinateSequenceSize :: GEOSHandle -> CoordinateSequence -> IO Int 
-getCoordinateSequenceSize h c = alloca $ \ptr -> do
+getCoordinateSequenceSize :: GEOSHandle -> CoordinateSequence -> Int 
+getCoordinateSequenceSize h c = unsafePerformIO $ alloca $ \ptr -> do
   i <- throwIfZero (mkErrorMessage "getCoordinateSequenceSize") $ 
         withHandle h $ \ch ->
           withCoordinateSequence c $ \pc ->
@@ -70,21 +70,21 @@ setCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> C
 setCoordinateSequence_ f h cs idx val = unsafePerformIO $ do
   i <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
         withHandle h (\ch -> withCoordinateSequence cs (\ pcs -> f ch pcs (fromIntegral idx) (realToFrac val)))
-  return $ fromIntegral i
+  return  ()
 
 
-setCoordinateSequenceX :: GEOSHandle -> CoordinateSequence -> Int -> Double -> Int  
+setCoordinateSequenceX :: GEOSHandle -> CoordinateSequence -> Int -> Double -> ()
 setCoordinateSequenceX = setCoordinateSequence_ I.geos_CoordSeqSetX
 
-setCoordinateSequenceY :: GEOSHandle -> CoordinateSequence -> Int -> Double -> Int  
+setCoordinateSequenceY :: GEOSHandle -> CoordinateSequence -> Int -> Double -> ()
 setCoordinateSequenceY = setCoordinateSequence_ I.geos_CoordSeqSetY
 
-setCoordinateSequenceZ :: GEOSHandle -> CoordinateSequence -> Int -> Double -> Int  
+setCoordinateSequenceZ :: GEOSHandle -> CoordinateSequence -> Int -> Double -> ()  
 setCoordinateSequenceZ = setCoordinateSequence_ I.geos_CoordSeqSetZ
 
 setCoordinateSequenceOrd :: GEOSHandle -> CoordinateSequence -> Int -> Int  -> Double -> Int
 setCoordinateSequenceOrd h cs idx dim v = unsafePerformIO $ do
-  i <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
+  i <- throwIfZero (mkErrorMessage "setCoordinateSequenceN") $ 
         withHandle h $ \ch -> 
           withCoordinateSequence cs $ \pcs -> 
             I.geos_CoordSeqSetOrdinate ch pcs (fromIntegral idx) (fromIntegral dim) (realToFrac v)

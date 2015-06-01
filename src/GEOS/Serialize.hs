@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module GEOS.Serialize where
+module GEOS.Serialize (
+    readHex
+  , writeHex
+) where
 
 import GEOS.Raw.Base
 import qualified GEOS.Raw.Geometry as R
@@ -17,8 +20,8 @@ readHex bs =
       g = S.readHex h r bs 
   in convertGeometryFromRaw h g
 
-{-writeHex :: Geometry -> BC.ByteString-}
-{-writeHex g = -}
-  {-let h = initializeGEOS putStrLn error-}
-      {-w = S.createWriter h-}
-  {-in S.writeHex h w $ convertGeometryToRaw g -}
+writeHex :: Geometry -> BC.ByteString
+writeHex g = 
+  let h = initializeGEOS putStrLn error
+      w = S.createWriter h
+  in S.writeHex h w $ convertGeometryToRaw h g 

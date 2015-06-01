@@ -1,7 +1,12 @@
 module GEOS.Geometry (
+  convertGeometryFromRaw,
+  convertGeometryToRaw,
+  interpolate,
+  interpolateNormalized,
+  project,
+  projectNormalized
 
-
- ) where
+) where
 
 import GEOS.Types
 import qualified Data.Vector as V
@@ -13,14 +18,72 @@ import Control.Applicative ((<$>))
 import GHC.Conc.Sync (pseq)
 
 
--- Return distance of point 'p' projected on 'g' from origin
--- of 'g'. Geometry 'g' must be a lineal geometry 
 project :: Geometry -> Geometry -> Double
 project g1 g2 = 
   let h = initializeGEOS putStrLn error
       g1'= convertGeometryToRaw h g1
       g2'= convertGeometryToRaw h g2
   in R.project h g1' g2'  
+
+projectNormalized :: Geometry ->  Geometry -> Double
+projectNormalized g1 g2 = 
+  let h = initializeGEOS putStrLn error
+      g1'= convertGeometryToRaw h g1
+      g2'= convertGeometryToRaw h g2
+  in R.project h g1' g2'  
+
+interpolate :: Geometry -> Double -> Geometry 
+interpolate g d = 
+  let h = initializeGEOS putStrLn error
+      g' = convertGeometryToRaw h g
+  in convertGeometryFromRaw h $ R.interpolate h g' $  realToFrac d
+
+
+interpolateNormalized :: Geometry -> Double -> Geometry 
+interpolateNormalized g d = 
+  let h = initializeGEOS putStrLn error
+      g' = convertGeometryToRaw h g
+  in convertGeometryFromRaw h $ R.interpolateNormalized h g' $  realToFrac d
+
+binaryPredicate_ :: (GEOSHandle -> R.Geometry -> R.Geometry -> Bool)
+                    -> Geometry 
+                    -> Geometry 
+                    -> Bool
+binaryPredicate_ f g1 g2 = 
+  let h = initializeGEOS putStrLn error
+      g1' = convertGeometryToRaw h g1
+      g2' = convertGeometryToRaw h g2
+  in f h g1' g2'
+
+disjoint :: Geometry -> Geometry -> Bool
+disjoint = binaryPredicate_ R.disjoint
+
+touches :: Geometry -> Geometry -> Bool
+touches = binaryPredicate_ R.touches
+
+crosses :: Geometry -> Geometry -> Bool
+crosses = binaryPredicate_ R.crosses
+
+within :: Geometry -> Geometry -> Bool
+within = binaryPredicate_ R.within
+
+contains :: Geometry -> Geometry -> Bool
+contains = binaryPredicate_ R.contains
+
+overlaps :: Geometry -> Geometry -> Bool
+overlaps = binaryPredicate_ R.overlaps
+
+equals :: Geometry -> Geometry -> Bool
+equals = binaryPredicate_ R.equals
+
+equalsExact :: Geometry -> Geometry -> Bool
+equalsExact = binaryPredicate_ R.equalsExact
+
+covers :: Geometry -> Geometry -> Bool
+covers = binaryPredicate_ R.covers
+
+coveredBy :: Geometry -> Geometry -> Bool
+coveredBy = binaryPredicate_ R.coveredBy
 
 
 
@@ -29,9 +92,9 @@ convertGeometryToRaw h g = case g of
     PointGeometry pg s -> convertPointToRaw h pg s 
     LineStringGeometry lsg s -> convertLineStringToRaw h lsg s
     PolygonGeometry pg s -> convertPolygonToRaw h pg s 
-    MultiPointGeometry mp s -> error ""
-    MultiLineStringGeometry mls s -> error ""
-    MultiPolygonGeometry mps s -> error ""
+    MultiPointGeometry mp s -> error "multipoint"
+    MultiLineStringGeometry mls s -> error "multilineString"
+    MultiPolygonGeometry mps s -> error "multipolygon"
 
 
 convertPointToRaw :: GEOSHandle -> Point -> SRID -> R.Geometry
@@ -70,16 +133,13 @@ convertGeometryFromRaw :: GEOSHandle -> R.Geometry -> Geometry
 convertGeometryFromRaw h rg = let s = R.getSRID h rg
     in case R.getTypeId h rg of
           0 -> PointGeometry (convertPointFromRaw h rg ) s
-          1 -> LineStringGeometry (convertLineStringFromRaw h rg) s 
+          1 -> LineStringGeometry (convertLineStringFromRaw h rg) $! s 
           2 -> PolygonGeometry (convertPolygonFromRaw h rg) s
           3 -> MultiPointGeometry (convertMultiPointFromRaw h rg) s 
           4 -> MultiLineStringGeometry (convertMultiLineStringFromRaw h rg) s
           5 -> MultiPolygonGeometry (convertMultiPolygonFromRaw h rg) s
           e -> error $ "Unrecognized geometry type" <> show e 
 
-
-    
--- todo, make more efficient by using the pointer functions instead of cloneing
 getPosition :: GEOSHandle -> RC.CoordinateSequence -> Int -> Coordinate 
 getPosition h cs i = 
     let dim = RC.getCoordinateSequenceDimensions h cs 
@@ -99,6 +159,7 @@ convertPointFromRaw h g =
 
 convertSequenceFromRaw :: GEOSHandle -> R.Geometry -> CoordinateSequence
 convertSequenceFromRaw h g = 
+  -- todo, consider using getCoordinateSequence_
   let cs = R.getCoordinateSequence h g
       size = R.getNumCoordinates h g
   in V.generate size (getPosition h cs)

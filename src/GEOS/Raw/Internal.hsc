@@ -272,29 +272,9 @@ foreign import ccall unsafe
   geos_Node :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
 
 
--- Return a Delaunay triangulation of the vertex of the given geometry
-
--- @param g the input geometry whose vertex will be used as "sites"
--- @param tolerance optional snapping tolerance to use for improved robustness
--- @param onlyEdges if non-zero will return a MULTILINESTRING, otherwise it will
---                  return a GEOMETRYCOLLECTION containing triangular POLYGONs.
-
---return  a newly allocated geometry, or NULL on exception
-
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSDelaunayTriangulation_r"
   geos_DelaunayTriangulation :: GEOSContextHandle_t -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry)
-
--- Returns the Voronoi polygons of a set of Vertices given as input
--- @param g the input geometry whose vertex will be used as sites.
--- @param tolerance snapping tolerance to use for improved robustness
--- @param onlyEdges whether to return only edges of the voronoi cells
--- @param env clipping envelope for the returned diagram, automatically
---            determined if NULL.
---            The diagram will be clipped to the larger
---            of this envelope or an envelope surrounding the sites.
- 
--- @return a newly allocated geometry, or NULL on exception.
 
 {-foreign import ccall unsafe-}
   {-"GEOS/geos_c.h GEOSVoronoiDiagram_r"-}

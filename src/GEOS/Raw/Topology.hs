@@ -1,88 +1,104 @@
-module GEOS.Topology where
-import qualified GEOS.Internal as I
-import GEOS.Wrapper
+module GEOS.Raw.Topology (
+    envelope
+  , intersection
+  , convexHull
+  , difference
+  , symmetricDifference
+  , boundary
+  , union
+  , unaryUnion
+  , pointOnSurface
+  , getCentroid
+  , node
+  , delaunayTriangulation
+) where
+import qualified GEOS.Raw.Internal as I
+import GEOS.Raw.Base
+import qualified GEOS.Raw.Geometry as R
 import Foreign
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.ForeignPtr
+import System.IO.Unsafe
+import Foreign.Marshal.Utils
 
-
-geo_1 :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry)) -> String -> GEOSHandle -> Geometry -> Geometry 
+geo_1 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry)) 
+          -> String 
+          -> GEOSHandle 
+          -> R.Geometry 
+          -> R.Geometry 
 geo_1 f s h g =  unsafePerformIO $ do
-  g <- throwIfNull s $ withHandle h (\ch -> 
-        withGeometry g (\gp -> 
-          f ch gp ))
+  g <- throwIfNull s $ withHandle h $ \ch -> 
+        R.withGeometry g $ \gp -> 
+          f ch gp 
   fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g
-  return $ Geometry fp
+  return $ R.Geometry fp
 
-geo_2 :: (Ptr I.GEOSContextHandle -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry))
+geo_2 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry))
           -> String
           -> GEOSHandle
-          -> Geometry
-          -> Geometry
-          -> Geometry
+          -> R.Geometry
+          -> R.Geometry
+          -> R.Geometry
 geo_2 f s h g1 g2  = unsafePerformIO $ do
-  g <- throwIfNull s $ withHandle h (\ch -> 
-        withGeometry g1 (\gp1 ->
-          withGeometry g2 (\gp2 ->
-            f ch gp1 gp2 )))
+  g <- throwIfNull s $ withHandle h $ \ch -> 
+        R.withGeometry g1 $ \gp1 ->
+         R.withGeometry g2 $ \gp2 ->
+            f ch gp1 gp2 
   fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g
-  return $ Geometry fp
+  return $ R.Geometry fp
 
 
-envelope :: GEOSHandle -> Geometry -> Geometry 
+envelope :: GEOSHandle -> R.Geometry -> R.Geometry 
 envelope = geo_1 I.geos_Envelope "envelope" 
 
-intersection :: GEOSHandle -> Geometry -> Geometry -> Geometry
+intersection :: GEOSHandle -> R.Geometry -> R.Geometry -> R.Geometry
 intersection = geo_2 I.geos_Intersection "intersection"
 
-convexHull :: GEOSHandle -> Geometry -> Geometry
+convexHull :: GEOSHandle -> R.Geometry -> R.Geometry
 convexHull = geo_1 I.geos_ConvexHull "convexHull"
 
-difference :: GEOSHandle -> Geometry -> Geometry -> Geometry
+difference :: GEOSHandle -> R.Geometry -> R.Geometry -> R.Geometry
 difference = geo_2 I.geos_Difference "difference"
 
-symmetricDifference :: GEOSHandle -> Geometry -> Geometry -> Geometry
-symmetricDifference = geo_2 I.geos_SymDiffference "symmetricDifference"
+symmetricDifference :: GEOSHandle -> R.Geometry -> R.Geometry -> R.Geometry
+symmetricDifference = geo_2 I.geos_SymDifference "symmetricDifference"
 
-boundary :: GEOSHandle -> Geometry -> Geometry
-boundary = geos_1 I.geos_Boundary "boundary"
+boundary :: GEOSHandle -> R.Geometry -> R.Geometry
+boundary = geo_1 I.geos_Boundary "boundary"
 
-union :: GEOSHandle -> Geometry -> Geometry -> Geometry
-union = geos_2 I.geos_Union "union"
+union :: GEOSHandle -> R.Geometry -> R.Geometry -> R.Geometry
+union = geo_2 I.geos_Union "union"
 
-unaryUnion :: GEOSHandle -> Geometry -> Geometry
-unaryUnion = geos_1 I.geos_UnaryUnion "unaryUnion"
+unaryUnion :: GEOSHandle -> R.Geometry -> R.Geometry
+unaryUnion = geo_1 I.geos_UnaryUnion "unaryUnion"
 
-pointOnSurface :: GEOSHandle -> Geometry -> Geometry
-pointOnSurface = geos_1 I.geos_PointOnSurface "pointOnSurface"
+pointOnSurface :: GEOSHandle -> R.Geometry -> R.Geometry
+pointOnSurface = geo_1 I.geos_PointsOnSurface "pointOnSurface"
 
-getCentroid :: GEOSHandle -> Geometry -> Geometry
-getCentroid = geos_1 I.geos_GetCentroid "getCentroid"
+getCentroid :: GEOSHandle -> R.Geometry -> R.Geometry
+getCentroid = geo_1 I.geos_GetCentroid "getCentroid"
 
-node :: GEOSHandle -> Geometry -> Geometry
-node = geos_1 I.geos_Node "node"
+node :: GEOSHandle -> R.Geometry -> R.Geometry
+node = geo_1 I.geos_Node "node"
 
+-- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use and @oe@ indicates that the function should return a MultiLineString, rather than a GeometryCollection containing triangular Polygons.
 
-delaunayTriangulation :: GEOSHandle  -> Geometry -> Double -> Bool -> Geometry 
+delaunayTriangulation :: GEOSHandle  -> R.Geometry -> Double -> Bool -> R.Geometry 
 delaunayTriangulation h g tol oe = unsafePerformIO $ do
   g <- throwIfNull "delaunayTriangulation" $ withHandle h $ \hp ->
-        withGeometry g $ \gp ->
-          I.geos_DelaunayTriangulation hp gp (realToFrac) $ case oe of
-            True -> 1
-            False -> 0
+        R.withGeometry g $ \gp ->
+          I.geos_DelaunayTriangulation hp gp (realToFrac tol) $ fromBool oe 
   fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g
-  return $ Geometry g
+  return $ R.Geometry fp
             
-{-voronoiDiagram :: GEOSHandle -> Geometry -> Geometry -> Double -> Bool -> Geometry-}
+{-voronoiDiagram :: GEOSHandle -> R.Geometry -> R.Geometry -> Double -> Bool -> R.Geometry-}
 {-voronoiDiagram h g env tol oe = unsafePerformIO $ do-}
   {-g <- throwIfNull "voronoiDiagram" $ withHandle h $ \hp -> -}
-        {-withGeometry g $ \gp -> -}
-          {-withGeometry env $ \ep -> -}
-            {-I.geos_VoronoiDiagram hp gp ep (realToFrac tol) $ case oe of-}
-              {-True -> 1-}
-              {-False -> 0-}
+        {-R.withGeometry g $ \gp -> -}
+          {-R.withGeometry env $ \ep -> -}
+            {-I.geos_VoronoiDiagram hp gp ep (realToFrac tol) $ fromBool oe -}
   {-fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g-}
-  {-return $ Geometry g-}
+  {-return $ R.Geometry g-}

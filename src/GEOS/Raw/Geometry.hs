@@ -5,7 +5,9 @@ import GEOS.Raw.CoordSeq
 import Foreign
 import Foreign.C.Types
 import Foreign.ForeignPtr
+import Foreign.Marshal.Utils
 import Data.Monoid ((<>))
+import qualified Data.Vector as V
 
 import System.IO.Unsafe
 
@@ -17,10 +19,12 @@ newtype GeomConst = GeomConst {
   _unGeomConst :: Ptr I.GEOSGeometry
 }
 
-convertToBool :: (Integral a, Eq a)  => a -> Bool
-convertToBool i = case fromIntegral i of
-  0 -> False
-  1 -> True 
+{-withVector :: Storable a => V.Vector a -> (Ptr a -> IO b) -> IO b-}
+{-withVector v f = -}
+  {-allocaArray len $ \ptr -> do-}
+    {-pokeArray ptr -}
+  {-where-}
+    {-len = V.length v-}
 
 withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
 withGeometry (Geometry g) f = withForeignPtr g f
@@ -209,8 +213,7 @@ createPolygon h o hs nh = unsafePerformIO $ do
         
 
 --- Linear Referencing
---
---
+----------------------
 geo_2_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO CDouble)
           -> GEOSHandle 
           -> Geometry
@@ -223,9 +226,8 @@ geo_2_ f h g p = unsafePerformIO $ do
                f hp gp pp 
    return . realToFrac $ d
 
+-- | @project p g@ returns the distance of point @p@ projected on @g@ from origin of @g@. Geometry @g@ must be a lineal geometry 
 --
--- Return distance of point 'p' projected on 'g' from origin
--- of 'g'. Geometry 'g' must be a lineal geometry 
 project :: GEOSHandle -> Geometry -> Geometry -> Double
 project = geo_2_ I.geos_Project
 
@@ -245,8 +247,8 @@ geo_1_d f h g d = unsafePerformIO $ do
   fptr <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g
   return $ Geometry fptr
 
---Return closest point to given distance within geometry
--- Geometry must be a LineString 
+-- | Return the closest point to given distance within geometry. Geometry must be a LineString 
+--
 interpolate :: GEOSHandle -> Geometry -> Double -> Geometry 
 interpolate = geo_1_d  I.geos_Interpolate 
 
@@ -254,6 +256,7 @@ interpolateNormalized :: GEOSHandle -> Geometry -> Double -> Geometry
 interpolateNormalized = geo_1_d I.geos_InterpolateNormalized
 
 --Binary Predicates
+--------------------
 binaryPredicate_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO CChar)
                     -> String
                     -> GEOSHandle
@@ -265,7 +268,7 @@ binaryPredicate_ f s h g1 g2 = unsafePerformIO $ do
         withGeometry g1 $ \gp1 ->
           withGeometry g2 $ \gp2 ->
             f hp gp1 gp2
-  return . convertToBool $  b
+  return . toBool $  b
 
 disjoint :: GEOSHandle -> Geometry -> Geometry -> Bool
 disjoint = binaryPredicate_ I.geos_Disjoint "disjoint"
