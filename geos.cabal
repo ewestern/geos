@@ -61,6 +61,7 @@ library
       base >=4.7 && <4.8
     , bytestring 
     , vector
+    , transformers >= 0.4
   build-tools: hsc2hs
   exposed-modules:
       GEOS.Topology
@@ -90,6 +91,7 @@ test-suite TEST
   build-depends:
     base >= 4.4
     , hspec >= 2.1
+
 
 
 
