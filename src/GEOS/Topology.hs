@@ -19,25 +19,19 @@ import qualified GEOS.Raw.Topology as R
 import qualified GEOS.Raw.Geometry as RG
 
 
-geo_1 :: (GEOSHandle -> RG.Geometry -> RG.Geometry )
+geo_1 :: ( RG.Geometry -> Geos RG.Geometry )
           -> Geometry
           -> Geometry   
-geo_1 f g = 
-  let h = initializeGEOS putStrLn error
-      g' = convertGeometryToRaw h g
-  in convertGeometryFromRaw h g'
+geo_1 f g = runGeos $ convertGeometryToRaw g >>= convertGeometryFromRaw 
 
-geo_2 :: (GEOSHandle -> RG.Geometry -> RG.Geometry -> RG.Geometry)
+geo_2 :: (RG.Geometry -> RG.Geometry -> Geos RG.Geometry)
           -> Geometry
           -> Geometry
           -> Geometry
-
-geo_2 f g1 g2 = 
-  let h = initializeGEOS putStrLn error
-      g1' = convertGeometryToRaw h g1
-      g2' = convertGeometryToRaw h g2
-  in convertGeometryFromRaw h $ f h g1' g2'
-
+geo_2 f g1 g2 = runGeos $ do
+  g1' <- convertGeometryToRaw g1
+  g2' <- convertGeometryToRaw g2
+  convertGeometryFromRaw =<< f g1' g2'
 
 envelope :: Geometry -> Geometry
 envelope = geo_1 R.envelope 
@@ -73,5 +67,5 @@ node :: Geometry -> Geometry
 node = geo_1 R.node
  
 delaunayTriangulation ::  Geometry -> Double -> Bool -> Geometry
-delaunayTriangulation g d b = geo_1 (\ h g' -> R.delaunayTriangulation h g' d b) g
+delaunayTriangulation g d b = geo_1 (\ g' -> R.delaunayTriangulation g' d b) g
 

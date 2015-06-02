@@ -14,14 +14,12 @@ import GEOS.Types
 import qualified Data.ByteString.Char8 as BC
 
 readHex :: BC.ByteString -> Geometry
-readHex bs = 
-  let h = initializeGEOS putStrLn error
-      r = S.createReader h 
-      g = S.readHex h r bs 
-  in convertGeometryFromRaw h g
+readHex bs = runGeos $ do 
+  r <- S.createReader 
+  g <- S.readHex r bs 
+  convertGeometryFromRaw g
 
 writeHex :: Geometry -> BC.ByteString
-writeHex g = 
-  let h = initializeGEOS putStrLn error
-      w = S.createWriter h
-  in S.writeHex h w $ convertGeometryToRaw h g 
+writeHex g = runGeos $ do
+  w <- S.createWriter
+  S.writeHex w =<<  convertGeometryToRaw g 

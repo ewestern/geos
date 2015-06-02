@@ -26,54 +26,51 @@ newtype Writer = Writer { _unWriter :: ForeignPtr I.GEOSWKBWriter }
 withReader (Reader r) f = withForeignPtr r f
 withWriter (Writer w) f = withForeignPtr w f
 
-createReader :: GEOSHandle -> Reader
-createReader h = unsafePerformIO $ do 
-    ptr <- throwIfNull "Create Reader" $ withHandle h $ \hp -> I.geos_WKBReaderCreate  hp  
-    fp <- withHandle h $ \hp -> newForeignPtrEnv I.geos_WKBReaderDestroy hp ptr
+createReader :: Geos Reader
+createReader = withGeos $ \h -> do 
+    ptr <- throwIfNull "Create Reader" $ 
+      I.geos_WKBReaderCreate h  
+    fp <- newForeignPtrEnv I.geos_WKBReaderDestroy h ptr
     return $ Reader fp
 
 read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry)) 
-            -> GEOSHandle 
             -> Reader 
             -> BC.ByteString 
-            -> Geometry
-read_ f h r bs = unsafePerformIO $  do
-  ptr <- withHandle h $ \hp -> 
-            withReader r $ \rp -> 
-              BC.useAsCStringLen bs $ \(cs, l) -> 
-                f hp rp cs $ fromIntegral l 
-  fp <- withHandle h $ \hp -> newForeignPtrEnv I.geos_GeomDestroy hp ptr
+            -> Geos Geometry
+read_ f r bs = withGeos $ \h -> do
+  ptr <- withReader r $ \rp -> 
+            BC.useAsCStringLen bs $ \(cs, l) -> 
+              f h rp cs $ fromIntegral l 
+  fp <- newForeignPtrEnv I.geos_GeomDestroy h ptr
   return $ Geometry fp
   
 
-read :: GEOSHandle -> Reader -> BC.ByteString -> Geometry
+read :: Reader -> BC.ByteString -> Geos Geometry
 read = read_ I.geos_WKBReaderRead
   
-readHex :: GEOSHandle -> Reader -> BC.ByteString -> Geometry
+readHex :: Reader -> BC.ByteString -> Geos Geometry
 readHex = read_ I.geos_WKBReaderReadHex
 
-createWriter :: GEOSHandle -> Writer
-createWriter h = unsafePerformIO $ do
-  ptr <- throwIfNull "CreateWriter" $ withHandle h $ \hp -> I.geos_WKBWriterCreate hp 
-  fp <- withHandle h $ \hp -> newForeignPtrEnv I.geos_WKBWriterDestroy hp ptr
+createWriter :: Geos Writer
+createWriter = withGeos $ \h -> do
+  ptr <- throwIfNull "CreateWriter" $ I.geos_WKBWriterCreate h 
+  fp <- newForeignPtrEnv I.geos_WKBWriterDestroy h ptr
   return $ Writer fp
         
 write_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBWriter -> Ptr I.GEOSGeometry -> Ptr CSize -> IO CString)
-          -> GEOSHandle
           -> Writer
           -> Geometry
-          -> BC.ByteString
-write_ f h w g = unsafePerformIO $ do
-  s <- withHandle h $ \hp ->
-          withWriter w $ \wp ->
-            withGeometry g $ \gp -> 
-              alloca $ \lp ->
-                f hp wp gp lp 
+          -> Geos BC.ByteString
+write_ f w g = withGeos $ \h ->  do
+  s <- withWriter w $ \wp ->
+          withGeometry g $ \gp -> 
+            alloca $ \lp ->
+              f h wp gp lp 
   bs <- BC.packCString s          
   return bs
                      
-write :: GEOSHandle -> Writer -> Geometry -> BC.ByteString
+write :: Writer -> Geometry -> Geos BC.ByteString
 write = write_ I.geos_WKBWriterWrite
 
-writeHex :: GEOSHandle -> Writer -> Geometry -> BC.ByteString
+writeHex :: Writer -> Geometry -> Geos BC.ByteString
 writeHex = write_ I.geos_WKBWriterWriteHex
