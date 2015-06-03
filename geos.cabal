@@ -62,6 +62,7 @@ library
     , bytestring 
     , vector
     , transformers >= 0.4
+    , mtl >= 2.0
   build-tools: hsc2hs
   exposed-modules:
       GEOS.Topology
@@ -82,16 +83,14 @@ library
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
-test-suite TEST
+test-suite test
   type:
     exitcode-stdio-1.0
   hs-source-dirs:
-    src, tests
+      src
+    , tests
   main-is: Tests.hs      
   build-depends:
-    base >= 4.4
+      base >= 4.4
     , hspec >= 2.1
-
-
-
 

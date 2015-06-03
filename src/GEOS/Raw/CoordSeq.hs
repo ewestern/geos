@@ -35,6 +35,10 @@ withCoordSeqConst (CoordSeqConst p) f = f p
 withCoordinateSequence :: CoordinateSequence -> (Ptr I.GEOSCoordSequence -> IO a) -> IO a
 withCoordinateSequence (CoordinateSequence fp) f = withForeignPtr fp f
 
+--
+{-freeCoordinateSequence :: CoordinateSequence -> Geos ()-}
+{-freeCoordinateSequence (CoordinateSequence p) = withGeos $ \h -> I.geos_CoordSeqDestroy h p -}
+
 
 createCoordinateSequence :: Int -> Int -> Geos CoordinateSequence
 createCoordinateSequence size dim = do

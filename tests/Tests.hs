@@ -10,6 +10,7 @@ import GEOS.Raw.Base
 import GEOS.Geometry
 import qualified Data.Vector as V
 import qualified GEOS.Raw.CoordSeq as RC
+import qualified GEOS.Raw.Geometry as R 
 import GHC.Conc.Sync (pseq)
 
 polygonBS = "0103000020E6100000010000000C00000073E92D50491A5DC024275C1ED5DE404076E933474C1A5DC02C279CD7DBDE40406EE9A178431A5DC034271059E6DE40406DE9851C431A5DC034271C7AE6DE40406CE9F7AA421A5DC03427A07DE6DE40406CE92B3B421A5DC03427E05BE6DE40406CE955E4411A5DC03427A023E6DE404066E9E9FB3B1A5DC0282718AAD8DE404062E905D4381A5DC02027E877D1DE40406CE95FF8411A5DC014274C4CC6DE40406CE9B5EC421A5DC01427C8A2C6DE404073E92D50491A5DC024275C1ED5DE4040" :: BS.ByteString
@@ -22,24 +23,39 @@ linestring = LineStringGeometry (LineString {unLineString = V.fromList [Coordina
 main :: IO ()
 main = hspec $ do
   describe "raw geometry" $ do
-    it "Creates a Coordinate Sequence" $ do
-      pending
-      {-let cs = RC.createCoordinateSequence cHandle 2 2-}
-          {-size = RC.getCoordinateSequenceSize cHandle cs -}
-          {-dim = RC.getCoordinateSequenceDimensions cHandle cs-}
-      {-size `shouldBe` (2 :: Int)-}
-      {-dim `shouldBe` (2 :: Int)-}
+    it "Creates a Coordinate Sequence" $  do
+      let (size, dim) = runGeos $ do 
+          cs <- RC.createCoordinateSequence 2 2
+          size <-  RC.getCoordinateSequenceSize cs 
+          dim <-  RC.getCoordinateSequenceDimensions cs
+          return (size, dim)
+      size `shouldBe` (2 :: Int)
+      dim `shouldBe` (2 :: Int)
     it "Sets a Coordinate Sequence" $ do
-      pending
-      {-let cs = RC.createCoordinateSequence cHandle 2 2-}
-          {-d1 = RC.setCoordinateSequenceX cHandle cs 0 5.0 `pseq` RC.getCoordinateSequenceX cHandle cs 0-}
-          {-d2 = RC.setCoordinateSequenceY cHandle cs 1 10.0 `pseq` RC.getCoordinateSequenceY cHandle cs 1-}
-      {-d1 `shouldBe` (5.0 :: Double)-}
-      {-d2 `shouldBe` (10.0 :: Double)-}
+      let (d1, d2) = runGeos $ do
+          cs <-  RC.createCoordinateSequence 2 2
+          RC.setCoordinateSequenceX cs 0 5.0 
+          d1 <- RC.getCoordinateSequenceX cs 0
+          RC.setCoordinateSequenceY cs 1 10.0 
+          d2 <- RC.getCoordinateSequenceY cs 1
+          return (d1, d2)
+      d1 `shouldBe` (5.0 :: Double)
+      d2 `shouldBe` (10.0 :: Double)
+    it "Creates a LineString " $ do
+      let tid = runGeos $ do
+          cs <- RC.createCoordinateSequence 2 2
+          ls <- R.createLineString cs
+          R.getTypeId ls
+      tid `shouldBe` 1
+      
     it "Creates a Geometry" $ do
       pending
     it "Converts a LineString" $ do
       pending
+      {-let tid = runGeos $ do-}
+          {-l <- convertGeometryToRaw linestring-}
+          {-R.getTypeId l-}
+      {-tid `shouldBe` 1-}
       {-let lsr = convertGeometryToRaw cHandle linestring-}
           {-nls = convertGeometryFromRaw cHandle lsr-}
       {-nls `shouldBe` linestring-}
@@ -47,5 +63,5 @@ main = hspec $ do
   describe "Tests Serialization" $ do
     it "Parses a bytestring to a linestring" $ do
       readHex linestringBS `shouldBe` linestring 
-    it "Serializes a LineString into a bytestring" $
-      writeHex linestring `shouldBe` linestringBS
+    {-it "Serializes a LineString into a bytestring" $-}
+      {-writeHex linestring `shouldBe` linestringBS-}

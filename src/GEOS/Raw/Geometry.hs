@@ -168,14 +168,19 @@ cloneConstGeometry g = withGeos $ \h -> do
   fp <- newForeignPtrEnv I.geos_GeomDestroy h gp
   return $ Geometry fp
   
+ {-Geometry Constructors.-}
+ {-GEOSCoordSequence* arguments will become ownership of the returned object.-}
+ {-All functions return NULL on exception.-}
 
+
+-- options:
+--  requred coordSEqConst
 
 createGeometry_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
     -> CoordinateSequence 
     -> Geos Geometry
 createGeometry_ f c  = withGeos $ \h ->  do
-   g <- throwIfNull "createGeometry" $ 
-    withCoordinateSequence c $ \pcs -> f h pcs
+   g <- throwIfNull "createGeometry" $ withCoordinateSequence c $ \pcs -> f h pcs
    fp <- newForeignPtrEnv I.geos_GeomDestroy h g
    return $ Geometry fp
 

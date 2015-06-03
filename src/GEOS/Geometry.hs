@@ -109,14 +109,11 @@ convertLinearRingToRaw l@(LinearRing cs) s = do
   where
     len = V.length cs
   
-{-imapM :: Monad m => (Int -> a -> m b) -> V.Vector a -> m V.Vector b-}
-{-imapM f v = zipWithM -}
 convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
 convertLineStringToRaw l@(LineString cs) s = do
   csr <- RC.createCoordinateSequence len (dimensions l) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
   R.createLineString csr
-  {-in V.imap (setCoordinateSequence h csr) cs `pseq` R.createLineString h csr-}
   where
     len = V.length cs    
 
