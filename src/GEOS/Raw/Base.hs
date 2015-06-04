@@ -1,10 +1,12 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-} 
+{-# LANGUAGE GeneralizedNewtypeDeriving, RankNTypes #-} 
+
 module GEOS.Raw.Base (
     Geos
   , runGeos  
   , throwIfZero
   , withGeos
   , mkErrorMessage
+  , (>><)
 ) where
 import qualified GEOS.Raw.Internal as I
 import Foreign
@@ -15,6 +17,12 @@ import qualified Control.Concurrent.MVar as MV
 import Control.Monad.Reader
 import Control.Monad.IO.Class
 import Control.Applicative (Applicative)
+
+infixl 1 >><
+(>><) :: Monad m => m a -> (a -> m b) -> m a
+m >>< f = (m >>= f) >> m
+
+
 
 newtype GEOSHandle = GEOSHandle { 
   unGEOSHandle :: MV.MVar (ForeignPtr I.GEOSContextHandle_HS)

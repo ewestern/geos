@@ -224,9 +224,44 @@ foreign import ccall unsafe
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSGeom_createPolygon_r"
   geos_GeomCreatePolygon :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr (Ptr GEOSGeometry) -> CUInt -> IO (Ptr GEOSGeometry)
---
 
+----------
+--- Buffer
+---------
+
+newtype GEOSBufCapStyles = GEOSBufCapStyles { unGEOSBufCapStyles :: CInt }
+    deriving (Eq,Show)
+
+#{ enum GEOSBufCapStyles, GEOSBufCapStyles,
+    capRound = 1 
+  , capFlat = 2
+  , capSquare = 3
+}
+
+newtype GEOSBufJoinStyles = GEOSBufJoinStyles { unGEOSBufJoinStyles :: CInt }
+    deriving (Eq, Show)
+
+#{ enum GEOSBufJoinStyles, GEOSBufJoinStyles,
+    joinRound = 1
+  , joinMitre = 2
+  , joinBevel = 3
+}
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBuffer_r"
+  geos_Buffer :: GEOSContextHandle_t -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry) 
+
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferParams_create_r"
+  geos_BufferParamsCreate :: GEOSContextHandle_t -> IO (Ptr GEOSBufferParams) 
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferParams_destroy_r"
+  geos_BufferParamsDestroy :: GEOSContextHandle_t -> Ptr GEOSBufferParams -> IO () 
+
+-----------
 --- Topology
+----------
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSEnvelope_r"
   geos_Envelope :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry) 
@@ -366,3 +401,4 @@ foreign import ccall unsafe
   "GEOS/geos_c.h GEOSWKBWriter_writeHEX_r"
   geos_WKBWriterWriteHex :: GEOSContextHandle_t -> Ptr GEOSWKBWriter -> Ptr GEOSGeometry -> Ptr CSize -> IO CString
 --1085 finish writer methods
+

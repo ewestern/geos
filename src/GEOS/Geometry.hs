@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-} 
+
 module GEOS.Geometry (
   convertGeometryFromRaw,
   convertGeometryToRaw,
@@ -15,8 +17,6 @@ import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
 import Control.Applicative ((<$>), (<*>))
-import GHC.Conc.Sync (pseq)
-
 
 project :: Geometry -> Geometry -> Double
 project g1 g2 = runGeos $ do
@@ -81,9 +81,8 @@ coveredBy :: Geometry -> Geometry -> Bool
 coveredBy = binaryPredicate_ R.coveredBy
 
 
-
 convertGeometryToRaw :: Geometry -> Geos R.Geometry
-convertGeometryToRaw g = case g of
+convertGeometryToRaw = \case 
     PointGeometry pg s -> convertPointToRaw pg s 
     LineStringGeometry lsg s -> convertLineStringToRaw lsg s
     PolygonGeometry pg s -> convertPolygonToRaw pg s 
@@ -96,16 +95,14 @@ convertPointToRaw :: Point -> SRID -> Geos R.Geometry
 convertPointToRaw p@(Point c) s = do
   cs <- RC.createCoordinateSequence 1 (dimensions p)
   setCoordinateSequence cs 1 c 
-  geo <- R.createPoint cs 
-  R.setSRID geo s 
-  return geo
+  R.createPoint cs >>< \g -> R.setSRID g s
 
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
 convertLinearRingToRaw l@(LinearRing cs) s = do
   csr <- RC.createCoordinateSequence len (dimensions l) 
   V.zipWithM_ (setCoordinateSequence csr) (V.enumFromN 0 len) cs 
-  R.createLinearRing csr
+  R.createLinearRing csr >>< \g -> R.setSRID g s
   where
     len = V.length cs
   
@@ -113,9 +110,7 @@ convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
 convertLineStringToRaw l@(LineString cs) s = do
   csr <- RC.createCoordinateSequence len (dimensions l) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
-  g <- R.createLineString csr
-  R.setSRID g s
-  return g
+  R.createLineString csr >>< \g -> R.setSRID g s
   where
     len = V.length cs    
 
@@ -123,7 +118,7 @@ convertPolygonToRaw :: Polygon -> SRID -> Geos R.Geometry
 convertPolygonToRaw p@(Polygon lrs) s = do
   ext <- convertLinearRingToRaw (V.head lrs) s
   inn <- (\v -> convertLinearRingToRaw v s) `V.mapM` V.tail lrs
-  R.createPolygon ext (V.toList inn) (V.length inn - 1) 
+  R.createPolygon ext (V.toList inn) (V.length inn - 1)  >>< \g -> R.setSRID g s
 
 
 setCoordinateSequence :: RC.CoordinateSequence -> Int -> Coordinate -> Geos () 
