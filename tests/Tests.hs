@@ -47,21 +47,22 @@ main = hspec $ do
           ls <- R.createLineString cs
           R.getTypeId ls
       tid `shouldBe` 1
-      
     it "Creates a Geometry" $ do
       pending
     it "Converts a LineString" $ do
-      pending
-      {-let tid = runGeos $ do-}
-          {-l <- convertGeometryToRaw linestring-}
-          {-R.getTypeId l-}
-      {-tid `shouldBe` 1-}
-      {-let lsr = convertGeometryToRaw cHandle linestring-}
-          {-nls = convertGeometryFromRaw cHandle lsr-}
-      {-nls `shouldBe` linestring-}
+      let (srid, tid) = runGeos $ do
+          l <- convertGeometryToRaw linestring
+          t <- R.getTypeId l
+          s <- R.getSRID l
+          return (s, t)
+      tid `shouldBe` 1
+      srid `shouldBe` 4326
       
   describe "Tests Serialization" $ do
-    it "Parses a bytestring to a linestring" $ do
+    it "Parses a bytestring to a linestring" $ 
       readHex linestringBS `shouldBe` linestring 
-    {-it "Serializes a LineString into a bytestring" $-}
-      {-writeHex linestring `shouldBe` linestringBS-}
+    it "Serializes a LineString into a bytestring" $ do
+      -- Slightly different header is OK. 
+      let orig = BS.drop 18 linestringBS
+          newS = BS.drop 10 $ writeHex linestring
+      orig `shouldBe` newS

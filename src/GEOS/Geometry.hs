@@ -113,7 +113,9 @@ convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
 convertLineStringToRaw l@(LineString cs) s = do
   csr <- RC.createCoordinateSequence len (dimensions l) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
-  R.createLineString csr
+  g <- R.createLineString csr
+  R.setSRID g s
+  return g
   where
     len = V.length cs    
 

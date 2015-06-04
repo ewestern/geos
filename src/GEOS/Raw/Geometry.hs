@@ -39,8 +39,8 @@ getSRID g = withGeos $ \h -> do
   return $ fromIntegral s
     
 setSRID :: Geometry -> Int -> Geos ()
-setSRID g i = withGeos $ \h -> do 
-    withGeometry g $ \gp ->
+setSRID g i = withGeos $ \h -> 
+    withGeometry g $ \gp -> 
       I.geos_SetSRID h gp $ fromIntegral i
   
 
@@ -172,15 +172,14 @@ cloneConstGeometry g = withGeos $ \h -> do
  {-GEOSCoordSequence* arguments will become ownership of the returned object.-}
  {-All functions return NULL on exception.-}
 
-
--- options:
---  requred coordSEqConst
-
 createGeometry_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
     -> CoordinateSequence 
     -> Geos Geometry
 createGeometry_ f c  = withGeos $ \h ->  do
-   g <- throwIfNull "createGeometry" $ withCoordinateSequence c $ \pcs -> f h pcs
+   g <- throwIfNull "createGeometry" $ withCoordinateSequence c $ \pcs -> do 
+   -- todo: clone for now, think of a better solution later
+     cloned <- throwIfNull  "cloneCoordinateSequence" $ I.geos_CoordSeqClone h pcs
+     f h cloned
    fp <- newForeignPtrEnv I.geos_GeomDestroy h g
    return $ Geometry fp
 
@@ -204,8 +203,6 @@ createPolygon o hs nh = withGeos $ \h -> do
   fp <- newForeignPtrEnv I.geos_GeomDestroy h g
   return $ Geometry fp
         
-        
-
 --- Linear Referencing
 ----------------------
 geo_2_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO CDouble)

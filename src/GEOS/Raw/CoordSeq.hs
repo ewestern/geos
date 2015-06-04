@@ -29,6 +29,10 @@ newtype CoordSeqConst = CoordSeqConst {
   _unCoordSeqConst :: Ptr I.GEOSCoordSequence
 }
 
+{-data CoordinateSequence =-}
+    {-CoordinateSequence (Ptr I.GEOSCoordSequence)-}
+  {-| CoordinateSequenceConst (Ptr I.GEOSCoordSequence)-}
+
 withCoordSeqConst :: CoordSeqConst -> (Ptr I.GEOSCoordSequence -> IO a) -> IO a
 withCoordSeqConst (CoordSeqConst p) f = f p
     
@@ -39,6 +43,10 @@ withCoordinateSequence (CoordinateSequence fp) f = withForeignPtr fp f
 {-freeCoordinateSequence :: CoordinateSequence -> Geos ()-}
 {-freeCoordinateSequence (CoordinateSequence p) = withGeos $ \h -> I.geos_CoordSeqDestroy h p -}
 
+-- options:
+--  * just remove all foreign pointers from coordseq, keep const, and make the user free when necesssary
+--  * create a CoordSeq monad or something? runCoordSeq :: (CoordSeq (Geos a) -> Geos a
+--  * always clone
 
 createCoordinateSequence :: Int -> Int -> Geos CoordinateSequence
 createCoordinateSequence size dim = do
@@ -47,6 +55,7 @@ createCoordinateSequence size dim = do
   fp <- withGeos $ \h -> 
     newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
   return $ CoordinateSequence fp
+
 
 
 getCoordinateSequenceD_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> Ptr CDouble -> IO CInt) 
