@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Tests where
+
+module Main where
 import qualified Data.ByteString as BS
 import Test.Hspec
-import Test.QuickCheck
+{-import Test.QuickCheck-}
 import Control.Exception
 import GEOS.Types
 import GEOS.Serialize
@@ -25,36 +26,36 @@ main = hspec $ do
   describe "raw geometry" $ do
     it "Creates a Coordinate Sequence" $  do
       let (size, dim) = runGeos $ do 
-          cs <- RC.createCoordinateSequence 2 2
-          size <-  RC.getCoordinateSequenceSize cs 
-          dim <-  RC.getCoordinateSequenceDimensions cs
-          return (size, dim)
+            cs <- RC.createCoordinateSequence 2 2
+            size <-  RC.getCoordinateSequenceSize cs 
+            dim <-  RC.getCoordinateSequenceDimensions cs
+            return (size, dim)
       size `shouldBe` (2 :: Int)
       dim `shouldBe` (2 :: Int)
     it "Sets a Coordinate Sequence" $ do
       let (d1, d2) = runGeos $ do
-          cs <-  RC.createCoordinateSequence 2 2
-          RC.setCoordinateSequenceX cs 0 5.0 
-          d1 <- RC.getCoordinateSequenceX cs 0
-          RC.setCoordinateSequenceY cs 1 10.0 
-          d2 <- RC.getCoordinateSequenceY cs 1
-          return (d1, d2)
+            cs <-  RC.createCoordinateSequence 2 2
+            RC.setCoordinateSequenceX cs 0 5.0 
+            d1 <- RC.getCoordinateSequenceX cs 0
+            RC.setCoordinateSequenceY cs 1 10.0 
+            d2 <- RC.getCoordinateSequenceY cs 1
+            return (d1, d2)
       d1 `shouldBe` (5.0 :: Double)
       d2 `shouldBe` (10.0 :: Double)
     it "Creates a LineString " $ do
       let tid = runGeos $ do
-          cs <- RC.createCoordinateSequence 2 2
-          ls <- R.createLineString cs
-          R.getTypeId ls
+            cs <- RC.createCoordinateSequence 2 2
+            ls <- R.createLineString cs
+            R.getTypeId ls
       tid `shouldBe` 1
     it "Creates a Geometry" $ do
       pending
     it "Converts a LineString" $ do
       let (srid, tid) = runGeos $ do
-          l <- convertGeometryToRaw linestring
-          t <- R.getTypeId l
-          s <- R.getSRID l
-          return (s, t)
+            l <- convertGeometryToRaw linestring
+            t <- R.getTypeId l
+            s <- R.getSRID l
+            return (s, t)
       tid `shouldBe` 1
       srid `shouldBe` 4326
       

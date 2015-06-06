@@ -11,12 +11,12 @@ import qualified Data.Vector as V
 import Control.Monad.Trans.Class
 
 newtype Geometry = Geometry { 
-  _unGeometry :: (ForeignPtr I.GEOSGeometry)
-}
+  unGeometry :: (ForeignPtr I.GEOSGeometry)
+} deriving (Show, Eq)
 
 newtype GeomConst = GeomConst {
-  _unGeomConst :: Ptr I.GEOSGeometry
-}
+  unGeomConst :: Ptr I.GEOSGeometry
+} deriving (Show, Eq)
 
 {-withVector :: Storable a => V.Vector a -> (Ptr a -> IO b) -> IO b-}
 {-withVector v f = -}

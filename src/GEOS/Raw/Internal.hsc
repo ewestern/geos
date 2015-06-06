@@ -24,8 +24,8 @@ newtype GEOSByteOrder = GEOSByteOrder { unGEOSByteOrder :: CInt}
   deriving (Eq, Show)
 
 #{ enum GEOSByteOrder, GEOSByteOrder, 
-    geos_bigEndian = 0
-  , geos_littleEndian = 1 
+    bigEndian = 0
+  , littleEndian = 1 
 }
 
 data GEOSContextHandle_HS
@@ -229,19 +229,19 @@ foreign import ccall unsafe
 --- Buffer
 ---------
 
-newtype GEOSBufCapStyles = GEOSBufCapStyles { unGEOSBufCapStyles :: CInt }
+newtype BufferCapStyle = BufferCapStyle { unBufferCapStyle :: CInt }
     deriving (Eq,Show)
 
-#{ enum GEOSBufCapStyles, GEOSBufCapStyles,
+#{ enum BufferCapStyle, BufferCapStyle,
     capRound = 1 
   , capFlat = 2
   , capSquare = 3
 }
 
-newtype GEOSBufJoinStyles = GEOSBufJoinStyles { unGEOSBufJoinStyles :: CInt }
+newtype BufferJoinStyle = BufferJoinStyle { unBufferJoinStyle :: CInt }
     deriving (Eq, Show)
 
-#{ enum GEOSBufJoinStyles, GEOSBufJoinStyles,
+#{ enum BufferJoinStyle, BufferJoinStyle,
     joinRound = 1
   , joinMitre = 2
   , joinBevel = 3
@@ -250,14 +250,45 @@ foreign import ccall unsafe
   "GEOS/geos_c.h GEOSBuffer_r"
   geos_Buffer :: GEOSContextHandle_t -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry) 
 
-
 foreign import ccall unsafe
   "GEOS/geos_c.h GEOSBufferParams_create_r"
   geos_BufferParamsCreate :: GEOSContextHandle_t -> IO (Ptr GEOSBufferParams) 
 
 foreign import ccall unsafe
-  "GEOS/geos_c.h GEOSBufferParams_destroy_r"
-  geos_BufferParamsDestroy :: GEOSContextHandle_t -> Ptr GEOSBufferParams -> IO () 
+  "GEOS/geos_c.h &GEOSBufferParams_destroy_r"
+  geos_BufferParamsDestroy :: FunPtr (GEOSContextHandle_t -> Ptr GEOSBufferParams -> IO ())
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferParams_setEndCapStyle_r"
+  geos_BufferParamsSetEndCapStyle :: GEOSContextHandle_t -> Ptr GEOSBufferParams -> CInt -> IO CInt 
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferParams_setJoinStyle_r"
+  geos_BufferParamsSetJoinStyle :: GEOSContextHandle_t -> Ptr GEOSBufferParams -> CInt -> IO CInt 
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferParams_setMitreLimit_r"
+  geos_BufferParamsSetMitreLimit :: GEOSContextHandle_t -> Ptr GEOSBufferParams -> CDouble -> IO CInt
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferParams_setQuadrantSegments_r"
+  geos_BufferParamsSetQuadrantSegments :: GEOSContextHandle_t -> Ptr GEOSBufferParams -> CInt -> IO CInt 
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferParams_setSingleSided_r"
+  geos_BufferParamsSetSingleSided :: GEOSContextHandle_t -> Ptr GEOSBufferParams -> CInt -> IO CInt
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferWithParams_r"
+  geos_BufferWithParams :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSBufferParams -> CDouble -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSBufferWithStyle_r"
+  geos_BufferWithStyle :: GEOSContextHandle_t -> Ptr GEOSGeometry -> CDouble -> CInt -> CInt -> CInt -> CDouble -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "GEOS/geos_c.h GEOSOffsetCurve_r"
+  geos_OffsetCurve :: GEOSContextHandle_t -> Ptr GEOSGeometry -> CDouble -> CInt -> CInt -> CDouble -> IO (Ptr GEOSGeometry)
 
 -----------
 --- Topology
