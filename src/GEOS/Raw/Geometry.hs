@@ -1,4 +1,37 @@
-module GEOS.Raw.Geometry where
+module GEOS.Raw.Geometry (
+    Geometry (Geometry)
+  , withGeometry
+  , getSRID
+  , setSRID
+  , getType
+  , getTypeId
+  , getCoordinateSequence
+  , getNumCoordinates
+  , getNumInteriorRings
+  , getNumGeometries
+  , getInteriorRingN
+  , getGeometryN
+  , getExteriorRing
+  , createPoint
+  , createLinearRing
+  , createLineString
+  , createPolygon
+  , project
+  , projectNormalized 
+  , interpolate
+  , interpolateNormalized
+  , disjoint
+  , touches
+  , crosses
+  , within
+  , contains
+  , overlaps
+  , equals
+  , equalsExact
+  , covers
+  , coveredBy
+
+) where
 import qualified GEOS.Raw.Internal as I
 import GEOS.Raw.Base
 import GEOS.Raw.CoordSeq
@@ -193,7 +226,8 @@ createLinearRing = createGeometry_ I.geos_GeomCreateLinearRing
 createLineString :: CoordinateSequence -> Geos Geometry
 createLineString = createGeometry_ I.geos_GeomCreateLineString
 
--- todo: refactor this to take a vector instead of list
+-- | The second argument is a list of geometries,
+-- | NOTE. geometries become owned by caller.
 createPolygon :: Geometry -> [Geometry] -> Int -> Geos Geometry
 createPolygon o hs nh = withGeos $ \h -> do
   ptrs <- mapM (\v -> withGeometry v $ return) hs

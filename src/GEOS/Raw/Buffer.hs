@@ -39,6 +39,8 @@ withBufferParams :: BufferParams -> (Ptr GEOSBufferParams -> IO a ) -> IO a
 withBufferParams (BufferParams g) f = withForeignPtr g f
 
 
+
+-- | Create a buffer around a geoemtry, where quadsegs is the number of line segments to use to approximate a quarter of a circle.
 buffer :: RG.Geometry -> Double -> Int -> Geos RG.Geometry
 buffer geo width quadsegs = withGeos $ \h -> do 
   g <- RG.withGeometry geo $ \gp -> geos_Buffer h gp (realToFrac width) $ fromIntegral quadsegs
@@ -99,12 +101,7 @@ bufferWithStyle g width quadsegs capstyle joinstyle mitrelimit = withGeos $ \h -
   fp <- newForeignPtrEnv geos_GeomDestroy h g
   return $ RG.Geometry fp
 
-{-Only LINESTRINGs are accepted.-}
-{-@param width : offset distance.-}
-               {-negative for right side offset.-}
-               {-positive for left side offset.-}
-{-@return NULL on exception-}
-
+-- | Will only accept LineString geometries. For the 'width' parameter, negative doubles represent a right-side offset, and positive doubles represent a left-side offset. 
 offsetCurve :: RG.Geometry -> Double -> Int -> BufferJoinStyle -> Double -> Geos RG.Geometry 
 offsetCurve g width quadsegs joinstyle mitrelimit = withGeos $ \h -> do
   g <- throwIfNull "offsetCurve" $ RG.withGeometry g $ \gp ->
