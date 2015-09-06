@@ -1,15 +1,9 @@
 name:                geos
 
--- http://www.haskell.org/haskellwiki/Package_versioning_policy
--- PVP summary:      +-+------- breaking API changes
---                   | | +----- non-breaking API additions
---                   | | | +--- code changes with no API change
 version:             0.1.0.0
 
--- A short (one-line) description of the package.
 -- synopsis:            
 
--- A longer description of the package.
 -- description:         
 
 license:             MIT
@@ -26,16 +20,11 @@ build-type:         Custom
 
 cabal-version:       >=1.18.0
 
-Flag UsePkgConfig
-  Default: False
-  --manual:  True
-
 Library
 
   if !os(darwin)
     Includes: geos_c.h
     Extra-libraries: geos_c
-    ld-options: -static -pthread
   GHC-options: -Wall 
   build-depends:       
       base >=4.7 && <4.8
@@ -54,27 +43,9 @@ Library
     , GEOS.Raw.Geometry
     , GEOS.Raw.Serialize
     , GEOS.Raw.Topology
-    --, GEOS.Raw.Internal
   other-modules:
     GEOS.Raw.Internal
   hs-source-dirs:      src
   frameworks: GEOS
 
   default-language:    Haskell2010
-
---test-suite test
-  --type:
-    --exitcode-stdio-1.0
-
-  --default-language:    Haskell2010
-  --hs-source-dirs: src, tests
-  --main-is: Main.hs      
-  --build-depends:
-      --base >= 4.4
-    --, bytestring 
-    --, vector
-    --, hspec
-    --, geos >= 0.1.0
-    --, transformers >= 0.4
-    --, mtl >= 2.0
-
