@@ -30,6 +30,11 @@ module GEOS.Raw.Geometry (
   , equalsExact
   , covers
   , coveredBy
+  -- Misc functions
+  , area
+  , geometryLength
+  , distance
+  , hausdorffDistance
 
 ) where
 import qualified GEOS.Raw.Internal as I
@@ -315,4 +320,41 @@ covers = binaryPredicate_ I.geos_Covers "covers"
 coveredBy :: Geometry -> Geometry -> Geos Bool
 coveredBy = binaryPredicate_ I.geos_CoveredBy "coveredBy"
 
+-- Misc functions
 
+geo_1 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr CDouble -> IO CInt) 
+          -> Geometry
+          -> Geos Double
+geo_1 f g = withGeos $ \h -> alloca $ \dptr -> do
+    i <- throwIfZero (mkErrorMessage "geo_1" ) $ withGeometry g $ \gp -> 
+        f h gp dptr 
+    s <- peek dptr
+    return $ realToFrac s
+
+area :: Geometry -> Geos Double
+area = geo_1 I.geos_Area
+
+geometryLength :: Geometry -> Geos Double
+geometryLength = geo_1 I.geos_Length
+
+geo_2_d :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> Ptr CDouble -> IO CInt)
+          -> Geometry
+          -> Geometry
+          -> Geos Double
+geo_2_d f g p = withGeos $ \h -> alloca $ \dptr -> do
+   d <- throwIfZero (mkErrorMessage "geo_2") $ withGeometry g $ \gp ->
+          withGeometry p $ \pp ->
+               f h gp pp dptr
+   return $ realToFrac  d
+
+distance :: Geometry -> Geometry -> Geos Double
+distance = geo_2_d I.geos_Distance
+
+hausdorffDistance :: Geometry -> Geometry -> Geos Double
+hausdorffDistance = geo_2_d I.geos_HausdorffDistance
+
+{-area g = withGeos $ \h -> alloca $ \dptr -> do-}
+    {-i <- throwIfZero (mkErrorMessage "area" ) $ withGeometry g $ \gp -> -}
+        {-I.geos_Area h gp dptr -}
+    {-s <- peek dptr-}
+    {-return $ realToFrac s-}

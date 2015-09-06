@@ -394,7 +394,6 @@ foreign import ccall unsafe
   geos_CoveredBy :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO CChar
 
 --- prepared Geometries
---
 
 ---  Readers / Writers
 foreign import ccall unsafe
@@ -430,5 +429,34 @@ foreign import ccall unsafe
 foreign import ccall unsafe
   "geos_c.h GEOSWKBWriter_writeHEX_r"
   geos_WKBWriterWriteHex :: GEOSContextHandle_t -> Ptr GEOSWKBWriter -> Ptr GEOSGeometry -> Ptr CSize -> IO CString
---1085 finish writer methods
 
+--TODO: 1085 finish writer methods
+
+-- following return 0 on exception, 1 otherwise
+foreign import ccall unsafe 
+  "geos_c.h GEOSArea_r"
+  geos_Area :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr CDouble -> IO CInt 
+
+foreign import ccall unsafe 
+  "geos_c.h GEOSLength_r"
+  geos_Length :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr CDouble -> IO CInt 
+
+foreign import ccall unsafe 
+  "geos_c.h GEOSDistance_r"
+  geos_Distance :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> Ptr CDouble -> IO CInt 
+
+foreign import ccall unsafe 
+  "geos_c.h GEOSHausdorffDistance_r"
+  geos_HausdorffDistance :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> Ptr CDouble -> IO CInt 
+
+foreign import ccall unsafe 
+  "geos_c.h GEOSHausdorffDistanceDensify_r"
+  geos_HausdorffDistanceDensify :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> CDouble -> Ptr CDouble -> IO CInt 
+
+foreign import ccall unsafe 
+  "geos_c.h GEOSGeomGetLength_r"
+  geos_GeomGetLength :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr CDouble -> IO CInt 
+
+foreign import ccall unsafe 
+  "geos_c.h GEOSNearestPoints_r"
+  geos_NearestPoints :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSCoordSequence)

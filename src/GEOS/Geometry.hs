@@ -163,7 +163,7 @@ getPosition cs i =  do
               else return Nothing
     case z of
       Nothing -> return $ Coordinate2 x y
-      Just z -> return $ Coordinate3 x y z
+      Just z' -> return $ Coordinate3 x y z'
 
 convertPointFromRaw :: R.Geometry -> Geos Point
 convertPointFromRaw g = do
