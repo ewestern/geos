@@ -20,7 +20,10 @@ import Control.Applicative (Applicative)
 
 infixl 1 >><
 (>><) :: Monad m => m a -> (a -> m b) -> m a
-m >>< f = (m >>= f) >> m
+m >>< f = do
+  a <- m
+  b <- f a
+  return a
 
 
 

@@ -35,6 +35,7 @@ module GEOS.Raw.Geometry (
   , geometryLength
   , distance
   , hausdorffDistance
+  , nearestPoints
 
 ) where
 import qualified GEOS.Raw.Internal as I
@@ -354,10 +355,12 @@ hausdorffDistance :: Geometry -> Geometry -> Geos Double
 hausdorffDistance = geo_2_d I.geos_HausdorffDistance
 
 nearestPoints :: Geometry -> Geometry -> Geos CoordinateSequence
-nearestPoints g p = withGeos $ \h -> 
-          withGeometry g $ \gp ->
+nearestPoints g p = withGeos $ \h -> do
+  ptr <-  withGeometry g $ \gp ->
             withGeometry p $ \pp ->
               I.geos_NearestPoints h gp pp
+  fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
+  return $ CoordinateSequence fptr
 
                           
 {-area g = withGeos $ \h -> alloca $ \dptr -> do-}

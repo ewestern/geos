@@ -17,6 +17,7 @@ module GEOS.Geometry (
   , crosses
   , touches
   , disjoint
+  , nearestPoints
 
 ) where
 
@@ -204,3 +205,15 @@ convertMultiPolygonFromRaw :: R.Geometry -> Geos MultiPolygon
 convertMultiPolygonFromRaw g = do
   ng <- R.getNumGeometries g
   MultiPolygon <$> V.generateM ng (\i -> convertPolygonFromRaw =<< R.getGeometryN g i)
+
+-- | Returns the closest points of the two geometries. The first point comes from g1 geometry and the second point comes from g2.
+nearestPoints :: Geometry -> Geometry -> Geos (Coordinate, Coordinate)
+nearestPoints g1 g2 = do
+  g1'<- convertGeometryToRaw g1
+  g2'<- convertGeometryToRaw g2
+  cs <- R.nearestPoints g1' g2'
+  p1 <- getPosition cs 0
+  p2 <- getPosition cs 1
+  return (p1, p2)
+
+

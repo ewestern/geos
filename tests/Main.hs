@@ -66,4 +66,4 @@ main = hspec $ do
       -- Slightly different header is OK. 
       let orig = BS.drop 18 linestringBS
           newS = BS.drop 10 $ writeHex linestring
-      orig `shouldBe` newS
+      newS `shouldBe` orig
