@@ -34,7 +34,7 @@ Library
 
   if !os(darwin)
     Includes: geos_c.h
-    Extra-libraries: geos
+    Extra-libraries: geos_c
     ld-options: -static -pthread
   GHC-options: -Wall 
   build-depends:       
