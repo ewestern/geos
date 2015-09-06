@@ -353,6 +353,13 @@ distance = geo_2_d I.geos_Distance
 hausdorffDistance :: Geometry -> Geometry -> Geos Double
 hausdorffDistance = geo_2_d I.geos_HausdorffDistance
 
+nearestPoints :: Geometry -> Geometry -> Geos CoordinateSequence
+nearestPoints g p = withGeos $ \h -> 
+          withGeometry g $ \gp ->
+            withGeometry p $ \pp ->
+              I.geos_NearestPoints h gp pp
+
+                          
 {-area g = withGeos $ \h -> alloca $ \dptr -> do-}
     {-i <- throwIfZero (mkErrorMessage "area" ) $ withGeometry g $ \gp -> -}
         {-I.geos_Area h gp dptr -}
