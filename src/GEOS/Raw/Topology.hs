@@ -16,23 +16,16 @@ import qualified GEOS.Raw.Internal as I
 import GEOS.Raw.Base
 import qualified GEOS.Raw.Geometry as R
 import Foreign
-import Foreign.C.String
-import Foreign.C.Types
-import Foreign.Marshal.Alloc
-import Foreign.Ptr
-import Foreign.ForeignPtr
-import System.IO.Unsafe
-import Foreign.Marshal.Utils
 
 geo_1 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry)) 
           -> String 
           -> R.Geometry 
           -> Geos R.Geometry 
 geo_1 f s g =  withGeos $ \h ->  do
-  g <- throwIfNull s $ 
+  g' <- throwIfNull s $ 
         R.withGeometry g $ \gp -> 
           f h gp 
-  fp <- newForeignPtrEnv I.geos_GeomDestroy h g
+  fp <- newForeignPtrEnv I.geos_GeomDestroy h g'
   return $ R.Geometry fp
 
 geo_2 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry))
@@ -86,10 +79,10 @@ node = geo_1 I.geos_Node "node"
 
 delaunayTriangulation :: R.Geometry -> Double -> Bool -> Geos R.Geometry 
 delaunayTriangulation g tol oe = withGeos $ \h -> do
-  g <- throwIfNull "delaunayTriangulation" $ 
+  g' <- throwIfNull "delaunayTriangulation" $ 
         R.withGeometry g $ \gp ->
           I.geos_DelaunayTriangulation h gp (realToFrac tol) $ fromBool oe 
-  fp <- newForeignPtrEnv I.geos_GeomDestroy h g
+  fp <- newForeignPtrEnv I.geos_GeomDestroy h g'
   return $ R.Geometry fp
             
 {-voronoiDiagram :: GEOSHandle -> R.Geometry -> R.Geometry -> Double -> Bool -> R.Geometry-}

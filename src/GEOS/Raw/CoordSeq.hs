@@ -18,9 +18,7 @@ module GEOS.Raw.CoordSeq (
 import qualified GEOS.Raw.Internal as I
 import GEOS.Raw.Base
 import Foreign
-import Foreign.ForeignPtr
 import Foreign.C.Types
-import System.IO.Unsafe
 
 newtype CoordinateSequence = CoordinateSequence { 
   _unCoordinateSequence :: ForeignPtr I.GEOSCoordSequence

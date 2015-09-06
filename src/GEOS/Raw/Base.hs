@@ -15,7 +15,7 @@ import Data.Monoid ((<>))
 import System.IO.Unsafe
 import qualified Control.Concurrent.MVar as MV
 import Control.Monad.Reader
-import Control.Monad.IO.Class
+{-import Control.Monad.IO.Class-}
 import Control.Applicative (Applicative)
 
 infixl 1 >><
@@ -39,8 +39,8 @@ makeMessageHandler f =  I.mkMessageHandler (\cs -> peekCString cs >>= f)
 -- not exposed
 withGeos :: (I.GEOSContextHandle_t -> IO a) -> Geos a
 withGeos f =  do
-  mv <- asks unGEOSHandle
-  Geos . ReaderT $ \gh -> MV.withMVar mv $ \fp -> withForeignPtr fp f
+  {-mv <- asks unGEOSHandle-}
+  Geos . ReaderT $ \gh -> MV.withMVar (unGEOSHandle gh) $ \fp -> withForeignPtr fp f
 
 newGeos :: a -> Geos a
 newGeos = return

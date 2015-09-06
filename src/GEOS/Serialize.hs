@@ -6,7 +6,6 @@ module GEOS.Serialize (
 ) where
 
 import GEOS.Raw.Base
-import qualified GEOS.Raw.Geometry as R
 import GEOS.Geometry
 import qualified GEOS.Raw.Serialize as S
 import GEOS.Types

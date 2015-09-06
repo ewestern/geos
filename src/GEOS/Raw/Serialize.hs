@@ -13,17 +13,17 @@ import GEOS.Raw.Geometry
 import Foreign
 import Foreign.C.String
 import Foreign.C.Types
-import Foreign.Marshal.Alloc
-import Foreign.Ptr
-import Foreign.ForeignPtr
 import qualified Data.ByteString.Char8 as BC
-import System.IO.Unsafe
 
 
 newtype Reader = Reader { _unReader :: ForeignPtr I.GEOSWKBReader }
 newtype Writer = Writer { _unWriter :: ForeignPtr I.GEOSWKBWriter }
 
+
+withReader :: Reader -> (Ptr I.GEOSWKBReader -> IO b) -> IO b
 withReader (Reader r) f = withForeignPtr r f
+
+withWriter :: Writer -> (Ptr I.GEOSWKBWriter -> IO b) -> IO b
 withWriter (Writer w) f = withForeignPtr w f
 
 createReader :: Geos Reader

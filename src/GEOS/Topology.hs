@@ -22,7 +22,9 @@ import qualified GEOS.Raw.Geometry as RG
 geo_1 :: ( RG.Geometry -> Geos RG.Geometry )
           -> Geometry
           -> Geometry   
-geo_1 f g = runGeos $ convertGeometryToRaw g >>= convertGeometryFromRaw 
+geo_1 f g = runGeos $ do
+    geo <- convertGeometryToRaw g 
+    convertGeometryFromRaw =<< f geo
 
 geo_2 :: (RG.Geometry -> RG.Geometry -> Geos RG.Geometry)
           -> Geometry

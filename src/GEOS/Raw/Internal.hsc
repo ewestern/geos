@@ -3,7 +3,6 @@ module GEOS.Raw.Internal where
 
 import Foreign
 import Foreign.C
-import Foreign.C.String
 
 #include <geos_c.h>
 

@@ -1,10 +1,5 @@
 module GEOS.Types where
 import qualified Data.Vector as V
-import qualified GEOS.Raw.Geometry as R
-import qualified GEOS.Raw.CoordSeq as RC
-import GEOS.Raw.Base
-import Data.Monoid ((<>))
-import Control.Applicative ((<$>))
 
 class Geo a where
   dimensions :: a -> Int

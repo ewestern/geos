@@ -37,11 +37,6 @@ import GEOS.Raw.Base
 import GEOS.Raw.CoordSeq
 import Foreign
 import Foreign.C.Types
-import Foreign.ForeignPtr
-import Foreign.Marshal.Utils
-import Data.Monoid ((<>))
-import qualified Data.Vector as V
-import Control.Monad.Trans.Class
 
 newtype Geometry = Geometry { 
   unGeometry :: (ForeignPtr I.GEOSGeometry)
@@ -135,10 +130,10 @@ getN_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CInt -> IO (Ptr I.GEOSG
           -> Int 
           -> Geos GeomConst
 getN_ f g i = withGeos $ \h ->  do
-  g <- throwIfNull "getN" $ 
+  g' <- throwIfNull "getN" $ 
         withGeometry g $ \gp ->
           f h gp $ fromIntegral i 
-  return $ GeomConst g
+  return $ GeomConst g'
 
 
 getGeometryN_ :: Geometry -> Int -> Geos GeomConst

@@ -1,12 +1,22 @@
 {-# LANGUAGE LambdaCase #-} 
 
 module GEOS.Geometry (
-  convertGeometryFromRaw,
-  convertGeometryToRaw,
-  interpolate,
-  interpolateNormalized,
-  project,
-  projectNormalized
+  convertGeometryFromRaw
+  , convertGeometryToRaw
+  , interpolate
+  , interpolateNormalized
+  , project
+  , projectNormalized
+  , covers
+  , coveredBy
+  , equalsExact
+  , equals
+  , overlaps
+  , contains
+  , within
+  , crosses
+  , touches
+  , disjoint
 
 ) where
 
@@ -16,7 +26,7 @@ import qualified GEOS.Raw.Geometry as R
 import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
-import Control.Applicative ((<$>), (<*>))
+import Control.Applicative ((<$>))
 
 project :: Geometry -> Geometry -> Double
 project g1 g2 = runGeos $ do
@@ -115,7 +125,7 @@ convertLineStringToRaw l@(LineString cs) s = do
     len = V.length cs    
 
 convertPolygonToRaw :: Polygon -> SRID -> Geos R.Geometry
-convertPolygonToRaw p@(Polygon lrs) s = do
+convertPolygonToRaw (Polygon lrs) s = do
   ext <- convertLinearRingToRaw (V.head lrs) s
   inn <- (\v -> convertLinearRingToRaw v s) `V.mapM` V.tail lrs
   R.createPolygon ext (V.toList inn) (V.length inn - 1)  >>< \g -> R.setSRID g s
