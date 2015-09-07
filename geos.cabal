@@ -21,10 +21,8 @@ Extra-source-files:  cbits/noticehandlers.h
 cabal-version:       >=1.18.0
 
 Library
-  -- want to include this ONLY if framework not installed
-  if !os(darwin)
-    Includes: geos_c.h
-    Extra-libraries: geos_c
+  Includes: geos_c.h
+  Extra-libraries: geos_c
   c-sources:           cbits/noticehandlers.c
   include-dirs:        cbits
   GHC-options: -Wall 
