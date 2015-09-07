@@ -5,6 +5,7 @@ import Foreign
 import Foreign.C
 
 #include <geos_c.h>
+#include "noticehandlers.h"
 
 newtype GEOSGeomType = GEOSGeomType { unGEOSGeomType :: CInt }
     deriving (Eq,Show)
@@ -33,25 +34,29 @@ data GEOSGeometry
 data GEOSCoordSequence
 data GEOSSTRtree
 data GEOSBufferParams
-type GEOSMessageHandler = CString -> IO ()
+type GEOSMessageHandler = FunPtr (CString -> (Ptr ()) -> IO ())
+type GEOSMessageHandler_r = FunPtr (CString -> (Ptr ()) -> IO ())
 
 -- read/write
 data GEOSWKBWriter
 data GEOSWKBReader
 
 
-foreign import ccall 
-  "wrapper"
-  mkMessageHandler :: GEOSMessageHandler -> IO (FunPtr GEOSMessageHandler)  
-
 foreign import ccall unsafe 
-  "geos_c.h initGEOS_r"
-   geos_initGEOS :: FunPtr GEOSMessageHandler -> FunPtr GEOSMessageHandler -> IO GEOSContextHandle_t
+  "notice_handlers.h init_GEOS"
+   geos_init :: IO GEOSContextHandle_t
 
 foreign import ccall unsafe
   "geos_c.h &finishGEOS_r"
-  geos_finishGEOS :: FunPtr (GEOSContextHandle_t -> IO ())
+  geos_finish :: FunPtr (GEOSContextHandle_t -> IO ())
 
+foreign import ccall unsafe
+  "geos_c.h GEOSContext_setNoticeHandler_r"
+  geos_setNoticeHandler :: GEOSContextHandle_t -> GEOSMessageHandler -> IO GEOSMessageHandler
+
+foreign import ccall unsafe
+  "geos_c.h GEOSContext_setErrorHandler_r"
+  geos_setErrorHandler :: GEOSContextHandle_t -> GEOSMessageHandler -> IO GEOSMessageHandler
 
 -- Info
 
