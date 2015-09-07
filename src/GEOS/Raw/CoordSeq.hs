@@ -49,7 +49,7 @@ getCoordinateSequenceD_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> 
                           -> Geos Double 
 getCoordinateSequenceD_ f cs idx = withGeos $ \h -> 
   alloca $ \dptr -> do
-    i <- throwIfZero (mkErrorMessage "getCoordiniateSequenceN") $
+    _ <- throwIfZero (mkErrorMessage "getCoordiniateSequenceN") $
           withCoordinateSequence cs $ \pcs -> f h pcs (fromIntegral idx) dptr
     d <- peek dptr
     return $ realToFrac d
@@ -66,7 +66,7 @@ getCoordinateSequenceZ = getCoordinateSequenceD_ I.geos_CoordSeqGetZ
 getCoordinateSequenceSize :: CoordinateSequence -> Geos Int 
 getCoordinateSequenceSize c =  withGeos $ \h -> 
   alloca $ \ptr -> do
-    i <- throwIfZero (mkErrorMessage "getCoordinateSequenceSize") $ 
+    _ <- throwIfZero (mkErrorMessage "getCoordinateSequenceSize") $ 
           withCoordinateSequence c $ \pc ->
             I.geos_CoordSeqGetSize h pc ptr
     s <- peek ptr
@@ -75,7 +75,7 @@ getCoordinateSequenceSize c =  withGeos $ \h ->
 getCoordinateSequenceDimensions :: CoordinateSequence -> Geos Int 
 getCoordinateSequenceDimensions c = withGeos $ \h -> 
   alloca $ \ptr -> do
-    i <- throwIfZero (mkErrorMessage "getCoordinateSeqenceDimensions") $ 
+    _ <- throwIfZero (mkErrorMessage "getCoordinateSeqenceDimensions") $ 
             withCoordinateSequence c $ \pc ->
               I.geos_CoordSeqGetDimensions h pc ptr
     s <- peek ptr
@@ -84,7 +84,7 @@ getCoordinateSequenceDimensions c = withGeos $ \h ->
 ---
 setCoordinateSequence_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> CDouble -> IO CInt) -> CoordinateSequence -> Int -> Double -> Geos ()
 setCoordinateSequence_ f cs idx val = withGeos $ \h -> do
-  i <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
+  _ <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
         withCoordinateSequence cs $ \pcs -> 
           f h pcs (fromIntegral idx) (realToFrac val)
   return  ()

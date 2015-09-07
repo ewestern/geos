@@ -264,9 +264,9 @@ geo_1_d :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CDouble -> IO (Ptr I.
           -> Double
           -> Geos Geometry
 geo_1_d f g d = withGeos $ \h -> do
-  g <- withGeometry g $ \gp ->   
+  g' <- withGeometry g $ \gp ->   
            f h gp $ realToFrac d
-  fptr <- newForeignPtrEnv I.geos_GeomDestroy h g
+  fptr <- newForeignPtrEnv I.geos_GeomDestroy h g'
   return $ Geometry fptr
 
 -- | Return the closest point to given distance within geometry. Geometry must be a LineString 

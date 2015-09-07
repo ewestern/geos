@@ -17,6 +17,10 @@ module GEOS.Geometry (
   , crosses
   , touches
   , disjoint
+  , area
+  , geometryLength
+  , distance
+  , hausdorffDistance
   , nearestPoints
 
 ) where
@@ -28,6 +32,7 @@ import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
 import Control.Applicative ((<$>))
+import Control.Monad
 
 project :: Geometry -> Geometry -> Double
 project g1 g2 = runGeos $ do
@@ -206,9 +211,28 @@ convertMultiPolygonFromRaw g = do
   ng <- R.getNumGeometries g
   MultiPolygon <$> V.generateM ng (\i -> convertPolygonFromRaw =<< R.getGeometryN g i)
 
+area  :: Geometry -> Double
+area = runGeos . (convertGeometryToRaw >=> R.area)
+
+geometryLength :: Geometry -> Double
+geometryLength = runGeos . (convertGeometryToRaw >=> R.geometryLength)
+
+distance :: Geometry -> Geometry -> Double
+distance p g = runGeos $ do
+  p' <- convertGeometryToRaw p 
+  g' <- convertGeometryToRaw g 
+  R.distance p' g'
+
+hausdorffDistance :: Geometry -> Geometry -> Double
+hausdorffDistance p g = runGeos $ do
+  p' <- convertGeometryToRaw p 
+  g' <- convertGeometryToRaw g 
+  R.hausdorffDistance p' g'
+
 -- | Returns the closest points of the two geometries. The first point comes from g1 geometry and the second point comes from g2.
-nearestPoints :: Geometry -> Geometry -> Geos (Coordinate, Coordinate)
-nearestPoints g1 g2 = do
+
+nearestPoints :: Geometry -> Geometry -> (Coordinate, Coordinate)
+nearestPoints g1 g2 = runGeos $ do
   g1'<- convertGeometryToRaw g1
   g2'<- convertGeometryToRaw g2
   cs <- R.nearestPoints g1' g2'
