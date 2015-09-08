@@ -1,5 +1,6 @@
 module GEOS.Types where
 import qualified Data.Vector as V
+import Data.Monoid
 
 class Geo a where
   dimensions :: a -> Int
@@ -37,6 +38,10 @@ newtype LinearRing = LinearRing {
   unLinearRing :: CoordinateSequence
 } deriving (Show, Eq)
 
+instance Monoid LinearRing where
+  mempty  = LinearRing V.empty
+  mappend (LinearRing a) (LinearRing b) =  LinearRing (a <> b)
+
 instance Geo LinearRing where
   dimensions = dimensions . V.head . unLinearRing
 
@@ -47,7 +52,11 @@ newtype LineString = LineString {
 instance Geo LineString where
   dimensions = dimensions . V.head . unLineString 
 
---  in a polygon, the fist LinearRing is the shell, and any following are holes.
+instance Monoid LineString where
+  mempty  = LineString V.empty
+  mappend (LineString a) (LineString b) =  LineString (a <> b)
+
+-- | In a polygon, the fist LinearRing is the shell, and any following are holes.
 newtype Polygon = Polygon {
   unPolygon :: V.Vector LinearRing
 } deriving (Show, Eq)
@@ -58,6 +67,10 @@ instance Geo Polygon where
 newtype MultiPoint = MultiPoint {
   unMultiPoint :: V.Vector Point
 } deriving (Show, Eq)
+
+instance Monoid MultiPoint where
+  mempty  = MultiPoint V.empty
+  mappend (MultiPoint a) (MultiPoint b) =  MultiPoint (a <> b)
 
 instance Geo MultiPoint where
   dimensions = dimensions . V.head . unMultiPoint

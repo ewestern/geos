@@ -38,11 +38,13 @@ Library
     , GEOS.Geometry
     , GEOS.Types
     , GEOS.Serialize
+    , GEOS.Buffer
     , GEOS.Raw.Base
     , GEOS.Raw.CoordSeq
     , GEOS.Raw.Geometry
     , GEOS.Raw.Serialize
     , GEOS.Raw.Topology
+    , GEOS.Raw.Buffer
   other-modules:
     GEOS.Raw.Internal
   hs-source-dirs:      src
