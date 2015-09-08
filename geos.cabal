@@ -49,5 +49,7 @@ Library
     GEOS.Raw.Internal
   hs-source-dirs:      src
   frameworks: GEOS
+  Extensions:
+    LambdaCase
 
   default-language:    Haskell2010
