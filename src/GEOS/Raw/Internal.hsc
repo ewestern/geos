@@ -34,6 +34,7 @@ data GEOSGeometry
 data GEOSCoordSequence
 data GEOSSTRtree
 data GEOSBufferParams
+data GEOSPreparedGeometry
 type GEOSMessageHandler = FunPtr (CString -> (Ptr ()) -> IO ())
 type GEOSMessageHandler_r = FunPtr (CString -> (Ptr ()) -> IO ())
 
@@ -465,3 +466,52 @@ foreign import ccall unsafe
 foreign import ccall unsafe 
   "geos_c.h GEOSNearestPoints_r"
   geos_NearestPoints :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSCoordSequence)
+
+-- | Prepared Geometries
+foreign import ccall unsafe
+  "geos_c.h GEOSPrepare_r"
+  geos_Prepare :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSPreparedGeometry)
+
+foreign import ccall unsafe
+  "geos_c.h &GEOSPreparedGeom_destroy_r"
+  geos_PreparedGeomDestroy :: FunPtr (GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> IO ())
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedContains_r"
+  geos_PreparedContains :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedContainsProperly_r"
+  geos_PreparedContainsProperly :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedCoveredBy_r"
+  geos_PreparedCoveredBy :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedCovers_r"
+  geos_PreparedCovers :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedCrosses_r"
+  geos_PreparedCrosses :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedDisjoint_r"
+  geos_PreparedDisjoint :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedIntersects_r"
+  geos_PreparedIntersects :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedOverlaps_r"
+  geos_PreparedOverlaps :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedTouches_r"
+  geos_PreparedTouches :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+foreign import ccall unsafe
+  "geos_c.h GEOSPreparedWithin_r"
+  geos_PreparedWithin :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
