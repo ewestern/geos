@@ -16,6 +16,10 @@ module GEOS.Raw.Geometry (
   , createLinearRing
   , createLineString
   , createPolygon
+  , createMultiPoint
+  , createMultiLineString
+  , createMultiPolygon
+  , createCollection
   , project
   , projectNormalized 
   , interpolate
@@ -227,16 +231,40 @@ createLinearRing = createGeometry_ I.geos_GeomCreateLinearRing
 createLineString :: CoordinateSequence -> Geos Geometry
 createLineString = createGeometry_ I.geos_GeomCreateLineString
 
+-- TODO: Make this take a vector argument
+
 -- | The second argument is a list of geometries,
 -- | NOTE. geometries become owned by caller.
-createPolygon :: Geometry -> [Geometry] -> Int -> Geos Geometry
-createPolygon o hs nh = withGeos $ \h -> do
+createPolygon :: Geometry -> [Geometry] -> Geos Geometry
+createPolygon o hs = withGeos $ \h -> do
   ptrs <- mapM (\v -> withGeometry v $ return) hs
   g <- withGeometry o $ \op -> 
         withArray ptrs $ \ph -> 
-          I.geos_GeomCreatePolygon h op ph $ fromIntegral nh
+          I.geos_GeomCreatePolygon h op ph $ fromIntegral $ length hs
   fp <- newForeignPtrEnv I.geos_GeomDestroy h g
   return $ Geometry fp
+
+createMulti_ :: I.GEOSGeomType -> [Geometry] -> Geos Geometry 
+createMulti_ t gs = withGeos $ \h -> do
+  ptrs <- mapM (\v -> withGeometry v $ return) gs
+  g <- withArray ptrs $ \ph ->
+    I.geos_GeomCreateCollection h (I.unGEOSGeomType t) ph $ fromIntegral $ length gs
+  fp <- newForeignPtrEnv I.geos_GeomDestroy h g
+  return $ Geometry fp
+
+createMultiPoint :: [Geometry] -> Geos Geometry 
+createMultiPoint = createMulti_ I.multiPointId 
+
+createMultiLineString :: [Geometry] -> Geos Geometry
+createMultiLineString = createMulti_  I.multiLineStringId
+
+createMultiPolygon :: [Geometry] -> Geos Geometry
+createMultiPolygon = createMulti_ I.multiPolygonId
+
+createCollection :: [Geometry] -> Geos Geometry
+createCollection = createMulti_ I.geometryCollectionId
+ 
+
         
 --- Linear Referencing
 ----------------------

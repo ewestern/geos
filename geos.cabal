@@ -23,6 +23,7 @@ cabal-version:       >=1.18.0
 Library
   Includes: geos_c.h
   Extra-libraries: geos_c
+  cc-options: -fPIC
   c-sources:           cbits/noticehandlers.c
   include-dirs:        cbits
   GHC-options: -Wall 
@@ -52,7 +53,10 @@ Library
   hs-source-dirs:      src
   frameworks: GEOS
   default-extensions:
-    LambdaCase
+      LambdaCase
+    , GADTs
+    , ExistentialQuantification 
+    --, RankNTypes
 
   default-language:    Haskell2010
 

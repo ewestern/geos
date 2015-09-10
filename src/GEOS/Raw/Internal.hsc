@@ -220,7 +220,6 @@ foreign import ccall unsafe
 --The caller remains owner of the array, but pointed-to
 --objects become ownership of the returned GEOSGeometry.
 
-
 foreign import ccall unsafe
   "geos_c.h GEOSGeom_createEmptyPolygon_r"
   geos_GeomCreateEmptyPolygon :: GEOSContextHandle_t -> IO (Ptr GEOSGeometry)
@@ -229,6 +228,14 @@ foreign import ccall unsafe
 foreign import ccall unsafe
   "geos_c.h GEOSGeom_createPolygon_r"
   geos_GeomCreatePolygon :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr (Ptr GEOSGeometry) -> CUInt -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "geos_c.h GEOSGeom_createCollection_r"
+  geos_GeomCreateCollection :: GEOSContextHandle_t -> CInt -> Ptr (Ptr GEOSGeometry) -> CUInt -> IO (Ptr GEOSGeometry)
+
+foreign import ccall unsafe
+  "geos_c.h GEOSGeom_createEmptyCollection_r"
+  geos_GeomCreateEmptyCollection :: GEOSContextHandle_t -> CInt -> IO (Ptr GEOSGeometry)
 
 ----------
 --- Buffer
