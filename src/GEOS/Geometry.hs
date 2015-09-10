@@ -134,7 +134,7 @@ convertPolygonToRaw :: Polygon -> SRID -> Geos R.Geometry
 convertPolygonToRaw (Polygon lrs) s = do
   ext <- convertLinearRingToRaw (V.head lrs) s
   inn <- (\v -> convertLinearRingToRaw v s) `V.mapM` V.tail lrs
-  R.createPolygon ext (V.toList inn) (V.length inn - 1)  >>< \g -> R.setSRID g s
+  R.createPolygon ext (V.toList inn)  >>< \g -> R.setSRID g s
 
 
 setCoordinateSequence :: RC.CoordinateSequence -> Int -> Coordinate -> Geos () 
