@@ -1,29 +1,40 @@
-module GEOS.Prepared where 
+module GEOS.Prepared (
+    prepare
+  , contains
+  , containsProperly
+  , coveredBy
+  , covers
+  , crosses
+  , disjoint
+  , intersects
+  , overlaps
+  , touches
+  , within
+) where 
 
 import qualified GEOS.Raw.Prepared as RP
 import qualified GEOS.Raw.Geometry as RG
 import GEOS.Raw.Base
-import GEOS.Geometry
+import qualified GEOS.Geometry as G
 import GEOS.Types
 import Control.Monad
 
 
 prepare :: Geometry -> Geos RP.PreparedGeometry
-prepare = convertGeometryToRaw >=> RP.prepare
+prepare = G.convertGeometryToRaw >=> RP.prepare
 
 queryPrepared :: (RP.PreparedGeometry -> RG.Geometry -> Geos Bool) 
                   -> RP.PreparedGeometry
                   -> Geometry
                   -> Geos Bool 
-queryPrepared f pg g = convertGeometryToRaw g >>= (f pg)
+queryPrepared f pg g = G.convertGeometryToRaw g >>= (f pg)
 
 contains :: RP.PreparedGeometry -> Geometry -> Geos Bool
 contains = queryPrepared RP.contains
 
 -- | The containsProperly predicate has the following equivalent definitions:
 
--- | Every point of the other geometry is a point of this geometry's interior.
--- | In other words, if the test geometry has any interaction with the boundary of the target geometry the result of containsProperly is false. This is different semantics to the Geometry::contains predicate, * in which test geometries can intersect the target's boundary and still be contained.
+-- | Every point of the other geometry is a point of this geometry's interior. In other words, if the test geometry has any interaction with the boundary of the target geometry the result of containsProperly is false. This is different semantics to the @contains@ predicate, in which test geometries can intersect the target's boundary and still be contained.
 
 -- | The advantage of using this predicate is that it can be computed efficiently, since it avoids the need to compute the full topological relationship of the input boundaries in cases where they intersect.
 

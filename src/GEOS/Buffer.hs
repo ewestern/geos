@@ -2,6 +2,9 @@ module GEOS.Buffer (
     buffer
   , defaultBufferParams
   , bufferWithParams
+  , BufferParams (..)
+  , BufferJoinStyle (..)
+  , BufferCapStyle (..)
 ) where
 import qualified GEOS.Raw.Buffer as R
 import GEOS.Raw.Base

@@ -1,5 +1,6 @@
 module GEOS.Raw.Prepared (
-    PreparedGeometry 
+    PreparedGeometry (..)
+  , withPreparedGeometry  
   , prepare
   , contains
   , containsProperly
@@ -75,5 +76,3 @@ touches = queryPrepared geos_PreparedTouches "touches"
 
 within :: PreparedGeometry -> RG.Geometry -> Geos Bool
 within = queryPrepared geos_PreparedWithin "within"
-
-
