@@ -31,7 +31,6 @@ import qualified GEOS.Raw.Geometry as R
 import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
-import Control.Applicative ((<$>))
 import Control.Monad
 
 project :: Geometry -> Geometry -> Double
@@ -108,23 +107,23 @@ convertGeometryToRaw = \case
 
 
 convertPointToRaw :: Point -> SRID -> Geos R.Geometry
-convertPointToRaw p@(Point c) s = do
-  cs <- RC.createCoordinateSequence 1 (dimensions p)
+convertPointToRaw (Point c) s = do
+  cs <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
   setCoordinateSequence cs 1 c 
   R.createPoint cs >>< \g -> R.setSRID g s
 
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
-convertLinearRingToRaw l@(LinearRing cs) s = do
-  csr <- RC.createCoordinateSequence len (dimensions l) 
+convertLinearRingToRaw (LinearRing cs) s = do
+  csr <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) (V.enumFromN 0 len) cs 
   R.createLinearRing csr >>< \g -> R.setSRID g s
   where
     len = V.length cs
   
 convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
-convertLineStringToRaw l@(LineString cs) s = do
-  csr <- RC.createCoordinateSequence len (dimensions l) 
+convertLineStringToRaw (LineString cs) s = do
+  csr <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
   R.createLineString csr >>< \g -> R.setSRID g s
   where
