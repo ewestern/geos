@@ -11,6 +11,7 @@ module GEOS.Raw.Base (
 import qualified GEOS.Raw.Internal as I
 import Foreign
 import Data.Monoid ((<>))
+import System.IO.Unsafe
 import qualified Control.Concurrent.MVar as MV
 import Control.Monad.Reader
 import Control.Applicative (Applicative)
