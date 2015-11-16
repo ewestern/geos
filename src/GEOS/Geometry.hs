@@ -31,6 +31,7 @@ import qualified GEOS.Raw.Geometry as R
 import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
+import Control.Applicative ((<$>))
 import Control.Monad
 
 project :: Geometry -> Geometry -> Double
