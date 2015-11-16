@@ -11,11 +11,11 @@ data Geometry =
   | PolygonGeometry Polygon SRID
   | MultiPointGeometry MultiPoint SRID
   | MultiLineStringGeometry MultiLineString SRID
-  | MultiPolygonGeometry MultiPolygon SRID deriving (Show, Eq, Data, Typeable)
+  | MultiPolygonGeometry MultiPolygon SRID deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 data Coordinate =
     Coordinate2 {-# UNPACK #-} !Double {-# UNPACK #-} !Double
-  | Coordinate3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double  deriving (Show, Eq, Data, Typeable)
+  | Coordinate3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double  deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 
 dimensionsCoordinate :: Coordinate -> Int
@@ -28,12 +28,12 @@ dimensionsCoordinateSequence = dimensionsCoordinate . V.head
 
 newtype Point = Point {
   unPoint :: Coordinate
-} deriving (Show, Eq, Data, Typeable)
+} deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 -- A LinearRing is a LineString that is closed
 newtype LinearRing = LinearRing {
   unLinearRing :: CoordinateSequence
-} deriving (Show, Eq, Data, Typeable)
+} deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 instance Monoid LinearRing where
   mempty  = LinearRing V.empty
@@ -41,7 +41,7 @@ instance Monoid LinearRing where
 
 newtype LineString = LineString {
   unLineString :: CoordinateSequence
-} deriving (Show, Eq, Data, Typeable)
+} deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 instance Monoid LineString where
   mempty  = LineString V.empty
@@ -50,11 +50,11 @@ instance Monoid LineString where
 -- | In a polygon, the fist LinearRing is the shell, and any following are holes.
 newtype Polygon = Polygon {
   unPolygon :: V.Vector LinearRing
-} deriving (Show, Eq, Data, Typeable)
+} deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 newtype MultiPoint = MultiPoint {
   unMultiPoint :: V.Vector Point
-} deriving (Show, Eq, Data, Typeable)
+} deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 instance Monoid MultiPoint where
   mempty  = MultiPoint V.empty
@@ -62,9 +62,9 @@ instance Monoid MultiPoint where
 
 newtype MultiLineString = MultiLineString {
   unMultiLineString :: V.Vector LineString
-} deriving (Show, Eq, Data, Typeable)
+} deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 newtype MultiPolygon = MultiPolygon {
   unMultiPolygon :: V.Vector Polygon
-} deriving (Show, Eq, Data, Typeable)
+} deriving (Read, Ord, Show, Eq, Data, Typeable)
 
