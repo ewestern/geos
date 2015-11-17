@@ -110,7 +110,7 @@ convertGeometryToRaw = \case
 convertPointToRaw :: Point -> SRID -> Geos R.Geometry
 convertPointToRaw (Point c) s = do
   cs <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
-  setCoordinateSequence cs 1 c 
+  setCoordinateSequence cs 0 c 
   R.createPoint cs >>< \g -> R.setSRID g s
 
 
