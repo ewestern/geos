@@ -65,6 +65,4 @@ main = hspec $ do
       readHex linestringBS `shouldBe` linestring 
     it "Serializes a LineString into a bytestring" $ do
       -- Slightly different header is OK. 
-      let orig = BS.drop 18 linestringBS
-          newS = BS.drop 10 $ writeHex linestring
-      newS `shouldBe` orig
+      linestringBS `shouldBe` writeHex linestring

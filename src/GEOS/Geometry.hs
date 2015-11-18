@@ -113,6 +113,15 @@ convertPointToRaw (Point c) s = do
   setCoordinateSequence cs 0 c 
   R.createPoint cs >>< \g -> R.setSRID g s
 
+convertPointToRaw' :: Point -> SRID -> Geos R.Geometry
+convertPointToRaw' (Point c) s = do
+  cs <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
+  setCoordinateSequence cs 0 c 
+  p <- R.createPoint cs 
+  R.setSRID p s
+  return p
+
+
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
 convertLinearRingToRaw (LinearRing cs) s = do

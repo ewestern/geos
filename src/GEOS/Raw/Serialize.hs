@@ -13,6 +13,7 @@ import GEOS.Raw.Geometry
 import Foreign
 import Foreign.C.String
 import Foreign.C.Types
+import Foreign.Marshal.Utils
 import qualified Data.ByteString.Char8 as BC
 
 
@@ -54,6 +55,7 @@ readHex = read_ I.geos_WKBReaderReadHex
 createWriter :: Geos Writer
 createWriter = withGeos $ \h -> do
   ptr <- throwIfNull "CreateWriter" $ I.geos_WKBWriterCreate h 
+  I.geos_WKBWriterSetIncludeSRID h ptr $ fromBool True
   fp <- newForeignPtrEnv I.geos_WKBWriterDestroy h ptr
   return $ Writer fp
         

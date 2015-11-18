@@ -443,6 +443,11 @@ foreign import ccall unsafe
   "geos_c.h GEOSWKBWriter_writeHEX_r"
   geos_WKBWriterWriteHex :: GEOSContextHandle_t -> Ptr GEOSWKBWriter -> Ptr GEOSGeometry -> Ptr CSize -> IO CString
 
+foreign import ccall unsafe
+  "geos_c.h GEOSWKBWriter_setIncludeSRID_r"
+  geos_WKBWriterSetIncludeSRID :: GEOSContextHandle_t -> Ptr GEOSWKBWriter -> CChar -> IO ()
+
+
 --TODO: 1085 finish writer methods
 
 -- following return 0 on exception, 1 otherwise
