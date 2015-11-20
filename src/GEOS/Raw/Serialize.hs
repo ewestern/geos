@@ -64,11 +64,13 @@ write_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBWriter -> Ptr I.GEOSGeometry ->
           -> Geometry
           -> Geos BC.ByteString
 write_ f w g = withGeos $ \h ->  do
-  s <- withWriter w $ \wp ->
+  clen <- withWriter w $ \wp ->
           withGeometry g $ \gp -> 
-            alloca $ \lp ->
-              f h wp gp lp 
-  bs <- BC.packCString s          
+            alloca $ \lp -> do
+              cs <- f h wp gp lp 
+              vl <- fromIntegral `fmap` (peek lp)
+              return (cs, vl)
+  bs <- BC.packCStringLen clen
   return bs
                      
 write :: Writer -> Geometry -> Geos BC.ByteString

@@ -67,4 +67,3 @@ newtype MultiLineString = MultiLineString {
 newtype MultiPolygon = MultiPolygon {
   unMultiPolygon :: V.Vector Polygon
 } deriving (Read, Ord, Show, Eq, Data, Typeable)
-
