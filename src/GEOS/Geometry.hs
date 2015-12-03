@@ -45,10 +45,11 @@ projectNormalized g1 g2 = runGeos $ do
   g2' <- convertGeometryToRaw g2
   R.project g1' g2'  
 
-interpolate :: Geometry a -> Double -> Some Geometry
+interpolate :: Geometry LineString -> Double -> Geometry Point
 interpolate g d = runGeos $ do 
   g' <- convertGeometryToRaw  g
-  convertGeometryFromRaw =<< (R.interpolate g' $ realToFrac d)
+  sg <- convertGeometryFromRaw =<< (R.interpolate g' $ realToFrac d)
+  return $ withSomeGeometry sg $ \pg@(PointGeometry _ _) -> pg
 
 
 interpolateNormalized :: Geometry a -> Double -> Some Geometry

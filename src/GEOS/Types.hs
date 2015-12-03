@@ -16,16 +16,8 @@ data Geometry a where
   MultiLineStringGeometry :: MultiLineString-> SRID -> Geometry LineString
   MultiPolygonGeometry :: MultiPolygon-> SRID -> Geometry LineString
 
-withSomeGeometry :: Monad m =>  Some Geometry -> (forall a . Geometry a -> m b) -> m b
+withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
 withSomeGeometry (Some p) f = f p 
-
-{-data Geometry = -}
-    {-PointGeometry Point SRID-}
-  {-| LineStringGeometry LineString SRID-}
-  {-| PolygonGeometry Polygon SRID-}
-  {-| MultiPointGeometry MultiPoint SRID-}
-  {-| MultiLineStringGeometry MultiLineString SRID-}
-  {-| MultiPolygonGeometry MultiPolygon SRID deriving (Read, Ord, Show, Eq, Data, Typeable)-}
 
 data Coordinate =
     Coordinate2 {-# UNPACK #-} !Double {-# UNPACK #-} !Double
