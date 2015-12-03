@@ -1,5 +1,5 @@
 module GEOS.Raw.Geometry (
-    Geometry (Geometry)
+    Geometry (..)
   , withGeometry
   , getSRID
   , setSRID
@@ -69,15 +69,18 @@ withGeometry (Geometry g) f = withForeignPtr g f
 withGeomConst :: GeomConst -> (Ptr I.GEOSGeometry -> IO a) -> IO a
 withGeomConst (GeomConst p) f = f p
 
-getSRID :: Geometry -> Geos Int
+-- TODO: return Maybe Int
+getSRID :: Geometry -> Geos (Maybe Int) 
 getSRID g = withGeos $ \h -> do
-  s <- throwIfZero (mkErrorMessage "getSRID")  $
-          withGeometry g $ \gp ->
+  s <- withGeometry g $ \gp ->
             I.geos_GetSRID h gp
-  return $ fromIntegral s
+  case fromIntegral s of
+    0 -> return Nothing 
+    i -> return (Just i)
     
-setSRID :: Geometry -> Int -> Geos ()
-setSRID g i = withGeos $ \h -> 
+setSRID :: Geometry -> (Maybe Int) -> Geos ()
+setSRID _ Nothing = return ()
+setSRID g (Just i) = withGeos $ \h -> 
     withGeometry g $ \gp -> 
       I.geos_SetSRID h gp $ fromIntegral i
   
@@ -355,7 +358,7 @@ geo_1 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr CDouble -> IO CInt)
           -> Geometry
           -> Geos Double
 geo_1 f g = withGeos $ \h -> alloca $ \dptr -> do
-    i <- throwIfZero (mkErrorMessage "geo_1" ) $ withGeometry g $ \gp -> 
+    _ <- throwIfZero (mkErrorMessage "geo_1" ) $ withGeometry g $ \gp -> 
         f h gp dptr 
     s <- peek dptr
     return $ realToFrac s

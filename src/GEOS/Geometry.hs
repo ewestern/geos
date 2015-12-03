@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-} 
+{-# LANGUAGE LambdaCase, ScopedTypeVariables #-} 
 
 module GEOS.Geometry (
   convertGeometryFromRaw
@@ -31,80 +31,79 @@ import qualified GEOS.Raw.Geometry as R
 import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
-import Control.Applicative ((<$>))
 import Control.Monad
 
-project :: Geometry -> Geometry -> Double
+project :: Geometry a -> Geometry a -> Double
 project g1 g2 = runGeos $ do
   g1'<- convertGeometryToRaw g1
   g2'<- convertGeometryToRaw g2
   R.project g1' g2'  
 
-projectNormalized :: Geometry -> Geometry -> Double
+projectNormalized :: Geometry a -> Geometry b -> Double
 projectNormalized g1 g2 = runGeos $ do 
   g1' <-  convertGeometryToRaw g1
   g2' <- convertGeometryToRaw g2
   R.project g1' g2'  
 
-interpolate :: Geometry -> Double -> Geometry 
+interpolate :: Geometry a -> Double -> Some Geometry
 interpolate g d = runGeos $ do 
   g' <- convertGeometryToRaw  g
   convertGeometryFromRaw =<< (R.interpolate g' $ realToFrac d)
 
 
-interpolateNormalized :: Geometry -> Double -> Geometry 
+interpolateNormalized :: Geometry a -> Double -> Some Geometry
 interpolateNormalized g d = runGeos $ do
   g' <- convertGeometryToRaw g
   convertGeometryFromRaw =<<  (R.interpolateNormalized g' $ realToFrac d)
 
 binaryPredicate_ :: (R.Geometry -> R.Geometry -> Geos Bool)
-                    -> Geometry 
-                    -> Geometry 
+                    -> Geometry a
+                    -> Geometry b
                     -> Bool
 binaryPredicate_ f g1 g2 = runGeos $ do --(f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
   g1' <- convertGeometryToRaw g1
   g2' <- convertGeometryToRaw g2
   f g1' g2'
 
-disjoint :: Geometry -> Geometry -> Bool
+disjoint :: Geometry a -> Geometry b -> Bool
 disjoint = binaryPredicate_ R.disjoint
 
-touches :: Geometry -> Geometry -> Bool
+touches :: Geometry a -> Geometry b -> Bool
 touches = binaryPredicate_ R.touches
 
-crosses :: Geometry -> Geometry -> Bool
+crosses :: Geometry a -> Geometry b -> Bool
 crosses = binaryPredicate_ R.crosses
 
-within :: Geometry -> Geometry -> Bool
+within :: Geometry a -> Geometry b -> Bool
 within = binaryPredicate_ R.within
 
-contains :: Geometry -> Geometry -> Bool
+contains :: Geometry a -> Geometry b -> Bool
 contains = binaryPredicate_ R.contains
 
-overlaps :: Geometry -> Geometry -> Bool
+overlaps :: Geometry a -> Geometry b -> Bool
 overlaps = binaryPredicate_ R.overlaps
 
-equals :: Geometry -> Geometry -> Bool
+equals :: Geometry a -> Geometry b -> Bool
 equals = binaryPredicate_ R.equals
 
-equalsExact :: Geometry -> Geometry -> Bool
+equalsExact :: Geometry a -> Geometry b -> Bool
 equalsExact = binaryPredicate_ R.equalsExact
 
-covers :: Geometry -> Geometry -> Bool
+covers :: Geometry a -> Geometry b -> Bool
 covers = binaryPredicate_ R.covers
 
-coveredBy :: Geometry -> Geometry -> Bool
+coveredBy :: Geometry a -> Geometry b -> Bool
 coveredBy = binaryPredicate_ R.coveredBy
 
 
-convertGeometryToRaw :: Geometry -> Geos R.Geometry
+convertGeometryToRaw :: Geometry a -> Geos R.Geometry
 convertGeometryToRaw = \case 
     PointGeometry pg s -> convertPointToRaw pg s 
     LineStringGeometry lsg s -> convertLineStringToRaw lsg s
     PolygonGeometry pg s -> convertPolygonToRaw pg s 
-    MultiPointGeometry mp s -> error "multipoint"
-    MultiLineStringGeometry mls s -> error "multilineString"
-    MultiPolygonGeometry mps s -> error "multipolygon"
+    MultiPointGeometry _ _ -> error "multipoint"
+    MultiLineStringGeometry _ _ -> error "multilineString"
+    MultiPolygonGeometry _ _ -> error "multipolygon"
 
 
 convertPointToRaw :: Point -> SRID -> Geos R.Geometry
@@ -112,15 +111,6 @@ convertPointToRaw (Point c) s = do
   cs <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
   setCoordinateSequence cs 0 c 
   R.createPoint cs >>< \g -> R.setSRID g s
-
-convertPointToRaw' :: Point -> SRID -> Geos R.Geometry
-convertPointToRaw' (Point c) s = do
-  cs <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
-  setCoordinateSequence cs 0 c 
-  p <- R.createPoint cs 
-  R.setSRID p s
-  return p
-
 
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
@@ -155,17 +145,29 @@ setCoordinateSequence cs i (Coordinate3 x y z) =
 
 --- Conversions
 --
-convertGeometryFromRaw :: R.Geometry -> Geos Geometry
+convertGeometryFromRaw :: R.Geometry -> Geos (Some Geometry)
 convertGeometryFromRaw rg = do
     s <- R.getSRID rg
     tid <- R.getTypeId rg
-    ($s) <$> case tid of
-        0 -> PointGeometry <$> (convertPointFromRaw rg )
-        1 -> LineStringGeometry <$> (convertLineStringFromRaw rg) 
-        2 -> PolygonGeometry <$> (convertPolygonFromRaw rg)
-        3 -> MultiPointGeometry <$>  (convertMultiPointFromRaw rg) 
-        4 -> MultiLineStringGeometry <$> (convertMultiLineStringFromRaw rg) 
-        5 -> MultiPolygonGeometry <$> (convertMultiPolygonFromRaw rg)
+    case tid of
+        0 -> do
+          p <- convertPointFromRaw rg
+          return $ Some $ (PointGeometry p s)
+        1 -> do
+          l <- convertLineStringFromRaw rg
+          return $ Some (LineStringGeometry l s)
+        2 -> do
+          p <- convertPolygonFromRaw rg
+          return $ Some (PolygonGeometry p s)
+        3 -> do
+          mp <- convertMultiPointFromRaw rg 
+          return $ Some (MultiPointGeometry mp s)
+        4 -> do
+          ml <- convertMultiLineStringFromRaw rg
+          return $ Some (MultiLineStringGeometry ml s)
+        5 -> do
+          mp <- convertMultiPolygonFromRaw rg
+          return $ Some (MultiPolygonGeometry mp s)
         e -> error $ "Unrecognized geometry type" <> show e 
 
 getPosition :: RC.CoordinateSequence -> Int -> Geos Coordinate 
@@ -220,19 +222,19 @@ convertMultiPolygonFromRaw g = do
   ng <- R.getNumGeometries g
   MultiPolygon <$> V.generateM ng (\i -> convertPolygonFromRaw =<< R.getGeometryN g i)
 
-area  :: Geometry -> Double
+area  :: Geometry a -> Double
 area = runGeos . (convertGeometryToRaw >=> R.area)
 
-geometryLength :: Geometry -> Double
+geometryLength :: Geometry a -> Double
 geometryLength = runGeos . (convertGeometryToRaw >=> R.geometryLength)
 
-distance :: Geometry -> Geometry -> Double
+distance :: Geometry a -> Geometry a -> Double
 distance p g = runGeos $ do
   p' <- convertGeometryToRaw p 
   g' <- convertGeometryToRaw g 
   R.distance p' g'
 
-hausdorffDistance :: Geometry -> Geometry -> Double
+hausdorffDistance :: Geometry a -> Geometry a -> Double
 hausdorffDistance p g = runGeos $ do
   p' <- convertGeometryToRaw p 
   g' <- convertGeometryToRaw g 
@@ -240,7 +242,7 @@ hausdorffDistance p g = runGeos $ do
 
 -- | Returns the closest points of the two geometries. The first point comes from g1 geometry and the second point comes from g2.
 
-nearestPoints :: Geometry -> Geometry -> (Coordinate, Coordinate)
+nearestPoints :: Geometry a -> Geometry a -> (Coordinate, Coordinate)
 nearestPoints g1 g2 = runGeos $ do
   g1'<- convertGeometryToRaw g1
   g2'<- convertGeometryToRaw g2

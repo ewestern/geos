@@ -11,13 +11,13 @@ import qualified GEOS.Raw.Serialize as S
 import GEOS.Types
 import qualified Data.ByteString.Char8 as BC
 
-readHex :: BC.ByteString -> Geometry
+readHex :: BC.ByteString -> Some Geometry
 readHex bs = runGeos $ do
   r <- S.createReader
   g <- S.readHex r bs
   convertGeometryFromRaw g
 
-writeHex :: Geometry -> BC.ByteString
+writeHex :: Geometry a -> BC.ByteString
 writeHex g = runGeos $ do
   w <- S.createWriter
   S.writeHex w =<< convertGeometryToRaw g

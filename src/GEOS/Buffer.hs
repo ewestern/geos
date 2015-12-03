@@ -52,13 +52,13 @@ defaultBufferParams = BufferParams {
   , singleSided = False
 }
 
-buffer :: Geometry -> Double -> Int -> Geometry 
+buffer :: Geometry a -> Double -> Int -> Some Geometry 
 buffer g width quadsegs = runGeos $  do
     rg <- convertGeometryToRaw g
     rg' <- R.buffer rg width quadsegs
     convertGeometryFromRaw rg'
 
-bufferWithParams :: Geometry -> Double -> BufferParams -> Geometry
+bufferWithParams :: Geometry a -> Double -> BufferParams -> Some Geometry
 bufferWithParams g width bp = runGeos $ do
   rg <- convertGeometryToRaw g
   rbp <- R.createBufferParams 

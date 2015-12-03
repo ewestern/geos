@@ -20,54 +20,55 @@ import qualified GEOS.Raw.Geometry as RG
 
 
 geo_1 :: ( RG.Geometry -> Geos RG.Geometry )
-          -> Geometry
-          -> Geometry   
+          -> Geometry a
+          -> Some Geometry
 geo_1 f g = runGeos $ do
     geo <- convertGeometryToRaw g 
     convertGeometryFromRaw =<< f geo
 
 geo_2 :: (RG.Geometry -> RG.Geometry -> Geos RG.Geometry)
-          -> Geometry
-          -> Geometry
-          -> Geometry
+          -> Geometry a
+          -> Geometry b
+          -> Some Geometry
 geo_2 f g1 g2 = runGeos $ do
   g1' <- convertGeometryToRaw g1
   g2' <- convertGeometryToRaw g2
   convertGeometryFromRaw =<< f g1' g2'
 
-envelope :: Geometry -> Geometry
+envelope :: Geometry a -> Some Geometry
 envelope = geo_1 R.envelope 
 
-intersection :: Geometry -> Geometry -> Geometry
+intersection :: Geometry a -> Geometry b -> Some Geometry
 intersection = geo_2 R.intersection
 
-convexHull :: Geometry -> Geometry
+convexHull :: Geometry a -> Some Geometry
 convexHull = geo_1 R.convexHull
 
-difference :: Geometry -> Geometry -> Geometry
+difference :: Geometry a -> Geometry b -> Some Geometry
 difference = geo_2 R.difference
 
-symmetricDifference :: Geometry -> Geometry -> Geometry
+symmetricDifference :: Geometry a -> Geometry b -> Some Geometry
 symmetricDifference = geo_2 R.symmetricDifference
 
-boundary :: Geometry -> Geometry
+boundary :: Geometry a -> Some Geometry
 boundary = geo_1 R.boundary
 
-union :: Geometry -> Geometry -> Geometry
+union :: Geometry a -> Geometry b -> Some Geometry
 union = geo_2 R.union
 
-unaryUnion :: Geometry -> Geometry 
+unaryUnion :: Geometry a -> Some Geometry 
 unaryUnion = geo_1 R.unaryUnion
 
-pointOnSurface :: Geometry -> Geometry
+-- todo: irrefutable pattern match?
+pointOnSurface :: Geometry a -> Some Geometry
 pointOnSurface = geo_1 R.pointOnSurface
 
-getCentroid :: Geometry -> Geometry
+getCentroid :: Geometry a -> Some Geometry
 getCentroid = geo_1 R.getCentroid
 
-node :: Geometry -> Geometry
+node :: Geometry a -> Some Geometry
 node = geo_1 R.node
  
-delaunayTriangulation ::  Geometry -> Double -> Bool -> Geometry
+delaunayTriangulation ::  Geometry a -> Double -> Bool -> Some Geometry
 delaunayTriangulation g d b = geo_1 (\ g' -> R.delaunayTriangulation g' d b) g
 

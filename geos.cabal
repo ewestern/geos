@@ -57,7 +57,10 @@ Library
     , GADTs
     , ExistentialQuantification 
     , DeriveDataTypeable
-    --, RankNTypes
+    , RankNTypes
+    , DataKinds
+    , KindSignatures
+    , ScopedTypeVariables
 
   default-language:    Haskell2010
 

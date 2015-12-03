@@ -2,16 +2,30 @@ module GEOS.Types where
 import qualified Data.Vector as V
 import Data.Monoid
 import Data.Data
-import Data.Typeable
 
-type SRID = Int
-data Geometry = 
-    PointGeometry Point SRID
-  | LineStringGeometry LineString SRID
-  | PolygonGeometry Polygon SRID
-  | MultiPointGeometry MultiPoint SRID
-  | MultiLineStringGeometry MultiLineString SRID
-  | MultiPolygonGeometry MultiPolygon SRID deriving (Read, Ord, Show, Eq, Data, Typeable)
+type SRID = Maybe Int
+
+data Some :: (* -> *) -> * where
+  Some :: f a -> Some f
+
+data Geometry a where
+  PointGeometry :: Point -> SRID -> Geometry Point
+  LineStringGeometry :: LineString -> SRID -> Geometry LineString
+  PolygonGeometry :: Polygon -> SRID -> Geometry LineString
+  MultiPointGeometry :: MultiPoint -> SRID -> Geometry LineString
+  MultiLineStringGeometry :: MultiLineString-> SRID -> Geometry LineString
+  MultiPolygonGeometry :: MultiPolygon-> SRID -> Geometry LineString
+
+withSomeGeometry :: Monad m =>  Some Geometry -> (forall a . Geometry a -> m b) -> m b
+withSomeGeometry (Some p) f = f p 
+
+{-data Geometry = -}
+    {-PointGeometry Point SRID-}
+  {-| LineStringGeometry LineString SRID-}
+  {-| PolygonGeometry Polygon SRID-}
+  {-| MultiPointGeometry MultiPoint SRID-}
+  {-| MultiLineStringGeometry MultiLineString SRID-}
+  {-| MultiPolygonGeometry MultiPolygon SRID deriving (Read, Ord, Show, Eq, Data, Typeable)-}
 
 data Coordinate =
     Coordinate2 {-# UNPACK #-} !Double {-# UNPACK #-} !Double

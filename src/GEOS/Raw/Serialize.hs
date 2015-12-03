@@ -13,7 +13,6 @@ import GEOS.Raw.Geometry
 import Foreign
 import Foreign.C.String
 import Foreign.C.Types
-import Foreign.Marshal.Utils
 import qualified Data.ByteString.Char8 as BC
 
 
