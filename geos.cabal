@@ -60,7 +60,7 @@ Library
     , RankNTypes
     , DataKinds
     , KindSignatures
-    , ScopedTypeVariables
+    --, ScopedTypeVariables
 
   default-language:    Haskell2010
 

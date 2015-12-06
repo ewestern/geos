@@ -354,9 +354,12 @@ foreign import ccall unsafe
   "geos_c.h GEOSDelaunayTriangulation_r"
   geos_DelaunayTriangulation :: GEOSContextHandle_t -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry)
 
-{-foreign import ccall unsafe-}
-  {-"geos_c.h GEOSVoronoiDiagram_r"-}
-  {-geos_VoronoiDiagram :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry)-}
+
+#if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
+foreign import ccall unsafe
+	"geos_c.h GEOSVoronoiDiagram_r"
+	geos_VoronoiDiagram :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry)
+#endif
 
 -----
 --Binary Predicates.

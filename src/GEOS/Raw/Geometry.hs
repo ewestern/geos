@@ -52,9 +52,8 @@ newtype Geometry = Geometry {
   unGeometry :: (ForeignPtr I.GEOSGeometry)
 } deriving (Show, Eq)
 
-newtype GeomConst = GeomConst {
-  unGeomConst :: Ptr I.GEOSGeometry
-} deriving (Show, Eq)
+newtype GeomConst = GeomConst ( Ptr I.GEOSGeometry)
+ deriving (Show, Eq)
 
 {-withVector :: Storable a => V.Vector a -> (Ptr a -> IO b) -> IO b-}
 {-withVector v f = -}

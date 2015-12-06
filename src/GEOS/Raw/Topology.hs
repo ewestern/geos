@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module GEOS.Raw.Topology (
     envelope
   , intersection
@@ -85,11 +86,13 @@ delaunayTriangulation g tol oe = withGeos $ \h -> do
   fp <- newForeignPtrEnv I.geos_GeomDestroy h g'
   return $ R.Geometry fp
             
-{-voronoiDiagram :: GEOSHandle -> R.Geometry -> R.Geometry -> Double -> Bool -> R.Geometry-}
-{-voronoiDiagram h g env tol oe = unsafePerformIO $ do-}
-  {-g <- throwIfNull "voronoiDiagram" $ withHandle h $ \hp -> -}
-        {-R.withGeometry g $ \gp -> -}
-          {-R.withGeometry env $ \ep -> -}
-            {-I.geos_VoronoiDiagram hp gp ep (realToFrac tol) $ fromBool oe -}
-  {-fp <- withHandle h $ \ch -> newForeignPtrEnv I.geos_GeomDestroy ch g-}
-  {-return $ R.Geometry g-}
+#if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
+voronoiDiagram :: GEOSHandle -> R.Geometry -> R.Geometry -> Double -> Bool -> Geos R.Geometry
+voronoiDiagram h g env tol oe = withGeos $ \h ->  do
+  g <- throwIfNull "voronoiDiagram" $ 
+        R.withGeometry g $ \gp -> 
+          R.withGeometry env $ \ep -> 
+            I.geos_VoronoiDiagram hp gp ep (realToFrac tol) $ fromBool oe 
+  fp <- newForeignPtrEnv I.geos_GeomDestroy h g
+  return $ R.Geometry g
+#endif

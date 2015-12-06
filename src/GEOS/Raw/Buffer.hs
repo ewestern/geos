@@ -25,9 +25,7 @@ import qualified GEOS.Raw.Geometry as RG
 import GEOS.Raw.Base
 import Foreign
 
-newtype BufferParams = BufferParams {
-  unBufferParams :: ForeignPtr GEOSBufferParams 
-} deriving (Show, Eq)
+newtype BufferParams =  BufferParams (ForeignPtr GEOSBufferParams) deriving (Show, Eq)
 
 
 withBufferParams :: BufferParams -> (Ptr GEOSBufferParams -> IO a ) -> IO a
