@@ -87,8 +87,10 @@ delaunayTriangulation g tol oe = withGeos $ \h -> do
   return $ R.Geometry fp
             
 #if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
-voronoiDiagram :: GEOSHandle -> R.Geometry -> R.Geometry -> Double -> Bool -> Geos R.Geometry
-voronoiDiagram h g env tol oe = withGeos $ \h ->  do
+-- | 
+-- TODO: make env Maybe Geometry
+voronoiDiagram :: R.Geometry -> R.Geometry -> Double -> Bool -> Geos R.Geometry
+voronoiDiagram g env tol oe = withGeos $ \h ->  do
   g <- throwIfNull "voronoiDiagram" $ 
         R.withGeometry g $ \gp -> 
           R.withGeometry env $ \ep -> 

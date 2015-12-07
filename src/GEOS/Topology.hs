@@ -72,3 +72,11 @@ node = geo_1 R.node
 delaunayTriangulation ::  Geometry a -> Double -> Bool -> Some Geometry
 delaunayTriangulation g d b = geo_1 (\ g' -> R.delaunayTriangulation g' d b) g
 
+#if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
+voronoiDiagram :: Geometry a  -> Geometry b -> Double -> Bool -> Some Geometry 
+voronoiDiagram g env tol onlyEdges = runGeos $ do
+  g' <- convertGeometryToRaw g 
+  env' <- convertGeometryToRaw env
+	convertGeometryFromRaw =<< R.voronoiDiagram g' env' tol onlyEndges
+
+#endif
