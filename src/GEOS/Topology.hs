@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module GEOS.Topology (
     envelope
   , intersection

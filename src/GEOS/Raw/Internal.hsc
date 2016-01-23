@@ -37,6 +37,7 @@ data GEOSBufferParams
 data GEOSPreparedGeometry
 type GEOSMessageHandler = FunPtr (CString -> (Ptr ()) -> IO ())
 type GEOSMessageHandler_r = FunPtr (CString -> (Ptr ()) -> IO ())
+type GEOSQueryCallback = FunPtr (Ptr () -> Ptr ())
 
 -- read/write
 data GEOSWKBWriter
@@ -530,3 +531,20 @@ foreign import ccall unsafe
 foreign import ccall unsafe
   "geos_c.h GEOSPreparedWithin_r"
   geos_PreparedWithin :: GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar
+
+-- STRTREE
+
+#if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
+foreign import ccall unsafe
+  "geos_c.h GEOSSTRtree_create_r"
+  geos_STRTreeCreate :: GEOSContextHandle_t -> CSize -> IO GEOSSTRtree
+
+
+foreign import ccall unsafe
+  "geos_c.h GEOSSTRtree_insert_r"
+  geos_STRTreeInsert :: GEOSContextHandle_t -> Ptr GEOSSTRtree -> Ptr GEOSGeometry -> Ptr () -> IO ()
+
+foreign import ccall unsafe
+  "geos_c.h GEOSSTRtree_query_r"
+  geos_STRTreeQuery :: GEOSContextHandle_t -> Ptr GEOSGeometry -> GEOSQueryCallback -> IO ()
+#endif

@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes, KindSignatures, GADTs, DeriveDataTypeable, StandaloneDeriving #-}
+
 module GEOS.Types where
 import qualified Data.Vector as V
 import Data.Monoid
@@ -11,10 +13,13 @@ data Some :: (* -> *) -> * where
 data Geometry a where
   PointGeometry :: Point -> SRID -> Geometry Point
   LineStringGeometry :: LineString -> SRID -> Geometry LineString
-  PolygonGeometry :: Polygon -> SRID -> Geometry LineString
-  MultiPointGeometry :: MultiPoint -> SRID -> Geometry LineString
-  MultiLineStringGeometry :: MultiLineString-> SRID -> Geometry LineString
-  MultiPolygonGeometry :: MultiPolygon-> SRID -> Geometry LineString
+  PolygonGeometry :: Polygon -> SRID -> Geometry Polygon
+  MultiPointGeometry :: MultiPoint -> SRID -> Geometry MultiPoint
+  MultiLineStringGeometry :: MultiLineString-> SRID -> Geometry MultiLineString
+  MultiPolygonGeometry :: MultiPolygon-> SRID -> Geometry MultiPolygon
+
+deriving instance Eq (Geometry a)
+deriving instance Show (Geometry a)
 
 withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
 withSomeGeometry (Some p) f = f p 
