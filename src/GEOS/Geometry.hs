@@ -61,10 +61,7 @@ binaryPredicate_ :: (R.Geometry -> R.Geometry -> Geos Bool)
                     -> Geometry a
                     -> Geometry b
                     -> Bool
-binaryPredicate_ f g1 g2 = runGeos $ do --(f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
-  g1' <- convertGeometryToRaw g1
-  g2' <- convertGeometryToRaw g2
-  f g1' g2'
+binaryPredicate_ f g1 g2 = runGeos . join $ (f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
 
 disjoint :: Geometry a -> Geometry b -> Bool
 disjoint = binaryPredicate_ R.disjoint

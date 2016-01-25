@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, KindSignatures, GADTs, DeriveDataTypeable, StandaloneDeriving #-}
+{-# LANGUAGE RankNTypes, KindSignatures, GADTs, DeriveDataTypeable, StandaloneDeriving, FlexibleInstances #-}
 
 module GEOS.Types where
 import qualified Data.Vector as V
@@ -10,19 +10,22 @@ type SRID = Maybe Int
 data Some :: (* -> *) -> * where
   Some :: f a -> Some f
 
+withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
+withSomeGeometry (Some p) f = f p 
+
+instance Show (Some Geometry) where
+  show (Some a) = "Some (" <> show a <> ")"
+
 data Geometry a where
   PointGeometry :: Point -> SRID -> Geometry Point
   LineStringGeometry :: LineString -> SRID -> Geometry LineString
   PolygonGeometry :: Polygon -> SRID -> Geometry Polygon
   MultiPointGeometry :: MultiPoint -> SRID -> Geometry MultiPoint
-  MultiLineStringGeometry :: MultiLineString-> SRID -> Geometry MultiLineString
+  MultiLineStringGeometry :: MultiLineString -> SRID -> Geometry MultiLineString
   MultiPolygonGeometry :: MultiPolygon-> SRID -> Geometry MultiPolygon
 
 deriving instance Eq (Geometry a)
 deriving instance Show (Geometry a)
-
-withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
-withSomeGeometry (Some p) f = f p 
 
 data Coordinate =
     Coordinate2 {-# UNPACK #-} !Double {-# UNPACK #-} !Double

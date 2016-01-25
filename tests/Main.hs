@@ -61,15 +61,11 @@ main = hspec $ do
       srid `shouldBe` (Just 4326)
       
   describe "Tests Serialization" $ do
-    it "Parses a bytestring to a linestring" $  
-			{-let (Some g :: (Geometry LineString)) = readHex linestringBS-}
-			{-in g `shouldBe` linestring-}
-			withSomeGeometry (readHex linestringBS) $ \case
-				ls@(LineStringGeometry _ _) -> ls `shouldBe` linestring
-				_ -> error "Incorrect Serialization"
-			{-in ls `shouldBe` linestring-}
-			{-withSomeGeometry (readHex linestringBS) $ \case-}
-				{-ls@(LineStringGeometry l s) -> ls `shouldBe` linestring-}
-				{-_ -> error "Incorrect deserialization"-}
+    it "Parses a bytestring to a linestring" $  do
+      let lsg :: Geometry LineString = withSomeGeometry (readHex linestringBS) $ \case
+                  ls@(LineStringGeometry _ _) -> ls
+                  _ -> error "asda"
+      lsg `shouldBe` linestring
+
     it "Serializes a LineString into a bytestring" $ do
       linestringBS `shouldBe` writeHex linestring

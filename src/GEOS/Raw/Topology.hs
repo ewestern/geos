@@ -24,8 +24,7 @@ geo_1 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry)
           -> Geos R.Geometry 
 geo_1 f s g =  withGeos $ \h ->  do
   g' <- throwIfNull s $ 
-        R.withGeometry g $ \gp -> 
-          f h gp 
+        R.withGeometry g $ f h
   fp <- newForeignPtrEnv I.geos_GeomDestroy h g'
   return $ R.Geometry fp
 
@@ -37,8 +36,7 @@ geo_2 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> I
 geo_2 f s g1 g2  = withGeos $ \h -> do
   g <- throwIfNull s $ 
         R.withGeometry g1 $ \gp1 ->
-         R.withGeometry g2 $ \gp2 ->
-            f h gp1 gp2 
+         R.withGeometry g2 $ f h gp1
   fp <- newForeignPtrEnv I.geos_GeomDestroy h g
   return $ R.Geometry fp
 

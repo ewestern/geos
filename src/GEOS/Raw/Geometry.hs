@@ -40,7 +40,7 @@ module GEOS.Raw.Geometry (
   , distance
   , hausdorffDistance
   , nearestPoints
-
+  , normalize
 ) where
 import qualified GEOS.Raw.Internal as I
 import GEOS.Raw.Base
@@ -71,8 +71,7 @@ withGeomConst (GeomConst p) f = f p
 -- TODO: return Maybe Int
 getSRID :: Geometry -> Geos (Maybe Int) 
 getSRID g = withGeos $ \h -> do
-  s <- withGeometry g $ \gp ->
-            I.geos_GetSRID h gp
+  s <- withGeometry g $ I.geos_GetSRID h
   case fromIntegral s of
     0 -> return Nothing 
     i -> return (Just i)
@@ -87,15 +86,13 @@ setSRID g (Just i) = withGeos $ \h ->
 getType :: Geometry -> Geos Int
 getType g = withGeos $ \h ->  do
   i <- throwIfNull "getType" $ 
-        withGeometry g $ \gp ->
-          I.geos_GeomType h gp
+        withGeometry g $ I.geos_GeomType h
   return . fromIntegral =<< peek i
 
 getTypeId ::Geometry -> Geos Int
 getTypeId g = withGeos $ \h -> do
   i <- throwIfNeg (mkErrorMessage "getTypeId")  $
-      withGeometry g $ \gp ->
-        I.geos_GeomTypeId h gp
+      withGeometry g $ I.geos_GeomTypeId h
   return $ fromIntegral i
 
 getCoordinateSequence :: Geometry -> Geos CoordinateSequence
@@ -103,8 +100,7 @@ getCoordinateSequence g = do
   csc <- getCoordinateSequence_ g
   withGeos $ \h -> do
     cloned <- throwIfNull  "cloneCoordinateSequence" $ 
-                withCoordSeqConst csc $ \ptr -> 
-                  I.geos_CoordSeqClone h ptr
+                withCoordSeqConst csc $ I.geos_CoordSeqClone h
     fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h cloned
     return $ CoordinateSequence fptr
 
@@ -112,8 +108,7 @@ getCoordinateSequence g = do
 getCoordinateSequence_ :: Geometry -> Geos CoordSeqConst
 getCoordinateSequence_ g = withGeos $ \h ->  do
   ptr <- throwIfNull  "getCoordinateSequence" $ 
-          withGeometry g $ \gp ->
-            I.geos_GetCoordSeq h gp
+          withGeometry g $ I.geos_GetCoordSeq h 
   return $ CoordSeqConst ptr
 
 
@@ -122,8 +117,7 @@ getNum_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO CInt)
             -> Geos Int
 getNum_ f g = withGeos $ \h ->  do
   i <- throwIfNeg (mkErrorMessage "getNumCoordinates")  $
-      withGeometry g $ \gp ->
-        f h gp
+      withGeometry g $ f h 
   return $ fromIntegral i
 
 getNumCoordinates :: Geometry -> Geos Int
@@ -155,16 +149,14 @@ getGeometryN :: Geometry -> Int -> Geos Geometry
 getGeometryN g i = do
   cloned <- cloneConstGeometry =<< getGeometryN_ g i
   withGeos $ \h -> do
-    fptr <- withGeometry cloned $ \gp ->
-                newForeignPtrEnv I.geos_GeomDestroy h gp
+    fptr <- withGeometry cloned $ newForeignPtrEnv I.geos_GeomDestroy h
     return $ Geometry fptr
 
 -- must not be destroyed directly
 getExteriorRing_ :: Geometry -> Geos GeomConst
 getExteriorRing_  g = withGeos $ \h ->  do
   r <- throwIfNull "getExteriorRing" $ 
-        withGeometry g $ \gp ->
-          I.geos_GetExteriorRing h gp
+        withGeometry g $ I.geos_GetExteriorRing h
   return $ GeomConst r
 
 
@@ -172,8 +164,7 @@ getExteriorRing :: Geometry -> Geos Geometry
 getExteriorRing g = do
   nr <- cloneConstGeometry =<< getExteriorRing_ g 
   withGeos $ \h ->  do
-    fptr <- withGeometry nr $ \gp -> 
-                newForeignPtrEnv I.geos_GeomDestroy h gp
+    fptr <- withGeometry nr $ newForeignPtrEnv I.geos_GeomDestroy h
     return $ Geometry fptr
 
 
@@ -185,26 +176,21 @@ getInteriorRingN :: Geometry -> Int -> Geos Geometry
 getInteriorRingN g i = do
   nr <- cloneConstGeometry =<< getInteriorRingN_ g i
   withGeos $ \h -> do
-    fptr <- withGeometry nr $ \nrp -> 
-                newForeignPtrEnv I.geos_GeomDestroy h nrp
+    fptr <- withGeometry nr $ newForeignPtrEnv I.geos_GeomDestroy h
     return $ Geometry fptr
 
-
-
-{-normalize :: GEOSHandle -> Geometry -> IO Geometry-}
-{-normalize h g = do-}
-  {-ng <- cloneGeometry h g-}
-  {-i <- throwIfNeg (mkErrorMessage "normalize") $  withHandle h $ \hp ->-}
-          {-withGeometry ng $ \gp ->-}
-            {-I.geos_Normalize hp gp-}
-  {-return ng-}
+normalize :: Geometry -> Geos Geometry
+normalize g = withGeos $ \h -> do
+  cloned <- withGeometry g $ I.geos_GeomClone h
+  fp <- Geometry <$> newForeignPtrEnv I.geos_GeomDestroy h cloned
+  _ <- throwIfNeg (mkErrorMessage "normalize") $ withGeometry fp $ I.geos_Normalize h
+  return fp
   
 -- 
 
 cloneConstGeometry :: GeomConst -> Geos Geometry
 cloneConstGeometry g = withGeos $ \h -> do
-  gp <- withGeomConst g $ \gp ->
-      I.geos_GeomClone h gp
+  gp <- withGeomConst g $ I.geos_GeomClone h
   fp <- newForeignPtrEnv I.geos_GeomDestroy h gp
   return $ Geometry fp
   
@@ -276,8 +262,7 @@ geo_2_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> 
           -> Geos Double
 geo_2_ f g p = withGeos $ \h -> do
    d <- withGeometry g $ \gp ->
-          withGeometry p $ \pp ->
-               f h gp pp 
+          withGeometry p $ f h gp 
    return . realToFrac $ d
 
 -- | @project p g@ returns the distance of point @p@ projected on @g@ from origin of @g@. Geometry @g@ must be a lineal geometry 
@@ -317,8 +302,7 @@ binaryPredicate_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGe
 binaryPredicate_ f s g1 g2 = withGeos $ \h -> do
   b <- throwIf (\v -> v == 2) (mkErrorMessage s) $ 
         withGeometry g1 $ \gp1 ->
-          withGeometry g2 $ \gp2 ->
-            f h gp1 gp2
+          withGeometry g2 $ f h gp1
   return . toBool $  b
 
 disjoint :: Geometry -> Geometry -> Geos Bool
@@ -387,14 +371,6 @@ hausdorffDistance = geo_2_d I.geos_HausdorffDistance
 nearestPoints :: Geometry -> Geometry -> Geos CoordinateSequence
 nearestPoints g p = withGeos $ \h -> do
   ptr <-  withGeometry g $ \gp ->
-            withGeometry p $ \pp ->
-              I.geos_NearestPoints h gp pp
+            withGeometry p $ I.geos_NearestPoints h gp
   fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
   return $ CoordinateSequence fptr
-
-                          
-{-area g = withGeos $ \h -> alloca $ \dptr -> do-}
-    {-i <- throwIfZero (mkErrorMessage "area" ) $ withGeometry g $ \gp -> -}
-        {-I.geos_Area h gp dptr -}
-    {-s <- peek dptr-}
-    {-return $ realToFrac s-}
