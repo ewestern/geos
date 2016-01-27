@@ -14,6 +14,7 @@ import Data.Monoid ((<>))
 import System.IO.Unsafe
 import qualified Control.Concurrent.MVar as MV
 import Control.Monad.Reader
+import Control.Applicative (Applicative)
 
 infixl 1 >><
 (>><) :: Monad m => m a -> (a -> m b) -> m a
