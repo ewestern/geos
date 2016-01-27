@@ -47,6 +47,7 @@ import GEOS.Raw.Base
 import GEOS.Raw.CoordSeq
 import Foreign
 import Foreign.C.Types
+import Control.Applicative ((<$>))
 
 newtype Geometry = Geometry { 
   unGeometry :: (ForeignPtr I.GEOSGeometry)
