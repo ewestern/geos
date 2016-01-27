@@ -4,6 +4,7 @@ module GEOS.Types where
 import qualified Data.Vector as V
 import Data.Monoid
 import Data.Data
+import Data.Typeable
 
 type SRID = Maybe Int
 
