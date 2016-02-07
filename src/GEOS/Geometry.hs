@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase, ScopedTypeVariables #-} 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module GEOS.Geometry (
   convertGeometryFromRaw
@@ -31,18 +32,17 @@ import qualified GEOS.Raw.Geometry as R
 import qualified GEOS.Raw.CoordSeq as RC
 import GEOS.Raw.Base
 import Data.Monoid ((<>))
-import Control.Applicative ((<$>), (<*>))
 import Control.Monad
 
-project :: Geometry a -> Geometry a -> Double
+project :: Geometry Point -> Geometry LineString -> Double
 project g1 g2 = runGeos $ do
   g1'<- convertGeometryToRaw g1
   g2'<- convertGeometryToRaw g2
   R.project g1' g2'  
 
-projectNormalized :: Geometry a -> Geometry b -> Double
+projectNormalized :: Geometry Point -> Geometry LineString -> Double
 projectNormalized g1 g2 = runGeos $ do 
-  g1' <-  convertGeometryToRaw g1
+  g1' <- convertGeometryToRaw g1
   g2' <- convertGeometryToRaw g2
   R.project g1' g2'  
 
@@ -53,7 +53,7 @@ interpolate g d = runGeos $ do
   return $ withSomeGeometry sg $ \pg@(PointGeometry _ _) -> pg
 
 
-interpolateNormalized :: Geometry a -> Double -> Some Geometry
+interpolateNormalized :: Geometry LineString -> Double -> Some Geometry
 interpolateNormalized g d = runGeos $ do
   g' <- convertGeometryToRaw g
   convertGeometryFromRaw =<<  (R.interpolateNormalized g' $ realToFrac d)
@@ -64,36 +64,23 @@ binaryPredicate_ :: (R.Geometry -> R.Geometry -> Geos Bool)
                     -> Bool
 binaryPredicate_ f g1 g2 = runGeos . join $ (f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
 
-disjoint :: Geometry a -> Geometry b -> Bool
-disjoint = binaryPredicate_ R.disjoint
+instance Geo (Geometry a) where
+  disjoint = binaryPredicate_ R.disjoint
+  touches = binaryPredicate_ R.touches
+  intersects = binaryPredicate_ R.intersects
+  contains = binaryPredicate_ R.contains
+  within = binaryPredicate_ R.within
+  crosses = binaryPredicate_ R.crosses
+  overlaps = binaryPredicate_ R.overlaps
+  covers = binaryPredicate_ R.covers
+  coveredBy = binaryPredicate_ R.coveredBy
 
-touches :: Geometry a -> Geometry b -> Bool
-touches = binaryPredicate_ R.touches
-
-crosses :: Geometry a -> Geometry b -> Bool
-crosses = binaryPredicate_ R.crosses
-
-within :: Geometry a -> Geometry b -> Bool
-within = binaryPredicate_ R.within
-
-contains :: Geometry a -> Geometry b -> Bool
-contains = binaryPredicate_ R.contains
-
-overlaps :: Geometry a -> Geometry b -> Bool
-overlaps = binaryPredicate_ R.overlaps
-
-equals :: Geometry a -> Geometry b -> Bool
+equals :: Geometry a -> Geometry a -> Bool
 equals = binaryPredicate_ R.equals
 
-equalsExact :: Geometry a -> Geometry b -> Bool
-equalsExact = binaryPredicate_ R.equalsExact
-
-covers :: Geometry a -> Geometry b -> Bool
-covers = binaryPredicate_ R.covers
-
-coveredBy :: Geometry a -> Geometry b -> Bool
-coveredBy = binaryPredicate_ R.coveredBy
-
+-- | Returns True if the two geometries are exactly equal, up to a specified tolerance. The tolerance value should be a floating point number representing the error tolerance in the comparison, e.g., @equalsExact g1 g2 0.001 @  will compare equality to within one thousandth of a unit.
+equalsExact :: Geometry a -> Geometry a -> Double -> Bool
+equalsExact g1 g2 d = binaryPredicate_ (\g1' g2' -> R.equalsExact g1' g2' d) g1 g2
 
 convertGeometryToRaw :: Geometry a -> Geos R.Geometry
 convertGeometryToRaw = \case 

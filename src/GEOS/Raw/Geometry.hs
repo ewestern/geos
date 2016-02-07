@@ -26,6 +26,7 @@ module GEOS.Raw.Geometry (
   , interpolateNormalized
   , disjoint
   , touches
+  , intersects
   , crosses
   , within
   , contains
@@ -300,7 +301,7 @@ binaryPredicate_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGe
                     -> Geometry 
                     -> Geos Bool
 binaryPredicate_ f s g1 g2 = withGeos $ \h -> do
-  b <- throwIf (\v -> v == 2) (mkErrorMessage s) $ 
+  b <- throwIf ((==) 2) (mkErrorMessage s) $ 
         withGeometry g1 $ \gp1 ->
           withGeometry g2 $ f h gp1
   return . toBool $  b
@@ -310,6 +311,10 @@ disjoint = binaryPredicate_ I.geos_Disjoint "disjoint"
 
 touches :: Geometry -> Geometry -> Geos Bool
 touches = binaryPredicate_ I.geos_Touches "touches"
+
+
+intersects :: Geometry -> Geometry -> Geos Bool
+intersects = binaryPredicate_ I.geos_Intersects "intersects"
 
 crosses :: Geometry -> Geometry -> Geos Bool
 crosses = binaryPredicate_ I.geos_Crosses "crosses"
@@ -326,8 +331,8 @@ overlaps = binaryPredicate_ I.geos_Overlaps "overlaps"
 equals :: Geometry -> Geometry -> Geos Bool
 equals = binaryPredicate_ I.geos_Equals "equals" 
 
-equalsExact :: Geometry -> Geometry -> Geos Bool
-equalsExact = binaryPredicate_ I.geos_EqualsExact "equalsExact"
+equalsExact :: Geometry -> Geometry -> Double -> Geos Bool
+equalsExact g1' g2' d = binaryPredicate_ (\h g1 g2 -> I.geos_EqualsExact h g1 g2 (realToFrac d)) "equalsExact" g1' g2'
 
 covers :: Geometry -> Geometry -> Geos Bool
 covers = binaryPredicate_ I.geos_Covers "covers"

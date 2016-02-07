@@ -5,6 +5,18 @@ import qualified Data.Vector as V
 import Data.Monoid
 import Data.Data
 
+class Geo a where
+  contains ::  a -> Geometry b -> Bool
+  coveredBy :: a -> Geometry b -> Bool
+  covers :: a -> Geometry b -> Bool
+  crosses :: a -> Geometry b -> Bool
+  disjoint ::  a -> Geometry b -> Bool
+  intersects :: a -> Geometry b -> Bool
+  overlaps :: a -> Geometry b -> Bool
+  touches ::  a -> Geometry b -> Bool
+  within ::  a -> Geometry b -> Bool
+  
+
 type SRID = Maybe Int
 
 data Some :: (* -> *) -> * where

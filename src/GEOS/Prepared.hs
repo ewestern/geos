@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module GEOS.Prepared (
     prepare
   , contains
@@ -19,18 +21,30 @@ import qualified GEOS.Geometry as G
 import GEOS.Types
 import Control.Monad
 
+--An interface for classes which prepare Geometrys in order to optimize the performance of repeated calls to specific geometric operations.
 
-prepare :: Geometry a -> Geos RP.PreparedGeometry
-prepare = G.convertGeometryToRaw >=> RP.prepare
+--A given implementation may provide optimized implementations for only some of the specified methods, and delegate the remaining methods to the original Geometry operations. An implementation may also only optimize certain situations, and delegate others. See the implementing classes for documentation about which methods and situations they optimize.
+
+
+prepare :: Geometry a -> RP.PreparedGeometry
+prepare = runGeos . (G.convertGeometryToRaw >=> RP.prepare)
 
 queryPrepared :: (RP.PreparedGeometry -> RG.Geometry -> Geos Bool) 
                   -> RP.PreparedGeometry
                   -> Geometry a
-                  -> Geos Bool 
-queryPrepared f pg g = G.convertGeometryToRaw g >>= (f pg)
+                  -> Bool 
+queryPrepared f pg g = runGeos $ G.convertGeometryToRaw g >>= (f pg)
 
-contains :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-contains = queryPrepared RP.contains
+instance Geo (RP.PreparedGeometry) where
+  contains = queryPrepared RP.contains
+  coveredBy = queryPrepared RP.coveredBy 
+  covers = queryPrepared RP.covers 
+  crosses = queryPrepared RP.crosses 
+  disjoint = queryPrepared RP.disjoint 
+  intersects = queryPrepared RP.intersects 
+  overlaps = queryPrepared RP.overlaps
+  touches = queryPrepared RP.touches 
+  within = queryPrepared RP.within 
 
 -- | The containsProperly predicate has the following equivalent definitions:
 
@@ -40,31 +54,8 @@ contains = queryPrepared RP.contains
 
 -- | An example use case is computing the intersections of a set of geometries with a large polygonal geometry. Since intersection is a fairly slow operation, it can be more efficient to use containsProperly to filter out test geometries which lie wholly inside the area. In these cases the intersection is known a priori to be exactly the original test geometry.
 
-containsProperly :: RP.PreparedGeometry -> Geometry a -> Geos Bool
+
+containsProperly :: RP.PreparedGeometry
+                  -> Geometry a
+                  -> Bool 
 containsProperly = queryPrepared RP.containsProperly
-
-coveredBy :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-coveredBy = queryPrepared RP.coveredBy 
-
-covers :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-covers = queryPrepared RP.covers 
-
-crosses :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-crosses = queryPrepared RP.crosses 
-
-disjoint :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-disjoint = queryPrepared RP.disjoint 
-
-intersects :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-intersects = queryPrepared RP.intersects 
-
-overlaps :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-overlaps = queryPrepared RP.overlaps
-
-touches :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-touches = queryPrepared RP.touches 
-
-within :: RP.PreparedGeometry -> Geometry a -> Geos Bool
-within = queryPrepared RP.within 
-
-

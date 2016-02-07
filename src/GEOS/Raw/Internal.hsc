@@ -400,7 +400,7 @@ foreign import ccall
 
 foreign import ccall 
   "geos_c.h GEOSEqualsExact_r"
-  geos_EqualsExact :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO CChar
+  geos_EqualsExact :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> CDouble -> IO CChar
 
 foreign import ccall 
   "geos_c.h GEOSCovers_r"
