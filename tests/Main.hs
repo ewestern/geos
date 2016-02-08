@@ -25,9 +25,10 @@ point = PointGeometry (Point $ Coordinate2 36.1 (-119.1)) (Just 4326)
 main :: IO ()
 main = hspec $ do
   describe "raw geometry" $ do
+
     it "Creates a Coordinate Sequence" $  do
       let (size, dim) = runGeos $ do 
-            cs <- RC.createCoordinateSequence 2 2
+            cs :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
             size <-  RC.getCoordinateSequenceSize cs 
             dim <-  RC.getCoordinateSequenceDimensions cs
             return (size, dim)
@@ -35,17 +36,27 @@ main = hspec $ do
       dim `shouldBe` (2 :: Int)
     it "Sets a Coordinate Sequence" $ do
       let (d1, d2) = runGeos $ do
-            cs <-  RC.createCoordinateSequence 2 2
-            RC.setCoordinateSequenceX cs 0 5.0 
-            d1 <- RC.getCoordinateSequenceX cs 0
-            RC.setCoordinateSequenceY cs 1 10.0 
-            d2 <- RC.getCoordinateSequenceY cs 1
+            c :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
+            RC.setCoordinateSequenceX c 0 5.0 
+            RC.setCoordinateSequenceY c 0 10.0 
+            d1 <- RC.getCoordinateSequenceX c 0
+            d2 <- RC.getCoordinateSequenceY c 0
             return (d1, d2)
       d1 `shouldBe` (5.0 :: Double)
       d2 `shouldBe` (10.0 :: Double)
+    it "Gets a Coordinate Sequence from a geometry" $ do
+      let cs = runGeos $ do
+            c <- RC.createCoordinateSequence 2 2
+            RC.setCoordinateSequenceX c 0 5.0 
+            RC.setCoordinateSequenceY c 0 10.0 
+            return c
+          cs' = runGeos $ do
+            g <- R.createLineString cs
+            R.getCoordinateSequence g
+      cs `shouldBe` cs'
     it "Creates a LineString " $ do
       let tid = runGeos $ do
-            cs <- RC.createCoordinateSequence 2 2
+            cs :: RC.CoordSeqConst <- RC.createCoordinateSequence 2 2
             ls <- R.createLineString cs
             R.getTypeId ls
       tid `shouldBe` 1
@@ -59,13 +70,26 @@ main = hspec $ do
             return (s, t)
       tid `shouldBe` 1
       srid `shouldBe` (Just 4326)
-      
+    it "Converts a Polygon" $ do
+      let pg1 = Polygon . V.singleton . LinearRing $ V.map (uncurry Coordinate2) $ V.fromList [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+          pg2 = Polygon . V.singleton . LinearRing $ V.map (uncurry Coordinate2) $ V.fromList [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+          t = runGeos $ do
+            rp <-  convertGeometryToRaw $ PolygonGeometry pg1 Nothing
+            R.getTypeId rp
+      t `shouldBe` 3
+    it "Tests disjoint" $ do
+
+      let pg1 = Polygon . V.singleton . LinearRing $ V.map (uncurry Coordinate2) $ V.fromList [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+          pg2 = Polygon . V.singleton . LinearRing $ V.map (uncurry Coordinate2) $ V.fromList [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+      disjoint (PolygonGeometry pg1 Nothing) (PolygonGeometry pg2 Nothing) `shouldBe` False
   describe "Tests Serialization" $ do
     it "Parses a bytestring to a linestring" $  do
       let lsg :: Geometry LineString = withSomeGeometry (readHex linestringBS) $ \case
                   ls@(LineStringGeometry _ _) -> ls
                   _ -> error "asda"
       lsg `shouldBe` linestring
-
     it "Serializes a LineString into a bytestring" $ do
       linestringBS `shouldBe` writeHex linestring
+   
+        
+    

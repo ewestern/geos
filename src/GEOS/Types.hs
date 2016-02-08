@@ -31,6 +31,7 @@ instance Show (Some Geometry) where
 data Geometry a where
   PointGeometry :: Point -> SRID -> Geometry Point
   LineStringGeometry :: LineString -> SRID -> Geometry LineString
+  LinearRingGeometry :: LinearRing -> SRID -> Geometry LinearRing
   PolygonGeometry :: Polygon -> SRID -> Geometry Polygon
   MultiPointGeometry :: MultiPoint -> SRID -> Geometry MultiPoint
   MultiLineStringGeometry :: MultiLineString -> SRID -> Geometry MultiLineString

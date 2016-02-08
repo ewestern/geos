@@ -86,6 +86,7 @@ convertGeometryToRaw :: Geometry a -> Geos R.Geometry
 convertGeometryToRaw = \case 
     PointGeometry pg s -> convertPointToRaw pg s 
     LineStringGeometry lsg s -> convertLineStringToRaw lsg s
+    LinearRingGeometry lg s -> convertLinearRingToRaw lg s
     PolygonGeometry pg s -> convertPolygonToRaw pg s 
     MultiPointGeometry _ _ -> error "multipoint"
     MultiLineStringGeometry _ _ -> error "multilineString"
@@ -94,14 +95,14 @@ convertGeometryToRaw = \case
 
 convertPointToRaw :: Point -> SRID -> Geos R.Geometry
 convertPointToRaw (Point c) s = do
-  cs <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
+  cs :: RC.CoordSeqConst <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
   setCoordinateSequence cs 0 c 
   R.createPoint cs >>< \g -> R.setSRID g s
 
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
 convertLinearRingToRaw (LinearRing cs) s = do
-  csr <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
+  csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) (V.enumFromN 0 len) cs 
   R.createLinearRing csr >>< \g -> R.setSRID g s
   where
@@ -109,7 +110,7 @@ convertLinearRingToRaw (LinearRing cs) s = do
   
 convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
 convertLineStringToRaw (LineString cs) s = do
-  csr <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
+  csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
   R.createLineString csr >>< \g -> R.setSRID g s
   where
@@ -122,7 +123,7 @@ convertPolygonToRaw (Polygon lrs) s = do
   R.createPolygon ext (V.toList inn)  >>< \g -> R.setSRID g s
 
 
-setCoordinateSequence :: RC.CoordinateSequence -> Int -> Coordinate -> Geos () 
+setCoordinateSequence :: RC.CoordinateSequence a => a -> Int -> Coordinate -> Geos () 
 setCoordinateSequence cs i (Coordinate2 x y) = 
   RC.setCoordinateSequenceX cs i x >> RC.setCoordinateSequenceY cs i y 
 
@@ -143,20 +144,23 @@ convertGeometryFromRaw rg = do
           l <- convertLineStringFromRaw rg
           return $ Some (LineStringGeometry l s)
         2 -> do
+           l <- convertLinearRingFromRaw rg
+           return $ Some (LinearRingGeometry l s)
+        3 -> do
           p <- convertPolygonFromRaw rg
           return $ Some (PolygonGeometry p s)
-        3 -> do
+        4 -> do
           mp <- convertMultiPointFromRaw rg 
           return $ Some (MultiPointGeometry mp s)
-        4 -> do
+        5 -> do
           ml <- convertMultiLineStringFromRaw rg
           return $ Some (MultiLineStringGeometry ml s)
-        5 -> do
+        6 -> do
           mp <- convertMultiPolygonFromRaw rg
           return $ Some (MultiPolygonGeometry mp s)
         e -> error $ "Unrecognized geometry type" <> show e 
 
-getPosition :: RC.CoordinateSequence -> Int -> Geos Coordinate 
+getPosition :: RC.CoordinateSequence a => a -> Int -> Geos Coordinate 
 getPosition cs i =  do 
     dim <- RC.getCoordinateSequenceDimensions cs 
     x <- RC.getCoordinateSequenceX cs i   

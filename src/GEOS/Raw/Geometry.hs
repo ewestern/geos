@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module GEOS.Raw.Geometry (
     Geometry (..)
   , withGeometry
@@ -51,10 +53,22 @@ import Foreign.C.Types
 
 newtype Geometry = Geometry { 
   unGeometry :: (ForeignPtr I.GEOSGeometry)
-} deriving (Show, Eq)
+} 
 
 newtype GeomConst = GeomConst ( Ptr I.GEOSGeometry)
- deriving (Show, Eq)
+
+instance Eq Geometry where
+  a == b = runGeos $ do
+    sa <- getSRID a
+    sb <- getSRID b
+    ta <- getTypeId a
+    tb <- getTypeId b
+    if (sa == sb) && (ta == tb)
+      then do
+        csa <- getCoordinateSequence a
+        csb <- getCoordinateSequence b
+        return $ csa == csb
+      else return False
 
 {-withVector :: Storable a => V.Vector a -> (Ptr a -> IO b) -> IO b-}
 {-withVector v f = -}
@@ -69,7 +83,6 @@ withGeometry (Geometry g) f = withForeignPtr g f
 withGeomConst :: GeomConst -> (Ptr I.GEOSGeometry -> IO a) -> IO a
 withGeomConst (GeomConst p) f = f p
 
--- TODO: return Maybe Int
 getSRID :: Geometry -> Geos (Maybe Int) 
 getSRID g = withGeos $ \h -> do
   s <- withGeometry g $ I.geos_GetSRID h
@@ -96,14 +109,14 @@ getTypeId g = withGeos $ \h -> do
       withGeometry g $ I.geos_GeomTypeId h
   return $ fromIntegral i
 
-getCoordinateSequence :: Geometry -> Geos CoordinateSequence
+getCoordinateSequence :: Geometry -> Geos CoordSeq
 getCoordinateSequence g = do
   csc <- getCoordinateSequence_ g
   withGeos $ \h -> do
     cloned <- throwIfNull  "cloneCoordinateSequence" $ 
-                withCoordSeqConst csc $ I.geos_CoordSeqClone h
+                withCoordinateSequence csc $ I.geos_CoordSeqClone h
     fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h cloned
-    return $ CoordinateSequence fptr
+    return $ CoordSeq fptr
 
 -- must not be destroyed directly
 getCoordinateSequence_ :: Geometry -> Geos CoordSeqConst
@@ -199,9 +212,10 @@ cloneConstGeometry g = withGeos $ \h -> do
  {-GEOSCoordSequence* arguments will become ownership of the returned object.-}
  {-All functions return NULL on exception.-}
 
-createGeometry_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
-    -> CoordinateSequence 
-    -> Geos Geometry
+createGeometry_ :: CoordinateSequence a 
+                => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
+                -> a 
+                -> Geos Geometry
 createGeometry_ f c  = withGeos $ \h ->  do
    g <- throwIfNull "createGeometry" $ withCoordinateSequence c $ \pcs -> do 
    -- todo: clone for now, think of a better solution later
@@ -211,13 +225,13 @@ createGeometry_ f c  = withGeos $ \h ->  do
    return $ Geometry fp
 
 -- Geometry Constructors
-createPoint :: CoordinateSequence -> Geos Geometry
+createPoint :: CoordinateSequence a => a -> Geos Geometry
 createPoint = createGeometry_ I.geos_GeomCreatePoint
 
-createLinearRing :: CoordinateSequence -> Geos Geometry
+createLinearRing :: CoordinateSequence a => a -> Geos Geometry
 createLinearRing = createGeometry_ I.geos_GeomCreateLinearRing
 
-createLineString :: CoordinateSequence -> Geos Geometry
+createLineString :: CoordinateSequence a => a -> Geos Geometry
 createLineString = createGeometry_ I.geos_GeomCreateLineString
 
 -- TODO: Make this take a vector argument
@@ -312,7 +326,6 @@ disjoint = binaryPredicate_ I.geos_Disjoint "disjoint"
 touches :: Geometry -> Geometry -> Geos Bool
 touches = binaryPredicate_ I.geos_Touches "touches"
 
-
 intersects :: Geometry -> Geometry -> Geos Bool
 intersects = binaryPredicate_ I.geos_Intersects "intersects"
 
@@ -373,9 +386,9 @@ distance = geo_2_d I.geos_Distance
 hausdorffDistance :: Geometry -> Geometry -> Geos Double
 hausdorffDistance = geo_2_d I.geos_HausdorffDistance
 
-nearestPoints :: Geometry -> Geometry -> Geos CoordinateSequence
+nearestPoints :: Geometry -> Geometry -> Geos CoordSeq
 nearestPoints g p = withGeos $ \h -> do
   ptr <-  withGeometry g $ \gp ->
             withGeometry p $ I.geos_NearestPoints h gp
   fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
-  return $ CoordinateSequence fptr
+  return $ CoordSeq fptr

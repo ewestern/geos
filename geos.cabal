@@ -69,12 +69,12 @@ test-suite test
   hs-source-dirs: tests src
   main-is: Main.hs
   build-depends:
-      base >= 4.7 && < 4.8
+      base >= 4.7 
     , bytestring >= 0.10.0
     , vector >= 0.10
     , mtl >= 2.1
     , geos >= 0.1
-    , hspec
+    , hspec >= 2.2
   default-extensions:
       LambdaCase
     , GADTs
