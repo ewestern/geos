@@ -9,7 +9,7 @@ module GEOS.Raw.Topology (
   , union
   , unaryUnion
   , pointOnSurface
-  , getCentroid
+  , centroid
   , node
   , delaunayTriangulation
 ) where
@@ -68,8 +68,8 @@ unaryUnion = geo_1 I.geos_UnaryUnion "unaryUnion"
 pointOnSurface :: R.Geometry -> Geos R.Geometry
 pointOnSurface = geo_1 I.geos_PointsOnSurface "pointOnSurface"
 
-getCentroid :: R.Geometry -> Geos R.Geometry
-getCentroid = geo_1 I.geos_GetCentroid "getCentroid"
+centroid :: R.Geometry -> Geos R.Geometry
+centroid = geo_1 I.geos_GetCentroid "getCentroid"
 
 node :: R.Geometry -> Geos R.Geometry
 node = geo_1 I.geos_Node "node"

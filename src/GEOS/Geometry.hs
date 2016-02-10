@@ -218,6 +218,7 @@ area = runGeos . (convertGeometryToRaw >=> R.area)
 geometryLength :: Geometry a -> Double
 geometryLength = runGeos . (convertGeometryToRaw >=> R.geometryLength)
 
+-- | NOTE: GEOS distance calculations are linear – in other words, GEOS does not perform a spherical calculation even if the SRID specifies a geographic coordinate system.
 distance :: Geometry a -> Geometry a -> Double
 distance p g = runGeos $ do
   p' <- convertGeometryToRaw p 

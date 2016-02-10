@@ -50,6 +50,7 @@ import GEOS.Raw.Base
 import GEOS.Raw.CoordSeq
 import Foreign
 import Foreign.C.Types
+import Foreign.C.String
 
 newtype Geometry = Geometry { 
   unGeometry :: (ForeignPtr I.GEOSGeometry)
@@ -97,11 +98,11 @@ setSRID g (Just i) = withGeos $ \h ->
       I.geos_SetSRID h gp $ fromIntegral i
   
 
-getType :: Geometry -> Geos Int
+getType :: Geometry -> Geos String
 getType g = withGeos $ \h ->  do
-  i <- throwIfNull "getType" $ 
+  s <- throwIfNull "getType" $ 
         withGeometry g $ I.geos_GeomType h
-  return . fromIntegral =<< peek i
+  return  =<< peekCString s
 
 getTypeId ::Geometry -> Geos Int
 getTypeId g = withGeos $ \h -> do

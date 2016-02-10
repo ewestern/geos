@@ -9,7 +9,7 @@ module GEOS.Topology (
   , union
   , unaryUnion
   , pointOnSurface
-  , getCentroid
+  , centroid
   , node
   , delaunayTriangulation
 ) where
@@ -36,12 +36,14 @@ geo_2 f g1 g2 = runGeos $ do
   g2' <- convertGeometryToRaw g2
   convertGeometryFromRaw =<< f g1' g2'
 
+-- | Returns a Polygon that represents the bounding envelope of this geometry. Note that it can also return a Point if the input geometry is a point.
 envelope :: Geometry a -> Some Geometry
 envelope = geo_1 R.envelope 
 
 intersection :: Geometry a -> Geometry b -> Some Geometry
 intersection = geo_2 R.intersection
 
+-- | Returns the smallest Polygon that contains all the points in the geometry.
 convexHull :: Geometry a -> Some Geometry
 convexHull = geo_1 R.convexHull
 
@@ -60,12 +62,14 @@ union = geo_2 R.union
 unaryUnion :: Geometry a -> Some Geometry 
 unaryUnion = geo_1 R.unaryUnion
 
--- todo: irrefutable pattern match?
-pointOnSurface :: Geometry a -> Some Geometry
-pointOnSurface = geo_1 R.pointOnSurface
+-- | Computes and returns a Point guaranteed to be on the interior of this geometry.
+pointOnSurface :: Geometry a -> Geometry Point
+pointOnSurface g = withSomeGeometry  (geo_1 R.pointOnSurface $ g) $ \pg@(PointGeometry _ _) -> pg
 
-getCentroid :: Geometry a -> Some Geometry
-getCentroid = geo_1 R.getCentroid
+
+-- | Returns a Point object representing the geometric center of the geometry. The point is not guaranteed to be on the interior of the geometry.
+centroid :: Geometry a -> Some Geometry
+centroid = geo_1 R.centroid
 
 node :: Geometry a -> Some Geometry
 node = geo_1 R.node
