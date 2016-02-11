@@ -40,6 +40,7 @@ geo_2 f g1 g2 = runGeos $ do
 envelope :: Geometry a -> Some Geometry
 envelope = geo_1 R.envelope 
 
+-- | Returns a Geometry representing the points shared by both geometries.
 intersection :: Geometry a -> Geometry b -> Some Geometry
 intersection = geo_2 R.intersection
 
@@ -47,15 +48,18 @@ intersection = geo_2 R.intersection
 convexHull :: Geometry a -> Some Geometry
 convexHull = geo_1 R.convexHull
 
+-- | Returns a Geometry representing the points making up this geometry that do not make up other.
 difference :: Geometry a -> Geometry b -> Some Geometry
 difference = geo_2 R.difference
 
+-- | Returns a Geometry combining the points in this geometry not in other, and the points in other not in this geometry.
 symmetricDifference :: Geometry a -> Geometry b -> Some Geometry
 symmetricDifference = geo_2 R.symmetricDifference
 
 boundary :: Geometry a -> Some Geometry
 boundary = geo_1 R.boundary
 
+-- | Returns a Geometry representing all the points in both geometries.
 union :: Geometry a -> Geometry b -> Some Geometry
 union = geo_2 R.union
 
@@ -74,8 +78,12 @@ centroid = geo_1 R.centroid
 node :: Geometry a -> Some Geometry
 node = geo_1 R.node
  
-delaunayTriangulation ::  Geometry a -> Double -> Bool -> Some Geometry
-delaunayTriangulation g d b = geo_1 (\ g' -> R.delaunayTriangulation g' d b) g
+-- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use.
+delaunayTriangulation ::  Geometry a -> Double -> Geometry MultiLineString
+delaunayTriangulation g d = withSomeGeometry (geo_1 (flip R.delaunayTriangulation $ d) g)  $ \ml@(MultiLineStringGeometry _ _ ) -> ml
+
+{-delaunayTriangulation ::  Geometry a -> Double -> Bool -> Some Geometry-}
+{-delaunayTriangulation g d oe = geo_1 (\ g' -> R.delaunayTriangulation g' d oe) g-}
 
 #if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
 voronoiDiagram :: Geometry a  -> Geometry b -> Double -> Bool -> Some Geometry 

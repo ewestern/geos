@@ -1,4 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-|
+Module      : GEOS.Prepared
+Description : Short description
+
+
+An interface for classes which prepare Geometrys in order to optimize the performance of repeated calls to specific geometric operations.
+
+A given implementation may provide optimized implementations for only some of the specified methods, and delegate the remaining methods to the original Geometry operations. An implementation may also only optimize certain situations, and delegate others. See the implementing classes for documentation about which methods and situations they optimize.
+
+-}
 
 module GEOS.Prepared (
     prepare
@@ -20,11 +30,6 @@ import GEOS.Raw.Base
 import qualified GEOS.Geometry as G
 import GEOS.Types
 import Control.Monad
-
---An interface for classes which prepare Geometrys in order to optimize the performance of repeated calls to specific geometric operations.
-
---A given implementation may provide optimized implementations for only some of the specified methods, and delegate the remaining methods to the original Geometry operations. An implementation may also only optimize certain situations, and delegate others. See the implementing classes for documentation about which methods and situations they optimize.
-
 
 prepare :: Geometry a -> RP.PreparedGeometry
 prepare = runGeos . (G.convertGeometryToRaw >=> RP.prepare)

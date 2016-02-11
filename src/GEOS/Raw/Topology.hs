@@ -74,13 +74,12 @@ centroid = geo_1 I.geos_GetCentroid "getCentroid"
 node :: R.Geometry -> Geos R.Geometry
 node = geo_1 I.geos_Node "node"
 
--- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use and @oe@ indicates that the function should return a MultiLineString, rather than a GeometryCollection containing triangular Polygons.
-
-delaunayTriangulation :: R.Geometry -> Double -> Bool -> Geos R.Geometry 
-delaunayTriangulation g tol oe = withGeos $ \h -> do
+-- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use.
+delaunayTriangulation :: R.Geometry -> Double -> Geos R.Geometry 
+delaunayTriangulation g tol = withGeos $ \h -> do
   g' <- throwIfNull "delaunayTriangulation" $ 
         R.withGeometry g $ \gp ->
-          I.geos_DelaunayTriangulation h gp (realToFrac tol) $ fromBool oe 
+          I.geos_DelaunayTriangulation h gp (realToFrac tol) $ fromBool True
   fp <- newForeignPtrEnv I.geos_GeomDestroy h g'
   return $ R.Geometry fp
             

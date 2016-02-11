@@ -34,18 +34,21 @@ import GEOS.Raw.Base
 import Data.Monoid ((<>))
 import Control.Monad
 
+-- | Returns the distance from the origin of LineString to the point projected on the geometry (that is to a point of the line the closest to the given point). 
 project :: Geometry Point -> Geometry LineString -> Double
 project g1 g2 = runGeos $ do
   g1'<- convertGeometryToRaw g1
   g2'<- convertGeometryToRaw g2
   R.project g1' g2'  
 
+-- | Like @project@, but returns the distance as a Double between 0 and 1.
 projectNormalized :: Geometry Point -> Geometry LineString -> Double
 projectNormalized g1 g2 = runGeos $ do 
   g1' <- convertGeometryToRaw g1
   g2' <- convertGeometryToRaw g2
   R.project g1' g2'  
 
+-- | Given a distance, returns the point (or closest point) within the geometry LineString that distance. 
 interpolate :: Geometry LineString -> Double -> Geometry Point
 interpolate g d = runGeos $ do 
   g' <- convertGeometryToRaw  g
@@ -53,6 +56,7 @@ interpolate g d = runGeos $ do
   return $ withSomeGeometry sg $ \pg@(PointGeometry _ _) -> pg
 
 
+-- | Like @interpolate@, but takes the distance as a double between 0 and 1.
 interpolateNormalized :: Geometry LineString -> Double -> Some Geometry
 interpolateNormalized g d = runGeos $ do
   g' <- convertGeometryToRaw g
@@ -75,6 +79,7 @@ instance Geo (Geometry a) where
   covers = binaryPredicate_ R.covers
   coveredBy = binaryPredicate_ R.coveredBy
 
+-- | Returns True if the DE-9IM intersection matrix for the two geometries is T*F**FFF*.
 equals :: Geometry a -> Geometry a -> Bool
 equals = binaryPredicate_ R.equals
 
@@ -88,23 +93,23 @@ convertGeometryToRaw = \case
     LineStringGeometry lsg s -> convertLineStringToRaw lsg s
     LinearRingGeometry lg s -> convertLinearRingToRaw lg s
     PolygonGeometry pg s -> convertPolygonToRaw pg s 
-    MultiPointGeometry _ _ -> error "multipoint"
-    MultiLineStringGeometry _ _ -> error "multilineString"
-    MultiPolygonGeometry _ _ -> error "multipolygon"
+    MultiPointGeometry mp s -> convertMultiPointToRaw mp s
+    MultiLineStringGeometry ml s -> convertMultiLineStringToRaw ml s 
+    MultiPolygonGeometry mp s -> convertMultiPolygonToRaw mp s 
 
 
 convertPointToRaw :: Point -> SRID -> Geos R.Geometry
 convertPointToRaw (Point c) s = do
   cs :: RC.CoordSeqConst <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
   setCoordinateSequence cs 0 c 
-  R.createPoint cs >>< \g -> R.setSRID g s
+  R.createPoint cs >>< (flip R.setSRID s)
 
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
 convertLinearRingToRaw (LinearRing cs) s = do
   csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) (V.enumFromN 0 len) cs 
-  R.createLinearRing csr >>< \g -> R.setSRID g s
+  R.createLinearRing csr >>< (flip R.setSRID s)
   where
     len = V.length cs
   
@@ -112,16 +117,30 @@ convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
 convertLineStringToRaw (LineString cs) s = do
   csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
-  R.createLineString csr >>< \g -> R.setSRID g s
+  R.createLineString csr >>< (flip R.setSRID s)
   where
     len = V.length cs    
 
 convertPolygonToRaw :: Polygon -> SRID -> Geos R.Geometry
 convertPolygonToRaw (Polygon lrs) s = do
   ext <- convertLinearRingToRaw (V.head lrs) s
-  inn <- (\v -> convertLinearRingToRaw v s) `V.mapM` V.tail lrs
+  inn <- (flip convertLinearRingToRaw $ s) `V.mapM` V.tail lrs
   R.createPolygon ext (V.toList inn)  >>< \g -> R.setSRID g s
 
+convertMultiPointToRaw :: MultiPoint -> SRID -> Geos R.Geometry
+convertMultiPointToRaw (MultiPoint vp) s = do
+  vr <- (flip convertPointToRaw $ s) `V.mapM` vp
+  R.createMultiPoint (V.toList vr) >>< (flip R.setSRID $ s) 
+
+convertMultiLineStringToRaw :: MultiLineString -> SRID -> Geos R.Geometry
+convertMultiLineStringToRaw (MultiLineString vl) s = do
+  vr <- (flip convertLineStringToRaw $ s) `V.mapM` vl
+  R.createMultiLineString (V.toList vr) >>< (flip R.setSRID $ s)
+
+convertMultiPolygonToRaw :: MultiPolygon -> SRID -> Geos R.Geometry
+convertMultiPolygonToRaw (MultiPolygon vp) s = do
+  vr <- (flip convertPolygonToRaw $ s) `V.mapM` vp
+  R.createMultiPolygon (V.toList vr) >>< (flip R.setSRID $ s)
 
 setCoordinateSequence :: RC.CoordinateSequence a => a -> Int -> Coordinate -> Geos () 
 setCoordinateSequence cs i (Coordinate2 x y) = 
@@ -215,6 +234,7 @@ convertMultiPolygonFromRaw g = do
 area  :: Geometry a -> Double
 area = runGeos . (convertGeometryToRaw >=> R.area)
 
+-- | Returns the length of this geometry (e.g., 0 for a Point, the length of a LineString, or the circumference of a Polygon).
 geometryLength :: Geometry a -> Double
 geometryLength = runGeos . (convertGeometryToRaw >=> R.geometryLength)
 
@@ -232,7 +252,6 @@ hausdorffDistance p g = runGeos $ do
   R.hausdorffDistance p' g'
 
 -- | Returns the closest points of the two geometries. The first point comes from g1 geometry and the second point comes from g2.
-
 nearestPoints :: Geometry a -> Geometry a -> (Coordinate, Coordinate)
 nearestPoints g1 g2 = runGeos $ do
   g1'<- convertGeometryToRaw g1

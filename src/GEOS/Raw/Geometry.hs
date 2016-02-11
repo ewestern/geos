@@ -1,11 +1,17 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+{-|
+Module      : GEOS.Raw.Geometery
+
+Light wrappers around GEOS functions. Must be run within the Geos monad.
+
+-}
 module GEOS.Raw.Geometry (
     Geometry (..)
   , withGeometry
   , getSRID
   , setSRID
-  , getType
+  , getTypeName
   , getTypeId
   , getCoordinateSequence
   , getNumCoordinates
@@ -98,8 +104,8 @@ setSRID g (Just i) = withGeos $ \h ->
       I.geos_SetSRID h gp $ fromIntegral i
   
 
-getType :: Geometry -> Geos String
-getType g = withGeos $ \h ->  do
+getTypeName :: Geometry -> Geos String
+getTypeName g = withGeos $ \h ->  do
   s <- throwIfNull "getType" $ 
         withGeometry g $ I.geos_GeomType h
   return  =<< peekCString s

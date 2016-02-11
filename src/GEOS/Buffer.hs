@@ -52,6 +52,8 @@ defaultBufferParams = BufferParams {
   , singleSided = False
 }
 
+-- | Returns a Geometry that represents all points whose distance from this geometry is less than or equal to the given width. The quadsegs argument sets the number of segments used to approximate a quarter circle.
+
 buffer :: Geometry a -> Double -> Int -> Some Geometry 
 buffer g width quadsegs = runGeos $  do
     rg <- convertGeometryToRaw g
