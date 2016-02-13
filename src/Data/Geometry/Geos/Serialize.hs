@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module GEOS.Serialize (
+module Data.Geometry.Geos.Serialize (
     readHex
   , writeHex
 ) where
 
-import GEOS.Raw.Base
-import GEOS.Geometry
-import qualified GEOS.Raw.Serialize as S
-import GEOS.Types
+import Data.Geometry.Geos.Raw.Base
+import Data.Geometry.Geos.Geometry
+import qualified Data.Geometry.Geos.Raw.Serialize as S
+import Data.Geometry.Geos.Types
 import qualified Data.ByteString.Char8 as BC
 
 readHex :: BC.ByteString -> Some Geometry

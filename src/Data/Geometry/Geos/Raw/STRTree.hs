@@ -1,10 +1,10 @@
 {-# LANGUAGE CPP #-}
 
-module GEOS.Raw.STRTree where
+module Data.Geometry.Geos.Raw.STRTree where
 
-import qualified GEOS.Raw.Internal as I
-import qualified GEOS.Raw.Geometry as RG
-import GEOS.Raw.Base
+import qualified Data.Geometry.Geos.Raw.Internal as I
+import qualified Data.Geometry.Geos.Raw.Geometry as RG
+import Data.Geometry.Geos.Raw.Base
 import Foreign
 import Data.IORef
 import qualified Data.Vector as V
@@ -12,15 +12,15 @@ import qualified Data.Vector as V
 --A query-only R-tree created using the Sort-Tile-Recursive (STR) algorithm. For two-dimensional spatial data.
 
 --The STR packed R-tree is simple to implement and maximizes space utilization; that is, as many leaves as possible are filled to capacity. Overlap between nodes is far less than in a basic R-tree. However, once the tree has been built (explicitly or on the first call to query), items may not be added or removed.
-newtype STRTree a = STRTree (ForeignPtr I.GEOSSTRTree)
+newtype STRTree a = STRTree (ForeignPtr I.Data.Geometry.GeosSTRTree)
   deriving (Show, Eq)
 
-withSTRTree :: STRTree a -> (Ptr I.GEOSSTRTree -> IO b ) -> IO b
+withSTRTree :: STRTree a -> (Ptr I.Data.Geometry.GeosSTRTree -> IO b ) -> IO b
 withSTRTree (STRTree t) f = withForeignPtr t f
 
---if GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR > 4
+--if Data.Geometry.Geos_VERSION_MAJOR >= 3 && Data.Geometry.Geos_VERSION_MINOR > 4
 foreign import ccall "wrapper"
-  wrap :: (Ptr () -> Ptr () -> IO ()) -> IO (I.GEOSQueryCallback)
+  wrap :: (Ptr () -> Ptr () -> IO ()) -> IO (I.Data.Geometry.GeosQueryCallback)
 
 createSTRTree :: Int -> Geos (STRTree a)
 createSTRTree n = withGeos $ \h -> do

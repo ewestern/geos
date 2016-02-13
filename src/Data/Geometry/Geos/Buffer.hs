@@ -1,4 +1,4 @@
-module GEOS.Buffer (
+module Data.Geometry.Geos.Buffer (
     buffer
   , defaultBufferParams
   , bufferWithParams
@@ -6,10 +6,10 @@ module GEOS.Buffer (
   , BufferJoinStyle (..)
   , BufferCapStyle (..)
 ) where
-import qualified GEOS.Raw.Buffer as R
-import GEOS.Raw.Base
-import GEOS.Types
-import GEOS.Geometry
+import qualified Data.Geometry.Geos.Raw.Buffer as R
+import Data.Geometry.Geos.Raw.Base
+import Data.Geometry.Geos.Types
+import Data.Geometry.Geos.Geometry
 
 data BufferCapStyle = 
     RoundCap

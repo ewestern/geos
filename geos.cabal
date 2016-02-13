@@ -35,20 +35,20 @@ Library
     , mtl >= 2.0
   build-tools: hsc2hs
   exposed-modules:
-      GEOS.Topology
-    , GEOS.Geometry
-    , GEOS.Types
-    , GEOS.Serialize
-    , GEOS.Buffer
-    , GEOS.Prepared
-    , GEOS.Raw.Base
-    , GEOS.Raw.CoordSeq
-    , GEOS.Raw.Geometry
-    , GEOS.Raw.Serialize
-    , GEOS.Raw.Topology
-    , GEOS.Raw.Buffer
-    , GEOS.Raw.Prepared
-    , GEOS.Raw.Internal
+      Data.Geometry.Geos.Topology
+    , Data.Geometry.Geos.Geometry
+    , Data.Geometry.Geos.Types
+    , Data.Geometry.Geos.Serialize
+    , Data.Geometry.Geos.Buffer
+    , Data.Geometry.Geos.Prepared
+    , Data.Geometry.Geos.Raw.Base
+    , Data.Geometry.Geos.Raw.CoordSeq
+    , Data.Geometry.Geos.Raw.Geometry
+    , Data.Geometry.Geos.Raw.Serialize
+    , Data.Geometry.Geos.Raw.Topology
+    , Data.Geometry.Geos.Raw.Buffer
+    , Data.Geometry.Geos.Raw.Prepared
+    , Data.Geometry.Geos.Raw.Internal
   hs-source-dirs:      src
   frameworks: GEOS
   default-extensions:

@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-module GEOS.Topology (
+module Data.Geometry.Geos.Topology (
     envelope
   , intersection
   , convexHull
@@ -13,11 +13,11 @@ module GEOS.Topology (
   , node
   , delaunayTriangulation
 ) where
-import GEOS.Types
-import GEOS.Raw.Base
-import GEOS.Geometry
-import qualified GEOS.Raw.Topology as R
-import qualified GEOS.Raw.Geometry as RG
+import Data.Geometry.Geos.Types
+import Data.Geometry.Geos.Raw.Base
+import Data.Geometry.Geos.Geometry
+import qualified Data.Geometry.Geos.Raw.Topology as R
+import qualified Data.Geometry.Geos.Raw.Geometry as RG
 
 
 geo_1 :: ( RG.Geometry -> Geos RG.Geometry )

@@ -1,4 +1,4 @@
-module GEOS.Raw.Buffer (
+module Data.Geometry.Geos.Raw.Buffer (
     BufferParams
   , withBufferParams
   , BufferCapStyle
@@ -20,9 +20,9 @@ module GEOS.Raw.Buffer (
   , joinMitre
   , joinBevel
 )  where
-import GEOS.Raw.Internal 
-import qualified GEOS.Raw.Geometry as RG
-import GEOS.Raw.Base
+import Data.Geometry.Geos.Raw.Internal 
+import qualified Data.Geometry.Geos.Raw.Geometry as RG
+import Data.Geometry.Geos.Raw.Base
 import Foreign
 
 newtype BufferParams =  BufferParams (ForeignPtr GEOSBufferParams) deriving (Show, Eq)

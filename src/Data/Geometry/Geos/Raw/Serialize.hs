@@ -1,4 +1,4 @@
-module GEOS.Raw.Serialize (
+module Data.Geometry.Geos.Raw.Serialize (
     createReader
   , createWriter
   , read
@@ -7,9 +7,9 @@ module GEOS.Raw.Serialize (
   , writeHex
 ) where
 import Prelude hiding (read)
-import qualified GEOS.Raw.Internal as I
-import GEOS.Raw.Base
-import GEOS.Raw.Geometry
+import qualified Data.Geometry.Geos.Raw.Internal as I
+import Data.Geometry.Geos.Raw.Base
+import Data.Geometry.Geos.Raw.Geometry
 import Foreign
 import Foreign.C.String
 import Foreign.C.Types

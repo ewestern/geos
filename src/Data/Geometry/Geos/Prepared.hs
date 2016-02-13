@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-|
-Module      : GEOS.Prepared
+Module      : Data.Geometry.Geos.Prepared
 
 An interface for classes which prepare Geometrys in order to optimize the performance of repeated calls to specific geometric operations.
 
@@ -8,7 +8,7 @@ A given implementation may provide optimized implementations for only some of th
 
 -}
 
-module GEOS.Prepared (
+module Data.Geometry.Geos.Prepared (
     prepare
   , contains
   , containsProperly
@@ -22,11 +22,11 @@ module GEOS.Prepared (
   , within
 ) where 
 
-import qualified GEOS.Raw.Prepared as RP
-import qualified GEOS.Raw.Geometry as RG
-import GEOS.Raw.Base
-import qualified GEOS.Geometry as G
-import GEOS.Types
+import qualified Data.Geometry.Geos.Raw.Prepared as RP
+import qualified Data.Geometry.Geos.Raw.Geometry as RG
+import Data.Geometry.Geos.Raw.Base
+import qualified Data.Geometry.Geos.Geometry as G
+import Data.Geometry.Geos.Types
 import Control.Monad
 
 prepare :: Geometry a -> RP.PreparedGeometry

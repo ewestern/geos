@@ -1,6 +1,6 @@
 {-# LANGUAGE RankNTypes, KindSignatures, GADTs, DeriveDataTypeable, StandaloneDeriving, FlexibleInstances #-}
 
-module GEOS.Types where
+module Data.Geometry.Geos.Types where
 import qualified Data.Vector as V
 import Data.Monoid
 import Data.Data

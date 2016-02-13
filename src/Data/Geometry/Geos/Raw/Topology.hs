@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-module GEOS.Raw.Topology (
+module Data.Geometry.Geos.Raw.Topology (
     envelope
   , intersection
   , convexHull
@@ -13,9 +13,9 @@ module GEOS.Raw.Topology (
   , node
   , delaunayTriangulation
 ) where
-import qualified GEOS.Raw.Internal as I
-import GEOS.Raw.Base
-import qualified GEOS.Raw.Geometry as R
+import qualified Data.Geometry.Geos.Raw.Internal as I
+import Data.Geometry.Geos.Raw.Base
+import qualified Data.Geometry.Geos.Raw.Geometry as R
 import Foreign
 
 geo_1 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry)) 

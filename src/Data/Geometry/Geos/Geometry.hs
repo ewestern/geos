@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase, ScopedTypeVariables #-} 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module GEOS.Geometry (
+module Data.Geometry.Geos.Geometry (
   convertGeometryFromRaw
   , convertGeometryToRaw
   , interpolate
@@ -26,11 +26,11 @@ module GEOS.Geometry (
 
 ) where
 
-import GEOS.Types
+import Data.Geometry.Geos.Types
 import qualified Data.Vector as V
-import qualified GEOS.Raw.Geometry as R
-import qualified GEOS.Raw.CoordSeq as RC
-import GEOS.Raw.Base
+import qualified Data.Geometry.Geos.Raw.Geometry as R
+import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
+import Data.Geometry.Geos.Raw.Base
 import Data.Monoid ((<>))
 import Control.Monad
 
@@ -238,7 +238,7 @@ area = runGeos . (convertGeometryToRaw >=> R.area)
 geometryLength :: Geometry a -> Double
 geometryLength = runGeos . (convertGeometryToRaw >=> R.geometryLength)
 
--- | NOTE: GEOS distance calculations are linear – in other words, GEOS does not perform a spherical calculation even if the SRID specifies a geographic coordinate system.
+-- | NOTE: Data.Geometry.Geos distance calculations are linear – in other words, Data.Geometry.Geos does not perform a spherical calculation even if the SRID specifies a geographic coordinate system.
 distance :: Geometry a -> Geometry a -> Double
 distance p g = runGeos $ do
   p' <- convertGeometryToRaw p 

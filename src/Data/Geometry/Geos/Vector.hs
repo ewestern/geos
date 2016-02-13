@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
-module GEOS.Vector where
+module Data.Geometry.Geos.Vector where
 
-import GEOS.Types 
+import Data.Geometry.Geos.Types 
 import Data.VectorSpace
 import Data.AdditiveGroup
 import Data.AffineSpace

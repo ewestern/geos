@@ -1,4 +1,4 @@
-module GEOS.Raw.Prepared (
+module Data.Geometry.Geos.Raw.Prepared (
     PreparedGeometry (..)
   , withPreparedGeometry  
   , prepare
@@ -13,9 +13,9 @@ module GEOS.Raw.Prepared (
   , touches
   , within
 ) where
-import GEOS.Raw.Internal 
-import GEOS.Raw.Base
-import qualified GEOS.Raw.Geometry as RG
+import Data.Geometry.Geos.Raw.Internal 
+import Data.Geometry.Geos.Raw.Base
+import qualified Data.Geometry.Geos.Raw.Geometry as RG
 import Foreign.Marshal.Utils
 import Foreign
 import Foreign.C.Types

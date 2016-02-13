@@ -1,12 +1,12 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-|
-Module      : GEOS.Raw.Geometery
+Module      : Data.Geometry.Geos.Raw.Geometery
 
-Light wrappers around GEOS functions. Must be run within the Geos monad.
+Light wrappers around Geos functions. Must be run within the Geos monad.
 
 -}
-module GEOS.Raw.Geometry (
+module Data.Geometry.Geos.Raw.Geometry (
     Geometry (..)
   , withGeometry
   , getSRID
@@ -51,9 +51,9 @@ module GEOS.Raw.Geometry (
   , nearestPoints
   , normalize
 ) where
-import qualified GEOS.Raw.Internal as I
-import GEOS.Raw.Base
-import GEOS.Raw.CoordSeq
+import qualified Data.Geometry.Geos.Raw.Internal as I
+import Data.Geometry.Geos.Raw.Base
+import Data.Geometry.Geos.Raw.CoordSeq
 import Foreign
 import Foreign.C.Types
 import Foreign.C.String

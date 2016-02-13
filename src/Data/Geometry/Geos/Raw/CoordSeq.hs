@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module GEOS.Raw.CoordSeq (
+module Data.Geometry.Geos.Raw.CoordSeq (
     CoordinateSequence 
   , CoordSeqConst (CoordSeqConst)
   , CoordSeq (CoordSeq)
@@ -17,8 +17,8 @@ module GEOS.Raw.CoordSeq (
   , setCoordinateSequenceOrd
 ) where
 
-import qualified GEOS.Raw.Internal as I
-import GEOS.Raw.Base
+import qualified Data.Geometry.Geos.Raw.Internal as I
+import Data.Geometry.Geos.Raw.Base
 import Foreign
 import Foreign.C.Types
 import Control.Monad

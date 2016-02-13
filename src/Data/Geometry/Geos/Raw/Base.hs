@@ -1,6 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, RankNTypes #-} 
 
-module GEOS.Raw.Base (
+module Data.Geometry.Geos.Raw.Base (
     Geos
   , runGeos  
   , throwIfZero
@@ -8,7 +8,8 @@ module GEOS.Raw.Base (
   , mkErrorMessage
   , (>><)
 ) where
-import qualified GEOS.Raw.Internal as I
+
+import qualified Data.Geometry.Geos.Raw.Internal as I
 import Foreign
 import Data.Monoid ((<>))
 import System.IO.Unsafe

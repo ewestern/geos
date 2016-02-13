@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP, ForeignFunctionInterface, EmptyDataDecls #-}
-module GEOS.Raw.Internal where
+module Data.Geometry.Geos.Raw.Internal where
 
 import Foreign
 import Foreign.C
