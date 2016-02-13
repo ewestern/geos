@@ -1,8 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-|
 Module      : GEOS.Prepared
-Description : Short description
-
 
 An interface for classes which prepare Geometrys in order to optimize the performance of repeated calls to specific geometric operations.
 
