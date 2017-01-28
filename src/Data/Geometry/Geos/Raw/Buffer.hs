@@ -32,7 +32,7 @@ withBufferParams :: BufferParams -> (Ptr GEOSBufferParams -> IO a ) -> IO a
 withBufferParams (BufferParams g) f = withForeignPtr g f
 
 
--- | Create a buffer around a geoemtry, where quadsegs is the number of line segments to use to approximate a quarter of a circle.
+-- | Create a buffer around a geometry, where quadsegs is the number of line segments to use to approximate a quarter of a circle.
 buffer :: RG.Geometry -> Double -> Int -> Geos RG.Geometry
 buffer geo width quadsegs = withGeos $ \h -> do 
   g <- RG.withGeometry geo $ \gp -> geos_Buffer h gp (realToFrac width) $ fromIntegral quadsegs

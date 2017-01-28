@@ -77,12 +77,7 @@ instance Eq Geometry where
         return $ csa == csb
       else return False
 
-{-withVector :: Storable a => V.Vector a -> (Ptr a -> IO b) -> IO b-}
-{-withVector v f = -}
-  {-allocaArray len $ \ptr -> do-}
-    {-pokeArray ptr -}
-  {-where-}
-    {-len = V.length v-}
+
 
 withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
 withGeometry (Geometry g) f = withForeignPtr g f
@@ -97,11 +92,11 @@ getSRID g = withGeos $ \h -> do
     0 -> return Nothing 
     i -> return (Just i)
     
-setSRID :: Geometry -> (Maybe Int) -> Geos ()
-setSRID _ Nothing = return ()
-setSRID g (Just i) = withGeos $ \h -> 
-    withGeometry g $ \gp -> 
-      I.geos_SetSRID h gp $ fromIntegral i
+setSRID :: (Maybe Int) -> Geometry -> Geos Geometry
+setSRID Nothing g = return g
+setSRID (Just i) g = withGeos $ \h ->  do
+  withGeometry g $ \gp -> I.geos_SetSRID h gp $ fromIntegral i
+  return g
   
 
 getTypeName :: Geometry -> Geos String

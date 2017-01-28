@@ -102,14 +102,14 @@ convertPointToRaw :: Point -> SRID -> Geos R.Geometry
 convertPointToRaw (Point c) s = do
   cs :: RC.CoordSeqConst <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
   setCoordinateSequence cs 0 c 
-  R.createPoint cs >>< (flip R.setSRID s)
+  R.createPoint cs >>= R.setSRID s
 
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
 convertLinearRingToRaw (LinearRing cs) s = do
   csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) (V.enumFromN 0 len) cs 
-  R.createLinearRing csr >>< (flip R.setSRID s)
+  R.createLinearRing csr >>= R.setSRID s
   where
     len = V.length cs
   
@@ -117,7 +117,7 @@ convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
 convertLineStringToRaw (LineString cs) s = do
   csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
-  R.createLineString csr >>< (flip R.setSRID s)
+  R.createLineString csr >>=  R.setSRID s
   where
     len = V.length cs    
 
@@ -125,22 +125,22 @@ convertPolygonToRaw :: Polygon -> SRID -> Geos R.Geometry
 convertPolygonToRaw (Polygon lrs) s = do
   ext <- convertLinearRingToRaw (V.head lrs) s
   inn <- (flip convertLinearRingToRaw $ s) `V.mapM` V.tail lrs
-  R.createPolygon ext (V.toList inn)  >>< \g -> R.setSRID g s
+  R.createPolygon ext (V.toList inn)  >>= R.setSRID s
 
 convertMultiPointToRaw :: MultiPoint -> SRID -> Geos R.Geometry
 convertMultiPointToRaw (MultiPoint vp) s = do
   vr <- (flip convertPointToRaw $ s) `V.mapM` vp
-  R.createMultiPoint (V.toList vr) >>< (flip R.setSRID $ s) 
+  R.createMultiPoint (V.toList vr) >>= R.setSRID s 
 
 convertMultiLineStringToRaw :: MultiLineString -> SRID -> Geos R.Geometry
 convertMultiLineStringToRaw (MultiLineString vl) s = do
   vr <- (flip convertLineStringToRaw $ s) `V.mapM` vl
-  R.createMultiLineString (V.toList vr) >>< (flip R.setSRID $ s)
+  R.createMultiLineString (V.toList vr) >>= R.setSRID s
 
 convertMultiPolygonToRaw :: MultiPolygon -> SRID -> Geos R.Geometry
 convertMultiPolygonToRaw (MultiPolygon vp) s = do
   vr <- (flip convertPolygonToRaw $ s) `V.mapM` vp
-  R.createMultiPolygon (V.toList vr) >>< (flip R.setSRID $ s)
+  R.createMultiPolygon (V.toList vr) >>= R.setSRID s
 
 setCoordinateSequence :: RC.CoordinateSequence a => a -> Int -> Coordinate -> Geos () 
 setCoordinateSequence cs i (Coordinate2 x y) = 
