@@ -3,7 +3,6 @@
 module Main where
 import qualified Data.ByteString as BS
 import Test.Hspec
-{-import Test.QuickCheck-}
 import Control.Exception
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Serialize
@@ -94,6 +93,3 @@ main = hspec $ do
       lsg `shouldBe` linestring
     it "Serializes a LineString into a bytestring" $ do
       linestringBS `shouldBe` writeHex linestring
-   
-        
-    
