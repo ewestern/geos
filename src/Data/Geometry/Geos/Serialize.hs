@@ -3,6 +3,7 @@
 module Data.Geometry.Geos.Serialize (
     readHex
   , writeHex
+  , readWkt
 ) where
 
 import Data.Geometry.Geos.Raw.Base
@@ -21,3 +22,9 @@ writeHex :: Geometry a -> BC.ByteString
 writeHex g = runGeos $ do
   w <- S.createWriter
   S.writeHex w =<< convertGeometryToRaw g
+
+readWkt :: BC.ByteString -> Some Geometry
+readWkt bs = runGeos $ do
+  r <- S.createWktReader
+  g <- S.readWkt r bs
+  convertGeometryFromRaw g

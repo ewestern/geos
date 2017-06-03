@@ -1,8 +1,10 @@
 module Data.Geometry.Geos.Raw.Serialize (
     createReader
   , createWriter
+  , createWktReader
   , read
   , readHex
+  , readWkt
   , write
   , writeHex
 ) where
@@ -19,6 +21,8 @@ import qualified Data.ByteString.Char8 as BC
 newtype Reader = Reader { _unReader :: ForeignPtr I.GEOSWKBReader }
 newtype Writer = Writer { _unWriter :: ForeignPtr I.GEOSWKBWriter }
 
+newtype WktReader = WktReader { _unWktReader :: ForeignPtr I.GEOSWKTReader }
+newtype WktWriter = WktWriter { _unWktWriter :: ForeignPtr I.GEOSWKTWriter }
 
 withReader :: Reader -> (Ptr I.GEOSWKBReader -> IO b) -> IO b
 withReader (Reader r) f = withForeignPtr r f
@@ -26,12 +30,25 @@ withReader (Reader r) f = withForeignPtr r f
 withWriter :: Writer -> (Ptr I.GEOSWKBWriter -> IO b) -> IO b
 withWriter (Writer w) f = withForeignPtr w f
 
+withWktReader :: WktReader -> (Ptr I.GEOSWKTReader -> IO b) -> IO b
+withWktReader (WktReader r) f = withForeignPtr r f
+
+withWktWriter :: WktWriter -> (Ptr I.GEOSWKTWriter -> IO b) -> IO b
+withWktWriter (WktWriter w) f = withForeignPtr w f
+
 createReader :: Geos Reader
-createReader = withGeos $ \h -> do 
-    ptr <- throwIfNull "Create Reader" $ 
-      I.geos_WKBReaderCreate h  
+createReader = withGeos $ \h -> do
+    ptr <- throwIfNull "Create Reader" $
+      I.geos_WKBReaderCreate h
     fp <- newForeignPtrEnv I.geos_WKBReaderDestroy h ptr
     return $ Reader fp
+
+createWktReader :: Geos WktReader
+createWktReader = withGeos $ \h -> do
+    ptr <- throwIfNull "Create WKT Reader" $
+      I.geos_WKTReaderCreate h
+    fp <- newForeignPtrEnv I.geos_WKTReaderDestroy h ptr
+    return $ WktReader fp
 
 read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry)) 
             -> Reader 
@@ -47,9 +64,21 @@ read_ f r bs = withGeos $ \h -> do
 
 read :: Reader -> BC.ByteString -> Geos Geometry
 read = read_ I.geos_WKBReaderRead
-  
+
 readHex :: Reader -> BC.ByteString -> Geos Geometry
 readHex = read_ I.geos_WKBReaderReadHex
+
+readWkt :: WktReader -> BC.ByteString -> Geos Geometry
+readWkt r bs = do
+  let f = I.geos_WKTReaderRead
+  withGeos $ \h -> do
+    ptr <- withWktReader r $ \rp ->
+              BC.useAsCStringLen bs $ \(cs, l) -> 
+                f h rp cs
+    fp <- newForeignPtrEnv I.geos_GeomDestroy h ptr
+    return $ Geometry fp
+  
+
 
 createWriter :: Geos Writer
 createWriter = withGeos $ \h -> do

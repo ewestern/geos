@@ -42,6 +42,8 @@ type GEOSQueryCallback = FunPtr (Ptr () -> Ptr () -> IO ())
 -- read/write
 data GEOSWKBWriter
 data GEOSWKBReader
+data GEOSWKTWriter
+data GEOSWKTReader
 
 
 foreign import ccall  
@@ -450,6 +452,21 @@ foreign import ccall
 foreign import ccall 
   "geos_c.h GEOSWKBWriter_setIncludeSRID_r"
   geos_WKBWriterSetIncludeSRID :: GEOSContextHandle_t -> Ptr GEOSWKBWriter -> CChar -> IO ()
+
+foreign import ccall 
+  "geos_c.h GEOSWKTReader_create_r"
+  geos_WKTReaderCreate :: GEOSContextHandle_t -> IO (Ptr GEOSWKTReader) 
+
+foreign import ccall 
+  "geos_c.h &GEOSWKTReader_destroy_r"
+  geos_WKTReaderDestroy :: FunPtr (GEOSContextHandle_t -> Ptr GEOSWKTReader -> IO ())
+
+-- 1167 extern GEOSGeometry GEOS_DLL *GEOSWKTReader_read_r(GEOSContextHandle_t handle,
+-- 1168                                                    GEOSWKTReader* reader,
+-- 1169                                                    const char *wkt);
+foreign import ccall 
+  "geos_c.h GEOSWKTReader_read_r"
+  geos_WKTReaderRead :: GEOSContextHandle_t -> Ptr GEOSWKTReader -> CString -> IO (Ptr GEOSGeometry)
 
 
 --TODO: 1085 finish writer methods
