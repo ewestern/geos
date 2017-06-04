@@ -464,9 +464,22 @@ foreign import ccall
 -- 1167 extern GEOSGeometry GEOS_DLL *GEOSWKTReader_read_r(GEOSContextHandle_t handle,
 -- 1168                                                    GEOSWKTReader* reader,
 -- 1169                                                    const char *wkt);
-foreign import ccall 
+foreign import ccall
   "geos_c.h GEOSWKTReader_read_r"
   geos_WKTReaderRead :: GEOSContextHandle_t -> Ptr GEOSWKTReader -> CString -> IO (Ptr GEOSGeometry)
+
+foreign import ccall
+  "geos_c.h GEOSWKTWriter_create_r"
+  geos_WKTWriterCreate :: GEOSContextHandle_t -> IO (Ptr GEOSWKTWriter)
+
+foreign import ccall
+  "geos_c.h &GEOSWKTWriter_destroy_r"
+  geos_WKTWriterDestroy :: FunPtr ( GEOSContextHandle_t -> Ptr GEOSWKTWriter -> IO ())
+
+  -- caller owns results
+foreign import ccall
+  "geos_c.h GEOSWKTWriter_write_r"
+  geos_WKTWriterWrite :: GEOSContextHandle_t -> Ptr GEOSWKTWriter -> Ptr GEOSGeometry -> IO CString
 
 
 --TODO: 1085 finish writer methods
