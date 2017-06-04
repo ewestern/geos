@@ -10,6 +10,7 @@ module Data.Geometry.Geos.Serialize (
 import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Geometry
 import qualified Data.Geometry.Geos.Raw.Serialize as S
+import qualified Data.Geometry.Geos.Raw.Geometry as R
 import Data.Geometry.Geos.Types
 import qualified Data.ByteString.Char8 as BC
 
@@ -24,11 +25,12 @@ writeHex g = runGeos $ do
   w <- S.createWriter
   S.writeHex w =<< convertGeometryToRaw g
 
-readWkt :: BC.ByteString -> Some Geometry
-readWkt bs = runGeos $ do
+readWkt :: Maybe Int -> BC.ByteString -> Some Geometry
+readWkt srid bs = runGeos $ do
   r <- S.createWktReader
   g <- S.readWkt r bs
-  convertGeometryFromRaw g
+  g' <- R.setSRID srid g
+  convertGeometryFromRaw g'
 
 writeWkt :: Geometry a -> BC.ByteString
 writeWkt g = runGeos $ do

@@ -9,7 +9,7 @@ import Data.Geometry.Geos.Serialize
 import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Geometry
 import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
-import qualified Data.Geometry.Geos.Raw.Geometry as R 
+import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Vector as V
 import Debug.Trace
 
@@ -26,21 +26,6 @@ makePolygon = Polygon . V.singleton . LinearRing . V.map (uncurry Coordinate2) .
 polygon1 =  makePolygon [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
 polygon2 = makePolygon [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
 
-
-main' :: IO ()
-main' = do
-  putStrLn $ show (compare (writeWkt linestring) linestringWkt)
-  putStrLn "\n"
-  putStrLn $ show (writeWkt linestring)
-  putStrLn "\n"
-  putStrLn $ show linestringWkt
-  putStrLn "\n"
-  let g = runGeos $ return (readWkt linestringWkt)
-      wkt = runGeos $ do
-        case g of
-          Some g' -> return (writeWkt g')
-  putStrLn $ show wkt
-  putStrLn "hi"
 
 main :: IO ()
 main = hspec $ do
@@ -112,8 +97,8 @@ main = hspec $ do
       linestringBS `shouldBe` writeHex linestring
     it "Serializes a LineString to WKT" $ do
       linestringWkt `shouldBe` (writeWkt linestring)
-    --it "Can parse WKT" $ do
-    --  let lsg :: Geometry LineString = withSomeGeometry (readWkt linestringWkt) $ \case
-    --              ls@(LineStringGeometry _ _) -> ls
-    --              _ -> error "asda"
-    --  lsg `shouldBe` linestring
+    it "Can parse WKT" $ do
+      let lsg :: Geometry LineString = withSomeGeometry (readWkt (Just 4326) linestringWkt) $ \case
+                  ls@(LineStringGeometry _ _) -> ls
+                  _ -> error "asda"
+      lsg `shouldBe` linestring
