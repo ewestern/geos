@@ -112,7 +112,7 @@ convertLinearRingToRaw (LinearRing cs) s = do
   R.createLinearRing csr >>= R.setSRID s
   where
     len = V.length cs
-  
+
 convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
 convertLineStringToRaw (LineString cs) s = do
   csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
