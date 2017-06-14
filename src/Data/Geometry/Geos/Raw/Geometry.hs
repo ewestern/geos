@@ -88,15 +88,23 @@ instance Geometry GeomConst where
     constructGeometry geo =  return $ GeomConst geo
 
 
+createGeometryFromCoords_ :: (Geometry b, CoordinateSequence a )
+                          => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
+                          -> a
+                          -> Geos b
+createGeometryFromCoords_ f c = do
+   ptr <- withGeos $ \h -> 
+            withCoordinateSequence c $ \pcs -> 
+              f h pcs
+   constructGeometry ptr
 
 createGeometryFromCoords :: (CoordSeqInput b ~ cb, Geometry b, CoordinateSequence cb )
                           => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
                           -> cb
                           -> Geos b
 createGeometryFromCoords f c  = do
-   cloned <- cloneCoordinateSequence c
    ptr <- withGeos $ \h -> 
-            withCoordinateSequence cloned $ \pcs -> 
+            withCoordinateSequence c $ \pcs -> 
               f h pcs
    constructGeometry ptr
 
@@ -112,6 +120,7 @@ geomEq a b = runGeos $ do
         csb <- getCoordinateSequence b
         return $ csa == csb
       else return False
+
 
 instance Eq Geom where
   a == b = geomEq a b
@@ -173,29 +182,31 @@ getNumInteriorRings = getNum_ I.geos_GetNumInteriorRings
 getNumGeometries :: Geometry a => a -> Geos Int
 getNumGeometries = getNum_ I.geos_GetNumGeometries
 
-getN_ :: Geometry a 
+getN_ :: (Geometry a , Geometry b)
       => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CInt -> IO (Ptr I.GEOSGeometry)) 
       -> a
       -> Int 
-      -> Geos a
+      -> Geos b
 getN_ f g i = do
   g' <- withGeos $ \h -> throwIfNull "getN" $ withGeometry g $ \gp ->
           f h gp $ fromIntegral i 
   constructGeometry g'
 
 
-getGeometryN :: Geometry a => a -> Int -> Geos a
+getGeometryN :: (Geometry a, Geometry b) => a -> Int -> Geos b
 getGeometryN = getN_ I.geos_GetGeometryN
 
--- must not be destroyed directly
-getExteriorRing :: Geometry a => a -> Geos a
+getExteriorRing :: (Geometry a, Geometry b) => a -> Geos b
 getExteriorRing  g = do
   r <- withGeos $ \h -> 
         throwIfNull "getExteriorRing" $ withGeometry g $ I.geos_GetExteriorRing h
   constructGeometry r
 
+{-getExteriorRing_ :: Geometry a => a -> GeomConst-}
+{-getExteriorRing_ = getExteriorRing-}
 
-getInteriorRingN :: Geometry a => a -> Int -> Geos a
+
+getInteriorRingN :: (Geometry a, Geometry b) => a -> Int -> Geos b
 getInteriorRingN  = getN_ I.geos_GetInteriorRingN
 
 normalize :: Geometry a => a -> Geos a
@@ -227,8 +238,8 @@ cloneGeometry g = do
 createPoint :: CoordSeqInput Geom -> Geos Geom
 createPoint = createGeometryFromCoords I.geos_GeomCreatePoint
 
-createLinearRing :: CoordSeqInput Geom -> Geos Geom
-createLinearRing = createGeometryFromCoords I.geos_GeomCreateLinearRing
+createLinearRing :: CoordSeqConst -> Geos GeomConst
+createLinearRing = createGeometryFromCoords_ I.geos_GeomCreateLinearRing
 
 createLineString :: CoordSeqInput Geom -> Geos Geom
 createLineString = createGeometryFromCoords I.geos_GeomCreateLineString
@@ -237,7 +248,7 @@ createLineString = createGeometryFromCoords I.geos_GeomCreateLineString
 
 -- | The second argument is a list of geometries,
 -- | NOTE. geometries become owned by caller.
-createPolygon :: Geometry a => a -> [a] -> Geos a
+createPolygon :: Geometry a => GeomConst -> [GeomConst] -> Geos a
 createPolygon o hs = do
   g <- withGeos $ \h -> do
         ptrs <- mapM (\v -> withGeometry v $ return) hs
