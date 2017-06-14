@@ -62,10 +62,10 @@ interpolateNormalized g d = runGeos $ do
   g' <- convertGeometryToRaw g
   convertGeometryFromRaw =<<  (R.interpolateNormalized g' $ realToFrac d)
 
-binaryPredicate_ :: (R.Geometry -> R.Geometry -> Geos Bool)
-                    -> Geometry a
-                    -> Geometry b
-                    -> Bool
+binaryPredicate_ :: (R.Geom -> R.Geom -> Geos Bool)
+                  -> Geometry a
+                  -> Geometry b
+                  -> Bool
 binaryPredicate_ f g1 g2 = runGeos . join $ (f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
 
 instance Geo (Geometry a) where
@@ -87,7 +87,7 @@ equals = binaryPredicate_ R.equals
 equalsExact :: Geometry a -> Geometry a -> Double -> Bool
 equalsExact g1 g2 d = binaryPredicate_ (\g1' g2' -> R.equalsExact g1' g2' d) g1 g2
 
-convertGeometryToRaw :: Geometry a -> Geos R.Geometry
+convertGeometryToRaw :: Geometry a -> Geos R.Geom
 convertGeometryToRaw = \case 
     PointGeometry pg s -> convertPointToRaw pg s 
     LineStringGeometry lsg s -> convertLineStringToRaw lsg s
@@ -98,14 +98,14 @@ convertGeometryToRaw = \case
     MultiPolygonGeometry mp s -> convertMultiPolygonToRaw mp s 
 
 
-convertPointToRaw :: Point -> SRID -> Geos R.Geometry
+convertPointToRaw :: Point -> SRID -> Geos R.Geom
 convertPointToRaw (Point c) s = do
   cs :: RC.CoordSeqConst <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
   setCoordinateSequence cs 0 c 
   R.createPoint cs >>= R.setSRID s
 
 
-convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geometry
+convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geom
 convertLinearRingToRaw (LinearRing cs) s = do
   csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) (V.enumFromN 0 len) cs 
@@ -113,7 +113,7 @@ convertLinearRingToRaw (LinearRing cs) s = do
   where
     len = V.length cs
 
-convertLineStringToRaw :: LineString -> SRID -> Geos R.Geometry
+convertLineStringToRaw :: LineString -> SRID -> Geos R.Geom
 convertLineStringToRaw (LineString cs) s = do
   csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
@@ -121,23 +121,23 @@ convertLineStringToRaw (LineString cs) s = do
   where
     len = V.length cs    
 
-convertPolygonToRaw :: Polygon -> SRID -> Geos R.Geometry
+convertPolygonToRaw :: Polygon -> SRID -> Geos R.Geom
 convertPolygonToRaw (Polygon lrs) s = do
   ext <- convertLinearRingToRaw (V.head lrs) s
   inn <- (flip convertLinearRingToRaw $ s) `V.mapM` V.tail lrs
   R.createPolygon ext (V.toList inn)  >>= R.setSRID s
 
-convertMultiPointToRaw :: MultiPoint -> SRID -> Geos R.Geometry
+convertMultiPointToRaw :: MultiPoint -> SRID -> Geos R.Geom
 convertMultiPointToRaw (MultiPoint vp) s = do
   vr <- (flip convertPointToRaw $ s) `V.mapM` vp
   R.createMultiPoint (V.toList vr) >>= R.setSRID s 
 
-convertMultiLineStringToRaw :: MultiLineString -> SRID -> Geos R.Geometry
+convertMultiLineStringToRaw :: MultiLineString -> SRID -> Geos R.Geom
 convertMultiLineStringToRaw (MultiLineString vl) s = do
   vr <- (flip convertLineStringToRaw $ s) `V.mapM` vl
   R.createMultiLineString (V.toList vr) >>= R.setSRID s
 
-convertMultiPolygonToRaw :: MultiPolygon -> SRID -> Geos R.Geometry
+convertMultiPolygonToRaw :: MultiPolygon -> SRID -> Geos R.Geom
 convertMultiPolygonToRaw (MultiPolygon vp) s = do
   vr <- (flip convertPolygonToRaw $ s) `V.mapM` vp
   R.createMultiPolygon (V.toList vr) >>= R.setSRID s
@@ -151,7 +151,7 @@ setCoordinateSequence cs i (Coordinate3 x y z) =
 
 --- Conversions
 --
-convertGeometryFromRaw :: R.Geometry -> Geos (Some Geometry)
+convertGeometryFromRaw :: R.Geometry a => a -> Geos (Some Geometry)
 convertGeometryFromRaw rg = do
     s <- R.getSRID rg
     tid <- R.getTypeId rg
@@ -191,42 +191,42 @@ getPosition cs i =  do
       Nothing -> return $ Coordinate2 x y
       Just z' -> return $ Coordinate3 x y z'
 
-convertPointFromRaw :: R.Geometry -> Geos Point
+convertPointFromRaw :: R.Geometry a => a -> Geos Point
 convertPointFromRaw g = do
   cs <- R.getCoordinateSequence g
   Point <$> getPosition cs 0 
 
-convertSequenceFromRaw :: R.Geometry -> Geos CoordinateSequence
+convertSequenceFromRaw :: R.Geometry a => a -> Geos CoordinateSequence
 convertSequenceFromRaw g = do
   -- todo, consider using getCoordinateSequence_
   cs <- R.getCoordinateSequence g
   size <- R.getNumCoordinates g
   V.generateM size (getPosition cs)
 
-convertLineStringFromRaw :: R.Geometry -> Geos LineString
+convertLineStringFromRaw :: R.Geometry a => a -> Geos LineString
 convertLineStringFromRaw g = LineString <$> convertSequenceFromRaw g
 
-convertLinearRingFromRaw :: R.Geometry -> Geos LinearRing
+convertLinearRingFromRaw :: R.Geometry a => a -> Geos LinearRing
 convertLinearRingFromRaw g = LinearRing <$> convertSequenceFromRaw g
 
-convertPolygonFromRaw :: R.Geometry -> Geos Polygon
+convertPolygonFromRaw :: R.Geometry a => a -> Geos Polygon
 convertPolygonFromRaw g = do
   is <- R.getNumInteriorRings g
   ext <- V.singleton <$> R.getExteriorRing g
   ins <- V.generateM is (R.getInteriorRingN g)
   Polygon <$> convertLinearRingFromRaw `V.mapM` (ext <> ins) 
 
-convertMultiPointFromRaw :: R.Geometry -> Geos MultiPoint
+convertMultiPointFromRaw :: R.Geometry a => a -> Geos MultiPoint
 convertMultiPointFromRaw g = do
   ng <- R.getNumGeometries g
   MultiPoint <$> V.generateM ng (\i -> convertPointFromRaw =<< R.getGeometryN g i ) 
 
-convertMultiLineStringFromRaw :: R.Geometry -> Geos MultiLineString
+convertMultiLineStringFromRaw :: R.Geometry a => a -> Geos MultiLineString
 convertMultiLineStringFromRaw g = do
   ng <- R.getNumGeometries g
   MultiLineString <$> V.generateM ng (\i -> convertLineStringFromRaw =<< R.getGeometryN g i)
 
-convertMultiPolygonFromRaw :: R.Geometry -> Geos MultiPolygon
+convertMultiPolygonFromRaw :: R.Geometry a => a -> Geos MultiPolygon
 convertMultiPolygonFromRaw g = do
   ng <- R.getNumGeometries g
   MultiPolygon <$> V.generateM ng (\i -> convertPolygonFromRaw =<< R.getGeometryN g i)
