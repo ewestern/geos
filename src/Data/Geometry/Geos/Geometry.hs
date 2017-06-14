@@ -2,8 +2,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Data.Geometry.Geos.Geometry (
-  convertGeometryFromRaw
+    convertGeometryFromRaw
   , convertGeometryToRaw
+  , convertMultiPolygonFromRaw
   , interpolate
   , interpolateNormalized
   , project
@@ -98,16 +99,18 @@ convertGeometryToRaw = \case
     MultiPolygonGeometry mp s -> convertMultiPolygonToRaw mp s 
 
 
+
+
 convertPointToRaw :: Point -> SRID -> Geos R.Geom
 convertPointToRaw (Point c) s = do
-  cs :: RC.CoordSeqConst <- RC.createCoordinateSequence 1 (dimensionsCoordinate c)
+  cs <- RC.createEmptyCoordinateSequence 1 (dimensionsCoordinate c)
   setCoordinateSequence cs 0 c 
   R.createPoint cs >>= R.setSRID s
 
 
 convertLinearRingToRaw :: LinearRing -> SRID -> Geos R.Geom
 convertLinearRingToRaw (LinearRing cs) s = do
-  csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
+  csr <- RC.createEmptyCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) (V.enumFromN 0 len) cs 
   R.createLinearRing csr >>= R.setSRID s
   where
@@ -115,7 +118,7 @@ convertLinearRingToRaw (LinearRing cs) s = do
 
 convertLineStringToRaw :: LineString -> SRID -> Geos R.Geom
 convertLineStringToRaw (LineString cs) s = do
-  csr :: RC.CoordSeqConst <- RC.createCoordinateSequence len (dimensionsCoordinateSequence cs) 
+  csr <- RC.createEmptyCoordinateSequence len (dimensionsCoordinateSequence cs) 
   V.zipWithM_ (setCoordinateSequence csr) ( V.enumFromN 0 len) cs 
   R.createLineString csr >>=  R.setSRID s
   where
@@ -256,7 +259,7 @@ nearestPoints :: Geometry a -> Geometry a -> (Coordinate, Coordinate)
 nearestPoints g1 g2 = runGeos $ do
   g1'<- convertGeometryToRaw g1
   g2'<- convertGeometryToRaw g2
-  cs <- R.nearestPoints g1' g2'
+  cs :: RC.CoordSeq <- R.nearestPoints g1' g2'
   p1 <- getPosition cs 0
   p2 <- getPosition cs 1
   return (p1, p2)
