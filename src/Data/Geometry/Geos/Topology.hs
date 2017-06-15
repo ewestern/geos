@@ -20,17 +20,17 @@ import qualified Data.Geometry.Geos.Raw.Topology as R
 import qualified Data.Geometry.Geos.Raw.Geometry as RG
 
 
-geo_1 :: ( RG.Geometry -> Geos RG.Geometry )
-          -> Geometry a
-          -> Some Geometry
+geo_1 ::( RG.Geom -> Geos RG.Geom )
+      -> Geometry a
+      -> Some Geometry
 geo_1 f g = runGeos $ do
     geo <- convertGeometryToRaw g 
     convertGeometryFromRaw =<< f geo
 
-geo_2 :: (RG.Geometry -> RG.Geometry -> Geos RG.Geometry)
-          -> Geometry a
-          -> Geometry b
-          -> Some Geometry
+geo_2 :: (RG.Geom -> RG.Geom -> Geos RG.Geom )
+      -> Geometry a
+      -> Geometry b
+      -> Some Geometry
 geo_2 f g1 g2 = runGeos $ do
   g1' <- convertGeometryToRaw g1
   g2' <- convertGeometryToRaw g2

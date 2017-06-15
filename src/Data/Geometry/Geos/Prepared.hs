@@ -32,10 +32,10 @@ import Control.Monad
 prepare :: Geometry a -> RP.PreparedGeometry
 prepare = runGeos . (G.convertGeometryToRaw >=> RP.prepare)
 
-queryPrepared :: (RP.PreparedGeometry -> RG.Geometry -> Geos Bool) 
-                  -> RP.PreparedGeometry
-                  -> Geometry a
-                  -> Bool 
+queryPrepared :: (RP.PreparedGeometry -> RG.Geom -> Geos Bool) 
+              -> RP.PreparedGeometry
+              -> Geometry b
+              -> Bool 
 queryPrepared f pg g = runGeos $ G.convertGeometryToRaw g >>= (f pg)
 
 instance Geo (RP.PreparedGeometry) where

@@ -36,7 +36,7 @@ Library
   build-tools: hsc2hs
   exposed-modules:
       Data.Geometry.Geos.Topology
-    , Data.Geometry.Geos.Geometry
+      Data.Geometry.Geos.Geometry
     , Data.Geometry.Geos.Types
     , Data.Geometry.Geos.Serialize
     , Data.Geometry.Geos.Buffer
@@ -84,6 +84,14 @@ test-suite test
     , RankNTypes
     , DataKinds
     , KindSignatures   
+  other-modules:
+      Data.Geometry.Geos.Geometry
+    , Data.Geometry.Geos.Raw.Base
+    , Data.Geometry.Geos.Raw.CoordSeq
+    , Data.Geometry.Geos.Raw.Geometry
+    , Data.Geometry.Geos.Raw.Serialize
+    , Data.Geometry.Geos.Serialize
+    , Data.Geometry.Geos.Types
 
 source-repository head
   type:     git
