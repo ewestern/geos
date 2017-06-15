@@ -18,6 +18,7 @@ module Data.Geometry.Geos.Raw.Geometry (
   , getTypeName
   , getTypeId
   , getCoordinateSequence
+  , getCoordinateSequence_
   , getNumCoordinates
   , getNumInteriorRings
   , getNumGeometries
@@ -153,6 +154,12 @@ getTypeId g = withGeos $ \h -> do
   i <- throwIfNeg (mkErrorMessage "getTypeId") $ withGeometry g $ I.geos_GeomTypeId h
   return $ fromIntegral i
 
+-- Duplicating this function is gross, but doing it temporarily to get things working.
+getCoordinateSequence_ :: Geometry a => a -> Geos CoordSeqConst
+getCoordinateSequence_ g = do
+  ptr <- withGeos $ \h ->  
+          throwIfNull  "getCoordinateSequence" $ withGeometry g $ I.geos_GetCoordSeq h 
+  createCoordinateSequence ptr
 
 getCoordinateSequence :: (CoordSeqInput a ~ ca, CoordinateSequence ca, Geometry a) => a -> Geos (CoordSeqInput a)
 getCoordinateSequence g = do
@@ -202,10 +209,6 @@ getExteriorRing  g = do
         throwIfNull "getExteriorRing" $ withGeometry g $ I.geos_GetExteriorRing h
   constructGeometry r
 
-{-getExteriorRing_ :: Geometry a => a -> GeomConst-}
-{-getExteriorRing_ = getExteriorRing-}
-
-
 getInteriorRingN :: (Geometry a, Geometry b) => a -> Int -> Geos b
 getInteriorRingN  = getN_ I.geos_GetInteriorRingN
 
@@ -227,12 +230,6 @@ cloneGeometry g = do
  {-GEOSCoordSequence* arguments will become ownership of the returned object.-}
  {-All functions return NULL on exception.-}
 
-
-
-{- For these:
-  a GeomConst needs a CoordSeq
-  a Geom needs a CoordSeqConst
--}
 
 -- Geometry Constructors
 createPoint :: CoordSeqInput Geom -> Geos Geom

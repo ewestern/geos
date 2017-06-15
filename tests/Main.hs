@@ -9,6 +9,7 @@ import Data.Geometry.Geos.Serialize
 import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Geometry
 import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
+import qualified Data.Geometry.Geos.Raw.Serialize as RS
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Vector as V
 import Debug.Trace
@@ -35,7 +36,7 @@ main = hspec $ do
 
     it "Creates a Coordinate Sequence" $  do
       let (size, dim) = runGeos $ do 
-            cs :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
+            cs :: RC.CoordSeq <- RC.createEmptyCoordinateSequence 2 2
             size <-  RC.getCoordinateSequenceSize cs 
             dim <-  RC.getCoordinateSequenceDimensions cs
             return (size, dim)
@@ -43,7 +44,7 @@ main = hspec $ do
       dim `shouldBe` (2 :: Int)
     it "Sets a Coordinate Sequence" $ do
       let (d1, d2) = runGeos $ do
-            c :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
+            c :: RC.CoordSeq <- RC.createEmptyCoordinateSequence 2 2
             RC.setCoordinateSequenceX c 0 5.0 
             RC.setCoordinateSequenceY c 0 10.0 
             d1 <- RC.getCoordinateSequenceX c 0
@@ -52,19 +53,21 @@ main = hspec $ do
       d1 `shouldBe` (5.0 :: Double)
       d2 `shouldBe` (10.0 :: Double)
     it "Gets a Coordinate Sequence from a geometry" $ do
+      -- CoordSeqConst, becuase required by createLineString
       let cs = runGeos $ do
-            c <- RC.createCoordinateSequence 2 2
+            c  <- RC.createEmptyCoordinateSequence 2 2
             RC.setCoordinateSequenceX c 0 5.0 
             RC.setCoordinateSequenceY c 0 10.0 
             return c
-          cs' = runGeos $ do
-            g <- R.createLineString cs
+          cs'  = runGeos $ do
+            -- CoordSeqConst becomes owned by Geom
+            g  <- R.createLineString cs
             R.getCoordinateSequence g
       cs `shouldBe` cs'
     it "Creates a LineString " $ do
       let tid = runGeos $ do
-            cs :: RC.CoordSeqConst <- RC.createCoordinateSequence 2 2
-            ls <- R.createLineString cs
+            cs :: RC.CoordSeqConst <- RC.createEmptyCoordinateSequence 2 2
+            ls :: R.Geom <- R.createLineString cs
             R.getTypeId ls
       tid `shouldBe` 1
     it "Creates a Geometry" $ do
@@ -84,10 +87,34 @@ main = hspec $ do
             rp <-  convertGeometryToRaw $ PolygonGeometry polygon1 Nothing
             R.getTypeId rp
       t `shouldBe` 3
+    it "Converts a MultiPolygon from Raw" $ do
+      let (x,y) = runGeos $ do
+            r <- RS.createReader
+            mpr <- RS.readHex r multiPolygonStringBS
+            MultiPolygon vps <- convertMultiPolygonFromRaw mpr
+            let (Polygon vlr) = vps V.! 0
+                (LinearRing vc) = vlr V.! 0
+                (Coordinate2 x y) = vc V.! 0
+            return (x, y)
+
+      x `shouldBe` 153.160525
+      y `shouldBe` -27.377412
     it "Tests disjoint" $ do
-      (disjoint (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing)) `shouldBe` False 
+       (disjoint (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing)) `shouldBe` False 
     it "Tests intersects" $ do
-      intersects (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing) `shouldBe` True
+       intersects (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing) `shouldBe` True
+    it "Tests raw parsing" $ do
+        let (x,y) = runGeos $ do
+                r <- RS.createReader
+                g <- RS.readHex r multiPolygonStringBS
+                gi :: R.GeomConst <- R.getGeometryN g 0
+                ir :: R.GeomConst <- R.getExteriorRing gi
+                cs :: RC.CoordSeqConst <- R.getCoordinateSequence_ ir
+                x <- RC.getCoordinateSequenceX cs 0
+                y <- RC.getCoordinateSequenceY cs 0
+                return (x,y)
+        x `shouldBe` 153.160525
+        y `shouldBe` -27.377412
 
   describe "Tests Serialization" $ do
     it "Parses a bytestring to a linestring" $  do
@@ -96,6 +123,7 @@ main = hspec $ do
                   _ -> error "asda"
       lsg `shouldBe` linestring
     it "Parse a multipolygon" $ do
+      pending
       let multig :: Geometry MultiPolygon = withSomeGeometry (readHex multiPolygonStringBS) $ \case
                   g@(MultiPolygonGeometry _ _) -> g
                   _ -> error "asda"

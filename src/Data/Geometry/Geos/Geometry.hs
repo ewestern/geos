@@ -155,7 +155,7 @@ setCoordinateSequence cs i (Coordinate3 x y z) =
 
 --- Conversions
 --
-convertGeometryFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca) => a -> Geos (Some Geometry)
+convertGeometryFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ RC.CoordSeqConst) => a -> Geos (Some Geometry)
 convertGeometryFromRaw rg = do
     s <- R.getSRID rg
     tid <- R.getTypeId rg
@@ -195,24 +195,22 @@ getPosition cs i =  do
       Nothing -> return $ Coordinate2 x y
       Just z' -> return $ Coordinate3 x y z'
 
--- (Eq ca, Geometry a, CoordSeqInput a ~ ca, CoordinateSequence ca) =>
 convertPointFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca)  => a -> Geos Point
 convertPointFromRaw g = do
   cs <- R.getCoordinateSequence g
   Point <$> getPosition cs 0 
 
 
-{-convertSequenceFromRaw :: R.Geometry a => a -> Geos CoordinateSequence-}
-convertSequenceFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca) => a -> Geos CoordinateSequence
+convertSequenceFromRaw :: R.Geometry a  => a -> Geos CoordinateSequence
 convertSequenceFromRaw g = do
-  cs :: RC.CoordSeqConst <- R.getCoordinateSequence g
+  cs <- R.getCoordinateSequence_ g
   size <- R.getNumCoordinates g
   V.generateM size (getPosition cs)
 
-convertLineStringFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca) => a -> Geos LineString
+convertLineStringFromRaw :: R.Geometry a => a -> Geos LineString
 convertLineStringFromRaw g = LineString <$> convertSequenceFromRaw g
 
-convertLinearRingFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca) => a -> Geos LinearRing
+convertLinearRingFromRaw :: R.Geometry a => a -> Geos LinearRing
 convertLinearRingFromRaw g = LinearRing <$> convertSequenceFromRaw g
 
 convertPolygonFromRaw :: R.Geometry a => a -> Geos Polygon

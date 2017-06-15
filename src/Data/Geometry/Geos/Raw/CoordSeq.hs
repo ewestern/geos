@@ -93,7 +93,6 @@ instance CoordinateSequence CoordSeq where
       fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
       return $ CoordSeq fptr
 
-
 instance CoordinateSequence CoordSeqConst where
   withCoordinateSequence (CoordSeqConst p) f = f p
   createEmptyCoordinateSequence size dim = do
