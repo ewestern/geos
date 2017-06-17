@@ -8,9 +8,11 @@ import Data.Geometry.Geos.Types
 
 point = PointGeometry (Point $ Coordinate2 36.1 (-119.1)) (Just 4326)
 makePoint (c1, c2) = Point $ Coordinate2 c1 c2
-makePointGeo c = PointGeometry (makePoint c) (Just 4326)
+makePointGeo c = PointGeometry (makePoint c) Nothing
 makePolygon = Polygon . V.singleton . LinearRing . V.map (uncurry Coordinate2) . V.fromList
-makePolygonGeo cs = PolygonGeometry (makePolygon cs) (Just 4326)
+makePolygonGeo cs = PolygonGeometry (makePolygon cs) Nothing
+makeMultiPolygon polygons = MultiPolygon . V.fromList $ (makePolygon <$> polygons)
+makeMultiPolygonGeo polygons = MultiPolygonGeometry (makeMultiPolygon polygons) Nothing
 polygon1 =  makePolygon [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
 polygon2 = makePolygon [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
 
