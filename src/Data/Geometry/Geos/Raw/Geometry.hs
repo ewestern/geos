@@ -18,7 +18,7 @@ module Data.Geometry.Geos.Raw.Geometry (
   , getTypeName
   , getTypeId
   , getCoordinateSequence
-  , getCoordinateSequence_
+  {-, getCoordinateSequence_-}
   , getNumCoordinates
   , getNumInteriorRings
   , getNumGeometries
@@ -89,19 +89,9 @@ instance Geometry GeomConst where
     constructGeometry geo =  return $ GeomConst geo
 
 
-createGeometryFromCoords_ :: (Geometry b, CoordinateSequence a )
-                          => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
-                          -> a
-                          -> Geos b
-createGeometryFromCoords_ f c = do
-   ptr <- withGeos $ \h -> 
-            withCoordinateSequence c $ \pcs -> 
-              f h pcs
-   constructGeometry ptr
-
-createGeometryFromCoords :: (CoordSeqInput b ~ cb, Geometry b, CoordinateSequence cb )
-                          => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
-                          -> cb
+createGeometryFromCoords :: Geometry b
+                          => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry))
+                          -> CoordSeqConst
                           -> Geos b
 createGeometryFromCoords f c  = do
    ptr <- withGeos $ \h -> 
@@ -154,14 +144,10 @@ getTypeId g = withGeos $ \h -> do
   i <- throwIfNeg (mkErrorMessage "getTypeId") $ withGeometry g $ I.geos_GeomTypeId h
   return $ fromIntegral i
 
--- Duplicating this function is gross, but doing it temporarily to get things working.
-getCoordinateSequence_ :: Geometry a => a -> Geos CoordSeqConst
-getCoordinateSequence_ g = do
-  ptr <- withGeos $ \h ->  
-          throwIfNull  "getCoordinateSequence" $ withGeometry g $ I.geos_GetCoordSeq h 
-  createCoordinateSequence ptr
-
-getCoordinateSequence :: (CoordSeqInput a ~ ca, CoordinateSequence ca, Geometry a) => a -> Geos (CoordSeqInput a)
+{-|
+Never a good case for using this with a finalizer. 
+-}
+getCoordinateSequence :: Geometry a => a -> Geos CoordSeqConst
 getCoordinateSequence g = do
   ptr <- withGeos $ \h ->  
           throwIfNull  "getCoordinateSequence" $ withGeometry g $ I.geos_GetCoordSeq h 
@@ -232,13 +218,17 @@ cloneGeometry g = do
 
 
 -- Geometry Constructors
-createPoint :: CoordSeqInput Geom -> Geos Geom
+{-|
+The following require CoordSeqConst as arguments since coordinate sequences become owned by the Geometry object.
+
+-}
+createPoint ::Geometry b => CoordSeqConst -> Geos b
 createPoint = createGeometryFromCoords I.geos_GeomCreatePoint
 
-createLinearRing :: CoordSeqConst -> Geos GeomConst
-createLinearRing = createGeometryFromCoords_ I.geos_GeomCreateLinearRing
+createLinearRing :: Geometry a => CoordSeqConst -> Geos a
+createLinearRing = createGeometryFromCoords I.geos_GeomCreateLinearRing
 
-createLineString :: CoordSeqInput Geom -> Geos Geom
+createLineString ::Geometry b => CoordSeqConst -> Geos b
 createLineString = createGeometryFromCoords I.geos_GeomCreateLineString
 
 -- TODO: Make this take a vector argument

@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-|
 Module      : Data.Geometry.Geos.Prepared
 
@@ -27,12 +28,14 @@ import qualified Data.Geometry.Geos.Raw.Geometry as RG
 import Data.Geometry.Geos.Raw.Base
 import qualified Data.Geometry.Geos.Geometry as G
 import Data.Geometry.Geos.Types
-import Control.Monad
 
 prepare :: Geometry a -> RP.PreparedGeometry
-prepare = runGeos . (G.convertGeometryToRaw >=> RP.prepare)
+prepare g = runGeos $ do
+  r :: RG.Geom <- G.convertGeometryToRaw g
+  RP.prepare r
 
-queryPrepared :: (RP.PreparedGeometry -> RG.Geom -> Geos Bool) 
+
+queryPrepared :: (RP.PreparedGeometry -> RG.GeomConst -> Geos Bool) 
               -> RP.PreparedGeometry
               -> Geometry b
               -> Bool 
