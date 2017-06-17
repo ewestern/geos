@@ -16,9 +16,10 @@ import Debug.Trace
 
 import ParsingSpec
 import RawGeometrySpec
-
+import SpatialOperationsSpec
 
 main :: IO ()
 main = hspec $ do
   rawGeometrySpecs
   parsingSpecs
+  spatialOpsSpecs
