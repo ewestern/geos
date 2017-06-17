@@ -16,10 +16,13 @@ spatialOpsSpecs = describe "Tests Contains" $ do
         polygonWithHole = makePolygonGeo [ [(0,0), (0,1), (1,1), (1,0), (0,0)], [(0.1,0.1),(0.1,0.9),(0.9,0.1),(0.1,0.1)] ]
         pointIn         = makePointGeo (0.6, 0.6)
         pointOut        = makePointGeo (1.5, 0.5)
+        pointInHole     = makePointGeo (0.4, 0.4)
     (contains polygon pointIn) `shouldBe` True
     (contains polygon pointOut) `shouldBe` False
     (contains polygonWithHole pointIn) `shouldBe` True
     (contains polygonWithHole pointOut) `shouldBe` False
+    (contains polygonWithHole pointInHole) `shouldBe` False
+
   it "Does simple polygon to polygon comparison" $ do
     let polygonBig   = makePolygonGeo [ [(0,0), (0,2), (2,2), (2,0), (0,0)] ]
         polygonSmall = makePolygonGeo [ [(0,0), (0,1), (1,1), (1,0), (0,0)] ]
@@ -29,7 +32,7 @@ spatialOpsSpecs = describe "Tests Contains" $ do
     (contains polygonBig polygonIntersect) `shouldBe` False
 
   it "Does multi polygon to point comparison" $ do
-    -- pendingWith "Causes double free on memory"
+    pendingWith "Causes double free on memory"
     let polygonBig   = [ [(0,0), (0,2), (2,2), (2,0), (0,0)]]
         polygonSmall = [ [(3,0), (3,1), (4,1), (4,0), (3,0)]]
         multiPoly    = makeMultiPolygonGeo [polygonBig, polygonSmall]
