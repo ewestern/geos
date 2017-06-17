@@ -21,7 +21,7 @@ class Geo a where
   touches ::  a -> Geometry b -> Bool
   -- | Returns True if the DE-9IM intersection matrix for the two geometries is T*F**F***.
   within ::  a -> Geometry b -> Bool
-  
+
 
 type SRID = Maybe Int
 
@@ -32,7 +32,7 @@ data Some :: (* -> *) -> * where
   {-(Some a) == (Some b) =  a == b-}
 
 withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
-withSomeGeometry (Some p) f = f p 
+withSomeGeometry (Some p) f = f p
 
 instance Show (Some Geometry) where
   show (Some a) = "Some (" <> show a <> ")"
@@ -58,7 +58,7 @@ data Coordinate =
 dimensionsCoordinate :: Coordinate -> Int
 dimensionsCoordinate = length . gmapQ (const ())
 
-type CoordinateSequence = V.Vector Coordinate 
+type CoordinateSequence = V.Vector Coordinate
 
 dimensionsCoordinateSequence :: CoordinateSequence -> Int
 dimensionsCoordinateSequence = dimensionsCoordinate . V.head
