@@ -54,16 +54,16 @@ main = hspec $ do
       d2 `shouldBe` (10.0 :: Double)
     it "Gets a Coordinate Sequence from a geometry" $ do
       -- CoordSeqConst, becuase required by createLineString
-      let cs = runGeos $ do
-            c  <- RC.createEmptyCoordinateSequence 2 2
-            RC.setCoordinateSequenceX c 0 5.0 
-            RC.setCoordinateSequenceY c 0 10.0 
+      let cs1 = runGeos $ do
+            c <- RC.createEmptyCoordinateSequence 2 2 -- will become owned by geometry
+            RC.setCoordinateSequenceX c 0 5.0
+            RC.setCoordinateSequenceY c 0 10.0
             return c
-          cs'  = runGeos $ do
-            -- CoordSeqConst becomes owned by Geom
-            g  <- R.createLineString cs
-            R.getCoordinateSequence g
-      cs `shouldBe` cs'
+          cs2  = runGeos $ do
+            g  :: R.Geom <- R.createLineString cs1 
+            cs' :: RC.CoordSeqConst <- R.getCoordinateSequence g
+            return cs'
+      cs1 `shouldBe` cs2
     it "Creates a LineString " $ do
       let tid = runGeos $ do
             cs :: RC.CoordSeqConst <- RC.createEmptyCoordinateSequence 2 2
@@ -74,7 +74,7 @@ main = hspec $ do
       pending
     it "Converts a LineString" $ do
       let (srid, tid, tn) = runGeos $ do
-            l <- convertGeometryToRaw linestring
+            l :: R.Geom <- convertGeometryToRaw linestring
             t <- R.getTypeId l
             s <- R.getSRID l
             tn <- R.getTypeName l
@@ -84,7 +84,7 @@ main = hspec $ do
       tn `shouldBe` "LineString"
     it "Converts a Polygon" $ do
       let t = runGeos $ do
-            rp <-  convertGeometryToRaw $ PolygonGeometry polygon1 Nothing
+            rp :: R.Geom <-  convertGeometryToRaw $ PolygonGeometry polygon1 Nothing
             R.getTypeId rp
       t `shouldBe` 3
     it "Converts a MultiPolygon from Raw" $ do
@@ -109,7 +109,7 @@ main = hspec $ do
                 g <- RS.readHex r multiPolygonStringBS
                 gi :: R.GeomConst <- R.getGeometryN g 0
                 ir :: R.GeomConst <- R.getExteriorRing gi
-                cs :: RC.CoordSeqConst <- R.getCoordinateSequence_ ir
+                cs :: RC.CoordSeqConst <- R.getCoordinateSequence ir
                 x <- RC.getCoordinateSequenceX cs 0
                 y <- RC.getCoordinateSequenceY cs 0
                 return (x,y)
