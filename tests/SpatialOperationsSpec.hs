@@ -35,7 +35,7 @@ spatialOpsSpecs = describe "Tests Contains" $ do
     let polygonBig   = [ [(0,0), (0,2), (2,2), (2,0), (0,0)]]
         polygonSmall = [ [(3,0), (3,1), (4,1), (4,0), (3,0)]]
         multiPoly    = makeMultiPolygonGeo [polygonBig, polygonSmall]
-    pointIn      = makePointGeo (0.5, 0.5)
-    pointOut     = makePointGeo (2.5, 0.5)
+        pointIn      = makePointGeo (0.5, 0.5)
+        pointOut     = makePointGeo (2.5, 0.5)
     (contains multiPoly pointIn) `shouldBe` True
     (contains multiPoly pointOut) `shouldBe` False

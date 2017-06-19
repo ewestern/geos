@@ -103,6 +103,10 @@ test-suite test
     , Data.Geometry.Geos.Raw.Serialize
     , Data.Geometry.Geos.Serialize
     , Data.Geometry.Geos.Types
+    , ParsingSpec
+    , RawGeometrySpec
+    , SpatialOperationsSpec
+    , SpecSampleData
 
 source-repository head
   type:     git
