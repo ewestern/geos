@@ -15,7 +15,6 @@ import qualified Data.Vector as V
 
 import SpecSampleData
 
-
 rawGeometrySpecs = describe "raw geometry" $ do
 
   it "Creates a Coordinate Sequence" $  do
