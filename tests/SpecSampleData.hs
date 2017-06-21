@@ -17,9 +17,18 @@ makePolygon = Polygon . V.fromList . (fmap makeLinearRing)
 makePolygonGeo cs = PolygonGeometry (makePolygon cs) Nothing
 makeMultiLineString =  MultiLineString . V.fromList . (fmap  makeLineString)
 makeMultiLineStringGeo lss = MultiLineStringGeometry (makeMultiLineString lss) Nothing
-
 makeMultiPolygon = MultiPolygon . V.fromList . (fmap makePolygon)
 makeMultiPolygonGeo polygons = MultiPolygonGeometry (makeMultiPolygon polygons) Nothing
+
+ensurePoint :: Some Geometry -> Geometry Point
+ensurePoint g = withSomeGeometry g $ \p'@(PointGeometry _ _)  -> p'
+
+ensurePolygon :: Some Geometry -> Geometry Polygon
+ensurePolygon g = withSomeGeometry g $ \p'@(PolygonGeometry _ _)  -> p'
+
+ensureMultiLineString :: Some Geometry -> Geometry MultiLineString
+ensureMultiLineString g = withSomeGeometry g $ \p'@(MultiLineStringGeometry _ _)  -> p'
+
 polygon1 =  makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]
 polygon2 = makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]
 
