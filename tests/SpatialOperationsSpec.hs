@@ -59,6 +59,8 @@ spatialOpsSpecs = describe "Tests Contains" $ do
         poly2 = makePolygonGeo [ [(0,0), (0,1), (1,1), (1,0), (0,0)], [(0.1,0.1),(0.1,0.9),(0.9,0.1),(0.1,0.1)] ]
         env2 = makeMultiLineStringGeo [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)], [(0.1, 0.1), (0.1, 0.9), (0.9, 0.1), (0.1, 0.1)]]
         env3 = makePolygonGeo [ [(0,0), (0,1), (1,1), (1,0), (0,0)] ]
-    (envelope poly1) `shouldBe` env1
+        point = makePointGeo (2.5, 0.5)
+    (withSomeGeometry (envelope poly1) $ \pg@(PolygonGeometry _ _)  -> pg) `shouldBe` env1
+    (withSomeGeometry (envelope point) $ \pg@(PointGeometry _ _)  -> pg) `shouldBe` point
     (withSomeGeometry (boundary poly2) $ \ml@(MultiLineStringGeometry _ _) -> ml) `shouldBe` env2
     convexHull poly2 `shouldBe` env3

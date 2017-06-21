@@ -39,8 +39,8 @@ geo_2 f g1 g2 = runGeos $ do
   convertGeometryFromRaw =<< f g1' g2'
 
 -- | Returns a Polygon that represents the bounding envelope of this geometry. Note that it can also return a Point if the input geometry is a point.
-envelope :: Geometry a -> Geometry Polygon
-envelope g = withSomeGeometry (geo_1 R.envelope g) $ \pg@(PolygonGeometry _ _) -> pg
+envelope :: Geometry a -> Some Geometry
+envelope = geo_1 R.envelope
 
 -- | Returns a Geometry representing the points shared by both geometries.
 intersection :: Geometry a -> Geometry b -> Some Geometry
