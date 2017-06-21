@@ -28,9 +28,6 @@ type SRID = Maybe Int
 data Some :: (* -> *) -> * where
   Some :: f a -> Some f
 
-{-instance Eq (Some Geometry) where-}
-  {-(Some a) == (Some b) =  a == b-}
-
 withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
 withSomeGeometry (Some p) f = f p
 
