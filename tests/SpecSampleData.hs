@@ -21,13 +21,19 @@ makeMultiPolygon = MultiPolygon . V.fromList . (fmap makePolygon)
 makeMultiPolygonGeo polygons = MultiPolygonGeometry (makeMultiPolygon polygons) Nothing
 
 ensurePoint :: Some Geometry -> Geometry Point
-ensurePoint g = withSomeGeometry g $ \p'@(PointGeometry _ _)  -> p'
+ensurePoint g = withSomeGeometry g $ \g' -> case g' of
+  PointGeometry _ _ -> g'
+  _ -> error "This geometry was expected to be a Point"
 
 ensurePolygon :: Some Geometry -> Geometry Polygon
-ensurePolygon g = withSomeGeometry g $ \p'@(PolygonGeometry _ _)  -> p'
+ensurePolygon g = withSomeGeometry g $ \g' -> case g' of
+  PolygonGeometry _ _  -> g'
+  _ -> error "This geometry was expected to be a Polygon"
 
 ensureMultiLineString :: Some Geometry -> Geometry MultiLineString
-ensureMultiLineString g = withSomeGeometry g $ \p'@(MultiLineStringGeometry _ _)  -> p'
+ensureMultiLineString g = withSomeGeometry g $ \p' -> case p' of
+  MultiLineStringGeometry _ _ -> p'
+  _ -> error "This geometry was expected to be a MultiLineString"
 
 polygon1 =  makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]
 polygon2 = makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]
