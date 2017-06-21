@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module SpatialOperationsSpec where
 
@@ -7,6 +8,7 @@ import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Geometry
+import Data.Geometry.Geos.Topology
 
 import SpecSampleData
 
@@ -39,3 +41,24 @@ spatialOpsSpecs = describe "Tests Contains" $ do
         pointOut     = makePointGeo (2.5, 0.5)
     (contains multiPoly pointIn) `shouldBe` True
     (contains multiPoly pointOut) `shouldBe` False
+  it "Projects a point against a linestring" $ do
+      let lr = makeLineStringGeo [(0,0), (0, 1), (1, 1)]
+          p = makePointGeo (0.5, 1.0)
+-- The point on this line string nearest (0.5, 1.0) is 1.5 units from the origin. i.e., halfway between the second and third point.
+      project lr p `shouldBe` 1.5
+      interpolate lr 1.5 `shouldBe` p
+  it "Tests disjoint geometries" $ do
+    let poly = makePolygonGeo [[(0,0), (0,1), (1,1), (1,0), (0,0)]]
+        p1 = makePointGeo (2,2)
+        p2 = makePointGeo (0.5, 0.5)
+    disjoint poly p1 `shouldBe` True
+    disjoint poly p2 `shouldBe` False
+  it "creates an envelope / boundary of a geometry" $ do
+    let poly1 = makePolygonGeo [[(0,0), (0,1), (1,1), (1.5, 1.5), (1,0), (0,0)]]
+        env1 = makePolygonGeo [[(0.0, 0.0), (1.5, 0.0), (1.5, 1.5), (0.0, 1.5), (0.0, 0.0)]]
+        poly2 = makePolygonGeo [ [(0,0), (0,1), (1,1), (1,0), (0,0)], [(0.1,0.1),(0.1,0.9),(0.9,0.1),(0.1,0.1)] ]
+        env2 = makeMultiLineStringGeo [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)], [(0.1, 0.1), (0.1, 0.9), (0.9, 0.1), (0.1, 0.1)]]
+        env3 = makePolygonGeo [ [(0,0), (0,1), (1,1), (1,0), (0,0)] ]
+    (envelope poly1) `shouldBe` env1
+    (withSomeGeometry (boundary poly2) $ \ml@(MultiLineStringGeometry _ _) -> ml) `shouldBe` env2
+    convexHull poly2 `shouldBe` env3

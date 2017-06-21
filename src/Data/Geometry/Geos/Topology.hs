@@ -47,8 +47,8 @@ intersection :: Geometry a -> Geometry b -> Some Geometry
 intersection = geo_2 R.intersection
 
 -- | Returns the smallest Polygon that contains all the points in the geometry.
-convexHull :: Geometry a -> Some Geometry
-convexHull = geo_1 R.convexHull
+convexHull :: Geometry a -> Geometry Polygon
+convexHull g = withSomeGeometry (geo_1 R.convexHull g) $ \pg@(PolygonGeometry _ _) -> pg
 
 -- | Returns a Geometry representing the points making up this geometry that do not make up other.
 difference :: Geometry a -> Geometry b -> Some Geometry

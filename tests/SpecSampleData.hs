@@ -11,8 +11,13 @@ makePoint (c1, c2) = Point $ Coordinate2 c1 c2
 makePointGeo c = PointGeometry (makePoint c) Nothing
 makeLinearRing cs = LinearRing . V.map (uncurry Coordinate2) . V.fromList $ cs
 makeLinearRingGeo cs = LinearRingGeometry (makeLinearRing cs) Nothing
+makeLineString cs = LineString . V.map (uncurry Coordinate2) . V.fromList $ cs
+makeLineStringGeo cs = LineStringGeometry  (makeLineString cs ) Nothing
 makePolygon = Polygon . V.fromList . (fmap makeLinearRing)
 makePolygonGeo cs = PolygonGeometry (makePolygon cs) Nothing
+makeMultiLineString =  MultiLineString . V.fromList . (fmap  makeLineString)
+makeMultiLineStringGeo lss = MultiLineStringGeometry (makeMultiLineString lss) Nothing
+
 makeMultiPolygon = MultiPolygon . V.fromList . (fmap makePolygon)
 makeMultiPolygonGeo polygons = MultiPolygonGeometry (makeMultiPolygon polygons) Nothing
 polygon1 =  makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]
