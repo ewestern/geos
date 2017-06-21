@@ -34,36 +34,38 @@ import qualified Data.Vector as V
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
 import Data.Geometry.Geos.Raw.Base
-import Data.Monoid ((<>))
 import Control.Monad
 
 -- | Returns the distance from the origin of LineString to the point projected on the geometry (that is to a point of the line the closest to the given point).
-project :: Geometry Point -> Geometry LineString -> Double
+project :: Geometry LineString -> Geometry Point -> Double
 project g1 g2 = runGeos $ do
-  g1' :: R.GeomConst <- convertGeometryToRaw g1
-  g2' :: R.GeomConst <- convertGeometryToRaw g2
+  g1' :: R.Geom <- convertGeometryToRaw g1
+  g2' :: R.Geom <- convertGeometryToRaw g2
   R.project g1' g2'
 
 -- | Like @project@, but returns the distance as a Double between 0 and 1.
 projectNormalized :: Geometry Point -> Geometry LineString -> Double
 projectNormalized g1 g2 = runGeos $ do
-  g1' :: R.GeomConst <- convertGeometryToRaw g1
-  g2' :: R.GeomConst <- convertGeometryToRaw g2
+  g1' :: R.Geom <- convertGeometryToRaw g1
+  g2' :: R.Geom <- convertGeometryToRaw g2
   R.project g1' g2'
 
 -- | Given a distance, returns the point (or closest point) within the geometry LineString that distance.
 interpolate :: Geometry LineString -> Double -> Geometry Point
 interpolate g d = runGeos $ do
-  g' :: R.GeomConst <- convertGeometryToRaw  g
-  sg <- convertGeometryFromRaw =<< (R.interpolate g' $ realToFrac d)
-  return $ withSomeGeometry sg $ \pg@(PointGeometry _ _) -> pg
+  g' :: R.Geom <- convertGeometryToRaw  g
+  s <- R.getSRID g'
+  p <- convertPointFromRaw =<< (R.interpolate g' $ realToFrac d)
+  return $ PointGeometry p s
 
 
 -- | Like @interpolate@, but takes the distance as a double between 0 and 1.
-interpolateNormalized :: Geometry LineString -> Double -> Some Geometry
+interpolateNormalized :: Geometry LineString -> Double -> Geometry Point
 interpolateNormalized g d = runGeos $ do
-  g' :: R.GeomConst <- convertGeometryToRaw g
-  convertGeometryFromRaw =<<  (R.interpolateNormalized g' $ realToFrac d)
+  g' :: R.Geom <- convertGeometryToRaw g
+  s <- R.getSRID g'
+  p <- convertPointFromRaw =<<  (R.interpolateNormalized g' $ realToFrac d)
+  return $ PointGeometry p s
 
 binaryPredicate_ :: (R.GeomConst -> R.GeomConst -> Geos Bool)
                   -> Geometry a
@@ -125,8 +127,8 @@ convertLineStringToRaw (LineString cs) s = do
 
 convertPolygonToRaw :: R.Geometry a => Polygon -> SRID -> Geos a
 convertPolygonToRaw (Polygon lrs) s = do
-  ext <- convertLinearRingToRaw (V.head lrs) s
-  inn <- (flip convertLinearRingToRaw $ s) `V.mapM` V.tail lrs
+  ext :: R.GeomConst <- convertLinearRingToRaw (V.head lrs) s
+  inn :: V.Vector R.GeomConst <- (flip convertLinearRingToRaw $ s) `V.mapM` V.tail lrs
   R.createPolygon ext (V.toList inn)  >>= R.setSRID s
 
 convertMultiPointToRaw :: R.Geometry a => MultiPoint -> SRID -> Geos a
@@ -217,9 +219,9 @@ convertLinearRingFromRaw g = LinearRing <$> convertSequenceFromRaw g
 convertPolygonFromRaw :: R.Geometry a => a -> Geos Polygon
 convertPolygonFromRaw g = do
   is <- R.getNumInteriorRings g
-  ext :: V.Vector R.GeomConst <- V.singleton <$> R.getExteriorRing g
+  ext :: R.GeomConst <- R.getExteriorRing g
   ins :: V.Vector R.GeomConst <- V.generateM is (R.getInteriorRingN g)
-  Polygon <$> convertLinearRingFromRaw `V.mapM` (ext <> ins)
+  Polygon <$> convertLinearRingFromRaw `V.mapM` (ext `V.cons` ins)
 
 {-
 Enforces using GeomConst for following functions
