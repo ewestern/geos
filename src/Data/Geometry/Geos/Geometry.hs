@@ -190,6 +190,10 @@ convertGeometryFromRaw rg = do
           return $ Some (MultiPolygonGeometry mp s)
         R.GeometryCollectionTypeId -> error "GeometryCollection currently unsupported"
 
+
+-- The following methods are useful when the type of a (Some Geometry) is known a priori
+-- (i.e. the result of calling centroid is always a point)
+
 ensurePoint :: Some Geometry -> Geometry Point
 ensurePoint g = withSomeGeometry g $ \g' -> case g' of
   PointGeometry _ _ -> g'
