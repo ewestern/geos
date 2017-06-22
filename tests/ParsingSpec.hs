@@ -18,23 +18,12 @@ import SpecSampleData
 
 parsingSpecs = describe "Tests Serialization" $ do
   it "Parses a bytestring to a linestring" $  do
-    let lsg :: Geometry LineString = withSomeGeometry (readHex linestringBS) $ \case
-                ls@(LineStringGeometry _ _) -> ls
-                _ -> error "asda"
-    lsg `shouldBe` linestring
+    ensureLineString (readHex linestringBS) `shouldBe` linestring
   it "Parse a multipolygon" $ do
-    let multig :: Geometry MultiPolygon = withSomeGeometry (readHex multiPolygonStringBS) $ \case
-                g@(MultiPolygonGeometry _ _) -> g
-                _ -> error "asda"
-    multig `shouldBe` multiPolygon
+    ensureMultiPolygon (readHex multiPolygonStringBS) `shouldBe` multiPolygon
   it "Serializes a LineString into a bytestring" $ do
     linestringBS `shouldBe` writeHex linestring
   it "Serializes a LineString to WKT" $ do
     linestringWkt `shouldBe` (writeWkt linestring)
   it "Can parse WKT" $ do
-    let lsg :: Geometry LineString = withSomeGeometry (readWkt (Just 4326) linestringWkt) $ \case
-                ls@(LineStringGeometry _ _) -> ls
-                _ -> error "asda"
-    lsg `shouldBe` linestring
-
-
+    ensureLineString (readWkt (Just 4326) linestringWkt) `shouldBe` linestring
