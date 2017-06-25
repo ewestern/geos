@@ -127,8 +127,8 @@ convertLineStringToRaw (LineString cs) s = do
 
 convertPolygonToRaw :: R.Geometry a => Polygon -> SRID -> Geos a
 convertPolygonToRaw (Polygon lrs) s = do
-  ext :: R.GeomConst <- convertLinearRingToRaw (V.head lrs) s
-  inn :: V.Vector R.GeomConst <- (flip convertLinearRingToRaw $ s) `V.mapM` V.tail lrs
+  ext <- convertLinearRingToRaw (V.head lrs) s
+  inn <- (flip convertLinearRingToRaw $ s) `V.mapM` V.tail lrs
   R.createPolygon ext (V.toList inn)  >>= R.setSRID s
 
 convertMultiPointToRaw :: R.Geometry a => MultiPoint -> SRID -> Geos a
