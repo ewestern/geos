@@ -16,7 +16,7 @@ maintainer:          pfrance@gmail.com
 
 category:            GIS
 
-build-type:         Custom 
+build-type:          Simple
 Extra-source-files:  cbits/noticehandlers.h
 cabal-version:       >=1.18.0
 
