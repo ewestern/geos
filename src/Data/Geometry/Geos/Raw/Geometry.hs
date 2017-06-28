@@ -257,7 +257,7 @@ createPolygon o hs = do
   constructGeometry g
 
 
-createMulti_ :: Geometry a => I.GEOSGeomType -> [a] -> Geos a
+createMulti_ :: Geometry a => I.GEOSGeomType -> [GeomConst] -> Geos a
 createMulti_ t gs = do
   g <- withGeos $ \h -> do
       ptrs <- mapM (\v -> withGeometry v $ return) gs
@@ -265,16 +265,16 @@ createMulti_ t gs = do
           I.geos_GeomCreateCollection h (I.unGEOSGeomType t) ph $ fromIntegral $ length gs
   constructGeometry g
 
-createMultiPoint :: Geometry a => [a] -> Geos a
+createMultiPoint :: Geometry a => [GeomConst] -> Geos a
 createMultiPoint = createMulti_ I.multiPointId
 
-createMultiLineString :: Geometry a => [a] -> Geos a
+createMultiLineString :: Geometry a => [GeomConst] -> Geos a
 createMultiLineString = createMulti_  I.multiLineStringId
 
-createMultiPolygon :: Geometry a => [a] -> Geos a
+createMultiPolygon :: Geometry a => [GeomConst] -> Geos a
 createMultiPolygon = createMulti_ I.multiPolygonId
 
-createCollection :: Geometry a => [a] -> Geos a
+createCollection :: Geometry a => [GeomConst] -> Geos a
 createCollection = createMulti_ I.geometryCollectionId
 
 
