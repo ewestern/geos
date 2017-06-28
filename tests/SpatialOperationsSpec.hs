@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 
 module SpatialOperationsSpec where
 
@@ -9,6 +10,7 @@ import qualified Data.Vector as V
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Geometry
 import Data.Geometry.Geos.Topology
+import Data.Geometry.Geos.STRTree
 
 import SpecSampleData
 
@@ -60,7 +62,14 @@ spatialOpsSpecs = describe "Tests Contains" $ do
         env2 = makeMultiLineStringGeo [[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)], [(0.1, 0.1), (0.1, 0.9), (0.9, 0.1), (0.1, 0.1)]]
         env3 = makePolygonGeo [ [(0,0), (0,1), (1,1), (1,0), (0,0)] ]
         point = makePointGeo (2.5, 0.5)
-    (withSomeGeometry (envelope poly1) $ \pg@(PolygonGeometry _ _)  -> pg) `shouldBe` env1
-    (withSomeGeometry (envelope point) $ \pg@(PointGeometry _ _)  -> pg) `shouldBe` point
-    (withSomeGeometry (boundary poly2) $ \ml@(MultiLineStringGeometry _ _) -> ml) `shouldBe` env2
+    (ensurePolygon $ envelope poly1) `shouldBe` env1
+    (ensurePoint $ envelope point) `shouldBe` point
+    (ensureMultiLineString $ boundary poly2) `shouldBe` env2
     convexHull poly2 `shouldBe` env3
+  it "can use STRTrees" $ do
+    let points = makePointGeo <$> [(0.1,0.1), (0.9, 0.9)]
+        polygon = makePolygonGeo [[(0,0),(0,1),(1,1),(1,0),(0,0)]]
+        foo = V.fromList $ zip points [(0::Int)..]
+    let tree = createSTR foo
+    let result = querySTR tree polygon
+    result `shouldBe` V.fromList [0,1]
