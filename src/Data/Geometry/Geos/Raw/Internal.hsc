@@ -317,7 +317,7 @@ foreign import ccall
   geos_Intersection :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
 
 foreign import ccall 
-  "geos_c.h GEOSIntersection_r"
+  "geos_c.h GEOSConvexHull_r"
   geos_ConvexHull :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
 
 foreign import ccall 
@@ -461,9 +461,6 @@ foreign import ccall
   "geos_c.h &GEOSWKTReader_destroy_r"
   geos_WKTReaderDestroy :: FunPtr (GEOSContextHandle_t -> Ptr GEOSWKTReader -> IO ())
 
--- 1167 extern GEOSGeometry GEOS_DLL *GEOSWKTReader_read_r(GEOSContextHandle_t handle,
--- 1168                                                    GEOSWKTReader* reader,
--- 1169                                                    const char *wkt);
 foreign import ccall
   "geos_c.h GEOSWKTReader_read_r"
   geos_WKTReaderRead :: GEOSContextHandle_t -> Ptr GEOSWKTReader -> CString -> IO (Ptr GEOSGeometry)

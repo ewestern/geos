@@ -28,18 +28,19 @@ newtype PreparedGeometry = PreparedGeometry {
 withPreparedGeometry :: PreparedGeometry -> (Ptr GEOSPreparedGeometry -> IO a ) -> IO a
 withPreparedGeometry (PreparedGeometry g) f = withForeignPtr g f
 
-prepare :: RG.Geometry -> Geos PreparedGeometry
+prepare :: RG.Geometry a => a -> Geos PreparedGeometry
 prepare g = withGeos $ \h -> do
     g' <- RG.withGeometry g $ \gp -> 
         geos_Prepare h gp
     fp <- newForeignPtrEnv geos_PreparedGeomDestroy h g'
     return $ PreparedGeometry fp
 
-queryPrepared :: (GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar)
-                -> String
-                -> PreparedGeometry
-                -> RG.Geometry
-                -> Geos Bool
+queryPrepared :: RG.Geometry a
+              => (GEOSContextHandle_t -> Ptr GEOSPreparedGeometry -> Ptr GEOSGeometry -> IO CChar)
+              -> String
+              -> PreparedGeometry
+              -> a
+              -> Geos Bool
 queryPrepared f s pg g = withGeos $ \h -> do
   b <-  throwIf (\v -> v == 2) (mkErrorMessage s) $ 
           RG.withGeometry g $ \gp -> 
@@ -47,32 +48,32 @@ queryPrepared f s pg g = withGeos $ \h -> do
               f h pp gp
   return . toBool $ b
 
-contains :: PreparedGeometry -> RG.Geometry -> Geos Bool
+contains :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 contains = queryPrepared geos_PreparedContains "contains"
 
-containsProperly :: PreparedGeometry -> RG.Geometry -> Geos Bool
+containsProperly :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 containsProperly = queryPrepared geos_PreparedContainsProperly "containsProperly"
 
-coveredBy :: PreparedGeometry -> RG.Geometry -> Geos Bool
+coveredBy :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 coveredBy = queryPrepared geos_PreparedCoveredBy "coveredBy"
 
-covers :: PreparedGeometry -> RG.Geometry -> Geos Bool
+covers :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 covers = queryPrepared geos_PreparedCovers "covers"
 
-crosses :: PreparedGeometry -> RG.Geometry -> Geos Bool
+crosses :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 crosses = queryPrepared geos_PreparedCrosses "crosses"
 
-disjoint :: PreparedGeometry -> RG.Geometry -> Geos Bool
+disjoint :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 disjoint = queryPrepared geos_PreparedDisjoint "disjoint"
 
-intersects :: PreparedGeometry -> RG.Geometry -> Geos Bool
+intersects :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 intersects = queryPrepared geos_PreparedIntersects "intersects"
 
-overlaps :: PreparedGeometry -> RG.Geometry -> Geos Bool
+overlaps :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 overlaps = queryPrepared geos_PreparedOverlaps "overlaps"
 
-touches :: PreparedGeometry -> RG.Geometry -> Geos Bool
+touches :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 touches = queryPrepared geos_PreparedTouches "touches"
 
-within :: PreparedGeometry -> RG.Geometry -> Geos Bool
+within :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool
 within = queryPrepared geos_PreparedWithin "within"

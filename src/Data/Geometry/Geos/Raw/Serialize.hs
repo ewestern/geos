@@ -55,29 +55,29 @@ createWktReader = withGeos $ \h -> do
 read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry)) 
             -> Reader 
             -> BC.ByteString 
-            -> Geos Geometry
+            -> Geos Geom
 read_ f r bs = withGeos $ \h -> do
   ptr <- withReader r $ \rp -> 
             BC.useAsCStringLen bs $ \(cs, l) -> 
               f h rp cs $ fromIntegral l 
   fp <- newForeignPtrEnv I.geos_GeomDestroy h ptr
-  return $ Geometry fp
+  return $ Geom fp
   
 
-read :: Reader -> BC.ByteString -> Geos Geometry
+read :: Reader -> BC.ByteString -> Geos Geom
 read = read_ I.geos_WKBReaderRead
 
-readHex :: Reader -> BC.ByteString -> Geos Geometry
+readHex :: Reader -> BC.ByteString -> Geos Geom
 readHex = read_ I.geos_WKBReaderReadHex
 
-readWkt :: WktReader -> BC.ByteString -> Geos Geometry
+readWkt :: WktReader -> BC.ByteString -> Geos Geom
 readWkt r bs = do
   withGeos $ \h -> do
     ptr <- withWktReader r $ \rp ->
               BC.useAsCString bs $ \cs ->
                 I.geos_WKTReaderRead h rp cs
     fp <- newForeignPtrEnv I.geos_GeomDestroy h ptr
-    return $ Geometry fp
+    return $ Geom fp
 
 createWriter :: Geos Writer
 createWriter = withGeos $ \h -> do
@@ -92,10 +92,11 @@ createWktWriter = withGeos $ \h -> do
   fp <- newForeignPtrEnv I.geos_WKTWriterDestroy h ptr
   return $ WktWriter fp
 
-write_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBWriter -> Ptr I.GEOSGeometry -> Ptr CSize -> IO CString)
-          -> Writer
-          -> Geometry
-          -> Geos BC.ByteString
+write_ :: Geometry a
+        => (I.GEOSContextHandle_t -> Ptr I.GEOSWKBWriter -> Ptr I.GEOSGeometry -> Ptr CSize -> IO CString)
+        -> Writer
+        -> a
+        -> Geos BC.ByteString
 write_ f w g = withGeos $ \h ->  do
   clen <- withWriter w $ \wp ->
           withGeometry g $ \gp ->
@@ -106,13 +107,13 @@ write_ f w g = withGeos $ \h ->  do
   bs <- BC.packCStringLen clen
   return bs
 
-write :: Writer -> Geometry -> Geos BC.ByteString
+write :: Geometry a => Writer -> a -> Geos BC.ByteString
 write = write_ I.geos_WKBWriterWrite
 
-writeHex :: Writer -> Geometry -> Geos BC.ByteString
+writeHex :: Geometry a => Writer -> a -> Geos BC.ByteString
 writeHex = write_ I.geos_WKBWriterWriteHex
 
-writeWkt :: WktWriter -> Geometry -> Geos BC.ByteString
+writeWkt :: Geometry a => WktWriter -> a -> Geos BC.ByteString
 writeWkt w g = withGeos $ \h ->  do
   wkt <- withWktWriter w $ \wp ->
           withGeometry g $ \gp -> do

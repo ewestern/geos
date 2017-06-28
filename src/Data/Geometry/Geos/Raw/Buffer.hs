@@ -33,11 +33,11 @@ withBufferParams (BufferParams g) f = withForeignPtr g f
 
 
 -- | Create a buffer around a geometry, where quadsegs is the number of line segments to use to approximate a quarter of a circle.
-buffer :: RG.Geometry -> Double -> Int -> Geos RG.Geometry
-buffer geo width quadsegs = withGeos $ \h -> do 
-  g <- RG.withGeometry geo $ \gp -> geos_Buffer h gp (realToFrac width) $ fromIntegral quadsegs
-  fp <- newForeignPtrEnv geos_GeomDestroy h g
-  return $ RG.Geometry fp
+buffer :: RG.Geometry a => a -> Double -> Int -> Geos a
+buffer geo width quadsegs = do 
+  g <- withGeos $ \h -> 
+        RG.withGeometry geo $ \gp -> geos_Buffer h gp (realToFrac width) $ fromIntegral quadsegs
+  RG.constructGeometry g
 
 
 createBufferParams :: Geos BufferParams 
@@ -78,25 +78,25 @@ setSingleSided bp b = withGeos $ \h -> do
     geos_BufferParamsSetSingleSided h bpp $ fromBool b
   return ()
 
-bufferWithParams :: RG.Geometry -> BufferParams -> Double -> Geos RG.Geometry
-bufferWithParams g b width = withGeos $ \h -> do
-  g' <- throwIfNull "bufferWithParams" $ RG.withGeometry g $ \gp ->
-    withBufferParams b $ \bp -> 
-      geos_BufferWithParams h gp bp $ realToFrac width
-  fp <- newForeignPtrEnv geos_GeomDestroy h g'
-  return $ RG.Geometry fp
+bufferWithParams :: RG.Geometry a => a -> BufferParams -> Double -> Geos a
+bufferWithParams g b width = do
+  g' <- withGeos $ \h -> do
+          throwIfNull "bufferWithParams" $ RG.withGeometry g $ \gp ->
+            withBufferParams b $ \bp -> 
+              geos_BufferWithParams h gp bp $ realToFrac width
+  RG.constructGeometry g'
 
-bufferWithStyle :: RG.Geometry -> Double -> Int -> BufferCapStyle -> BufferJoinStyle -> Double -> Geos RG.Geometry
-bufferWithStyle g width quadsegs capstyle joinstyle mitrelimit = withGeos $ \h -> do
-  g' <- throwIfNull "bufferWithStyle" $ RG.withGeometry g $ \gp ->
-        geos_BufferWithStyle h gp (realToFrac width) (fromIntegral quadsegs) (unBufferCapStyle capstyle) (unBufferJoinStyle joinstyle) $ realToFrac mitrelimit
-  fp <- newForeignPtrEnv geos_GeomDestroy h g'
-  return $ RG.Geometry fp
+bufferWithStyle :: RG.Geometry a => a -> Double -> Int -> BufferCapStyle -> BufferJoinStyle -> Double -> Geos a
+bufferWithStyle g width quadsegs capstyle joinstyle mitrelimit = do
+  g' <- withGeos $ \h -> do
+          throwIfNull "bufferWithStyle" $ RG.withGeometry g $ \gp ->
+            geos_BufferWithStyle h gp (realToFrac width) (fromIntegral quadsegs) (unBufferCapStyle capstyle) (unBufferJoinStyle joinstyle) $ realToFrac mitrelimit
+  RG.constructGeometry g'
 
 -- | Will only accept LineString geometries. For the 'width' parameter, negative doubles represent a right-side offset, and positive doubles represent a left-side offset. 
-offsetCurve :: RG.Geometry -> Double -> Int -> BufferJoinStyle -> Double -> Geos RG.Geometry 
-offsetCurve g width quadsegs joinstyle mitrelimit = withGeos $ \h -> do
-  g' <- throwIfNull "offsetCurve" $ RG.withGeometry g $ \gp ->
-    geos_OffsetCurve h gp (realToFrac width) (fromIntegral quadsegs) (unBufferJoinStyle joinstyle) $ realToFrac mitrelimit
-  fp <- newForeignPtrEnv geos_GeomDestroy h g'
-  return $ RG.Geometry fp
+offsetCurve :: RG.Geometry a => a  -> Double -> Int -> BufferJoinStyle -> Double -> Geos a
+offsetCurve g width quadsegs joinstyle mitrelimit = do
+  g' <- withGeos $ \h -> do
+        throwIfNull "offsetCurve" $ RG.withGeometry g $ \gp ->
+          geos_OffsetCurve h gp (realToFrac width) (fromIntegral quadsegs) (unBufferJoinStyle joinstyle) $ realToFrac mitrelimit
+  RG.constructGeometry g'
