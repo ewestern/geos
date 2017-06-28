@@ -1,24 +1,22 @@
 name:                geos
-
 version:             0.1.0.0
-
 synopsis:  Bindings for GEOS.          
-
 description:   This is a Haskell binding to Geos, the open-source geometry library, which includes geometry types, predicate functions and other operations, spatially indexed geometries, and parsers for WKB and WKT formats.
-
 license:             MIT
-
 license-file:        LICENSE
-
 author:              Peter France
-
 maintainer:          pfrance@gmail.com
-
 category:            GIS
 
 build-type:         Custom 
+
 Extra-source-files:  cbits/noticehandlers.h
 cabal-version:       >=1.18.0
+
+custom-setup
+  setup-depends:
+    base >= 4.5 && < 5,
+    Cabal > 1.10
 
 Library
   Includes: geos_c.h
