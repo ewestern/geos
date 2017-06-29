@@ -5,6 +5,7 @@ module SpecSampleData where
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 import Data.Geometry.Geos.Types
+import Data.Geometry.Geos.CSV
 
 point = PointGeometry (Point $ Coordinate2 36.1 (-119.1)) (Just 4326)
 makePoint (c1, c2) = Point $ Coordinate2 c1 c2
@@ -17,6 +18,8 @@ makePolygon = Polygon . V.fromList . (fmap makeLinearRing)
 makePolygonGeo cs = PolygonGeometry (makePolygon cs) Nothing
 makeMultiLineString =  MultiLineString . V.fromList . (fmap  makeLineString)
 makeMultiLineStringGeo lss = MultiLineStringGeometry (makeMultiLineString lss) Nothing
+
+loadGeomsFromFile = 
 
 makeMultiPolygon = MultiPolygon . V.fromList . (fmap makePolygon)
 makeMultiPolygonGeo polygons = MultiPolygonGeometry (makeMultiPolygon polygons) Nothing
