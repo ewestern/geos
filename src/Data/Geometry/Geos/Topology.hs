@@ -25,7 +25,7 @@ geo_1 ::( RG.GeomConst -> Geos RG.GeomConst )
       -> Geometry a
       -> Some Geometry
 geo_1 f g = runGeos $ do
-    geo <- convertGeometryToRaw g 
+    geo <- convertGeometryToRaw g
     convertGeometryFromRaw =<< f geo
 
 
@@ -48,7 +48,7 @@ intersection = geo_2 R.intersection
 
 -- | Returns the smallest Polygon that contains all the points in the geometry.
 convexHull :: Geometry a -> Geometry Polygon
-convexHull g = withSomeGeometry (geo_1 R.convexHull g) $ \pg@(PolygonGeometry _ _) -> pg
+convexHull g = ensurePolygon $ geo_1 R.convexHull g
 
 -- | Returns a Geometry representing the points making up this geometry that do not make up other.
 difference :: Geometry a -> Geometry b -> Some Geometry
@@ -74,29 +74,28 @@ union :: Geometry a -> Geometry b -> Some Geometry
 union = geo_2 R.union
 
 
-unaryUnion :: Geometry a -> Some Geometry 
+unaryUnion :: Geometry a -> Some Geometry
 unaryUnion = geo_1 R.unaryUnion
 
 -- | Computes and returns a Point guaranteed to be on the interior of this geometry.
 pointOnSurface :: Geometry a -> Geometry Point
-pointOnSurface g = withSomeGeometry  (geo_1 R.pointOnSurface $ g) $ \pg@(PointGeometry _ _) -> pg
-
+pointOnSurface g = ensurePoint $ geo_1 R.pointOnSurface g
 
 -- | Returns a Point object representing the geometric center of the geometry. The point is not guaranteed to be on the interior of the geometry.
 centroid :: Geometry a -> Geometry Point
-centroid g = withSomeGeometry (geo_1 R.centroid g) $ \pg@(PointGeometry _ _) -> pg
+centroid g = ensurePoint $ geo_1 R.centroid g
 
 node :: Geometry a -> Some Geometry
 node = geo_1 R.node
- 
+
 -- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use.
 delaunayTriangulation ::  Geometry a -> Double -> Geometry MultiLineString
-delaunayTriangulation g d = withSomeGeometry (geo_1 (flip R.delaunayTriangulation $ d) g)  $ \ml@(MultiLineStringGeometry _ _ ) -> ml
+delaunayTriangulation g d = ensureMultiLineString (geo_1 (flip R.delaunayTriangulation $ d) g)
 
 #if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
-voronoiDiagram :: Geometry a -> Geometry b -> Double -> Bool -> Some Geometry 
+voronoiDiagram :: Geometry a -> Geometry b -> Double -> Bool -> Some Geometry
 voronoiDiagram g env tol onlyEdges = runGeos $ do
-  g' <- convertGeometryToRaw g 
+  g' <- convertGeometryToRaw g
   env' <- convertGeometryToRaw env
 	convertGeometryFromRaw =<< R.voronoiDiagram g' env' tol onlyEndges
 
