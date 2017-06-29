@@ -32,9 +32,9 @@ main = hspec $ do
   describe "raw geometry" $ do
 
     it "Creates a Coordinate Sequence" $  do
-      let (size, dim) = runGeos $ do 
+      let (size, dim) = runGeos $ do
             cs :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
-            size <-  RC.getCoordinateSequenceSize cs 
+            size <-  RC.getCoordinateSequenceSize cs
             dim <-  RC.getCoordinateSequenceDimensions cs
             return (size, dim)
       size `shouldBe` (2 :: Int)
@@ -42,8 +42,8 @@ main = hspec $ do
     it "Sets a Coordinate Sequence" $ do
       let (d1, d2) = runGeos $ do
             c :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
-            RC.setCoordinateSequenceX c 0 5.0 
-            RC.setCoordinateSequenceY c 0 10.0 
+            RC.setCoordinateSequenceX c 0 5.0
+            RC.setCoordinateSequenceY c 0 10.0
             d1 <- RC.getCoordinateSequenceX c 0
             d2 <- RC.getCoordinateSequenceY c 0
             return (d1, d2)
@@ -52,8 +52,8 @@ main = hspec $ do
     it "Gets a Coordinate Sequence from a geometry" $ do
       let cs = runGeos $ do
             c <- RC.createCoordinateSequence 2 2
-            RC.setCoordinateSequenceX c 0 5.0 
-            RC.setCoordinateSequenceY c 0 10.0 
+            RC.setCoordinateSequenceX c 0 5.0
+            RC.setCoordinateSequenceY c 0 10.0
             return c
           cs' = runGeos $ do
             g <- R.createLineString cs
@@ -78,16 +78,13 @@ main = hspec $ do
       srid `shouldBe` (Just 4326)
       tn `shouldBe` "LineString"
     it "Converts a Polygon" $ do
-      pendingWith "This seems to cause an exception in the cleanup?"
       let t = runGeos $ do
             rp <-  convertGeometryToRaw $ PolygonGeometry polygon1 Nothing
             R.getTypeId rp
       t `shouldBe` 3
     it "Tests disjoint" $ do
-      pendingWith "This seems to cause an exception in the cleanup?"
-      (disjoint (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing)) `shouldBe` False 
+      (disjoint (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing)) `shouldBe` False
     it "Tests intersects" $ do
-      pendingWith "This seems to cause an exception in the cleanup?"
       intersects (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing) `shouldBe` True
 
   describe "Tests Serialization" $ do
