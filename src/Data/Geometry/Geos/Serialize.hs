@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.Geometry.Geos.Serialize (
     readHex
@@ -23,7 +24,8 @@ readHex bs = runGeos $ do
 writeHex :: Geometry a -> BC.ByteString
 writeHex g = runGeos $ do
   w <- S.createWriter
-  S.writeHex w =<< convertGeometryToRaw g
+  r :: R.Geom <- convertGeometryToRaw g
+  S.writeHex w r
 
 readWkt :: Maybe Int -> BC.ByteString -> Some Geometry
 readWkt srid bs = runGeos $ do
@@ -35,4 +37,5 @@ readWkt srid bs = runGeos $ do
 writeWkt :: Geometry a -> BC.ByteString
 writeWkt g = runGeos $ do
   w <- S.createWktWriter
-  S.writeWkt w =<< convertGeometryToRaw g
+  r :: R.Geom <- convertGeometryToRaw g
+  S.writeWkt w r

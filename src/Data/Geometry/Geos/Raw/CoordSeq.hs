@@ -1,11 +1,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Data.Geometry.Geos.Raw.CoordSeq (
-    CoordinateSequence 
+    CoordinateSequence (..)
   , CoordSeqConst (CoordSeqConst)
   , CoordSeq (CoordSeq)
-  , withCoordinateSequence
-  , createCoordinateSequence
+  , cloneCoordinateSequence
   , getCoordinateSequenceX
   , getCoordinateSequenceY
   , getCoordinateSequenceZ
@@ -25,7 +24,9 @@ import Control.Monad
 
 class CoordinateSequence a where
   withCoordinateSequence :: a -> (Ptr I.GEOSCoordSequence -> IO b) -> IO b
-  createCoordinateSequence :: Int -> Int -> Geos a
+  createEmptyCoordinateSequence :: Int -> Int -> Geos a
+  createCoordinateSequence :: Ptr I.GEOSCoordSequence -> Geos a
+
   
 
 newtype CoordSeq = CoordSeq { 
@@ -80,23 +81,31 @@ coordSeqShow a = runGeos $ do
       ya <- getCoordinateSequenceY a i
       return . show $ (xa, ya)
     
+
 instance CoordinateSequence CoordSeq where
   withCoordinateSequence (CoordSeq fp) f = withForeignPtr fp f
-  createCoordinateSequence size dim = do
+  createEmptyCoordinateSequence size dim = do
     ptr <- withGeos $ \h ->
-      throwIfNull "createCoordinateSequence" $ I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
-    fp <- withGeos $ \h -> 
-      newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
-    return $ CoordSeq fp
+      throwIfNull "createEmptyCoordinateSequence" $ I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
+    createCoordinateSequence ptr
 
+  createCoordinateSequence ptr = withGeos $ \h -> do
+      fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
+      return $ CoordSeq fptr
 
 instance CoordinateSequence CoordSeqConst where
   withCoordinateSequence (CoordSeqConst p) f = f p
-  createCoordinateSequence size dim = do
+  createEmptyCoordinateSequence size dim = do
     ptr <- withGeos $ \h ->
-      throwIfNull "createCoordinateSequence" $ I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
-    return $ CoordSeqConst ptr
+      throwIfNull "createEmptyCoordinateSequence" $ I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
+    createCoordinateSequence ptr
+  createCoordinateSequence ptr = return $ CoordSeqConst ptr
 
+
+cloneCoordinateSequence :: CoordinateSequence a => a -> Geos CoordSeq
+cloneCoordinateSequence cs = do
+  cloned <- withGeos $ \h -> withCoordinateSequence cs $ I.geos_CoordSeqClone h
+  createCoordinateSequence cloned
 
 getCoordinateSequenceD_ :: CoordinateSequence a 
                           => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> Ptr CDouble -> IO CInt) 

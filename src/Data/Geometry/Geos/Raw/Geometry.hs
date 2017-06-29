@@ -1,4 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 
 {-|
 Module      : Data.Geometry.Geos.Raw.Geometery
@@ -7,8 +10,10 @@ Light wrappers around Geos functions. Must be run within the Geos monad.
 
 -}
 module Data.Geometry.Geos.Raw.Geometry (
-    Geometry (..)
-  , withGeometry
+    Geom (..)
+  , GeomConst (..)
+  , Geometry (..)
+  , GeomTypeId (..)
   , getSRID
   , setSRID
   , getTypeName
@@ -28,8 +33,9 @@ module Data.Geometry.Geos.Raw.Geometry (
   , createMultiLineString
   , createMultiPolygon
   , createCollection
+
   , project
-  , projectNormalized 
+  , projectNormalized
   , interpolate
   , interpolateNormalized
   , disjoint
@@ -58,14 +64,42 @@ import Foreign
 import Foreign.C.Types
 import Foreign.C.String
 
-newtype Geometry = Geometry { 
-  unGeometry :: (ForeignPtr I.GEOSGeometry)
-} 
+newtype Geom = Geom {
+  unGeom :: (ForeignPtr I.GEOSGeometry)
+}
 
 newtype GeomConst = GeomConst ( Ptr I.GEOSGeometry)
 
-instance Eq Geometry where
-  a == b = runGeos $ do
+
+class Geometry a where
+    type CoordSeqInput a
+    withGeometry :: a  -> (Ptr I.GEOSGeometry -> IO b ) -> IO b
+    constructGeometry :: Ptr I.GEOSGeometry -> Geos a
+
+instance Geometry Geom where
+    type CoordSeqInput Geom = CoordSeqConst
+    withGeometry (Geom g) f = withForeignPtr g f
+    constructGeometry geo = withGeos $ \h -> do
+      fptr <- newForeignPtrEnv I.geos_GeomDestroy h geo
+      return $ Geom fptr
+
+instance Geometry GeomConst where
+    type CoordSeqInput GeomConst = CoordSeq
+    withGeometry (GeomConst p) f = f p
+    constructGeometry geo =  return $ GeomConst geo
+
+createGeometryFromCoords :: Geometry b
+                          => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry))
+                          -> CoordSeqConst
+                          -> Geos b
+createGeometryFromCoords f c  = do
+   ptr <- withGeos $ \h ->
+            withCoordinateSequence c $ \pcs ->
+              f h pcs
+   constructGeometry ptr
+
+geomEq :: (Eq ca, Geometry a, CoordSeqInput a ~ ca, CoordinateSequence ca) => a -> a -> Bool
+geomEq a b = runGeos $ do
     sa <- getSRID a
     sb <- getSRID b
     ta <- getTypeId a
@@ -78,303 +112,280 @@ instance Eq Geometry where
       else return False
 
 
+instance Eq Geom where
+  a == b = geomEq a b
 
-withGeometry :: Geometry -> (Ptr I.GEOSGeometry -> IO a ) -> IO a
-withGeometry (Geometry g) f = withForeignPtr g f
+instance Eq GeomConst where
+  a == b = geomEq a b
 
-withGeomConst :: GeomConst -> (Ptr I.GEOSGeometry -> IO a) -> IO a
-withGeomConst (GeomConst p) f = f p
-
-getSRID :: Geometry -> Geos (Maybe Int) 
+getSRID :: Geometry a => a -> Geos (Maybe Int)
 getSRID g = withGeos $ \h -> do
   s <- withGeometry g $ I.geos_GetSRID h
   case fromIntegral s of
-    0 -> return Nothing 
+    0 -> return Nothing
     i -> return (Just i)
-    
-setSRID :: (Maybe Int) -> Geometry -> Geos Geometry
+
+setSRID :: Geometry a => (Maybe Int) -> a -> Geos a
 setSRID Nothing g = return g
 setSRID (Just i) g = withGeos $ \h ->  do
   withGeometry g $ \gp -> I.geos_SetSRID h gp $ fromIntegral i
   return g
-  
 
-getTypeName :: Geometry -> Geos String
+data GeomTypeId = PointTypeId | LineStringTypeId | LinearRingTypeId | PolygonTypeId
+                | MultiPointTypeId | MultiLineStringTypeId | MultiPolygonTypeId | GeometryCollectionTypeId deriving (Eq,Show)
+
+geomTypeId :: Integer -> GeomTypeId
+geomTypeId 0 = PointTypeId
+geomTypeId 1 = LineStringTypeId
+geomTypeId 2 = LinearRingTypeId
+geomTypeId 3 = PolygonTypeId
+geomTypeId 4 = MultiPointTypeId
+geomTypeId 5 = MultiLineStringTypeId
+geomTypeId 6 = MultiPolygonTypeId
+geomTypeId 7 = GeometryCollectionTypeId
+geomTypeId i = error $ "Not a valid geometry type " ++ (show i)
+
+getTypeName :: Geometry a => a -> Geos String
 getTypeName g = withGeos $ \h ->  do
-  s <- throwIfNull "getType" $ 
+  s <- throwIfNull "getType" $
         withGeometry g $ I.geos_GeomType h
   return  =<< peekCString s
 
-getTypeId ::Geometry -> Geos Int
+getTypeId ::Geometry a => a -> Geos GeomTypeId
 getTypeId g = withGeos $ \h -> do
-  i <- throwIfNeg (mkErrorMessage "getTypeId")  $
-      withGeometry g $ I.geos_GeomTypeId h
-  return $ fromIntegral i
+  i <- throwIfNeg (mkErrorMessage "getTypeId") $ withGeometry g $ I.geos_GeomTypeId h
+  return $ geomTypeId (fromIntegral i)
 
-getCoordinateSequence :: Geometry -> Geos CoordSeq
+{-|
+Never a good case for using this with a finalizer. 
+-}
+getCoordinateSequence :: Geometry a => a -> Geos CoordSeqConst
 getCoordinateSequence g = do
-  csc <- getCoordinateSequence_ g
-  withGeos $ \h -> do
-    cloned <- throwIfNull  "cloneCoordinateSequence" $ 
-                withCoordinateSequence csc $ I.geos_CoordSeqClone h
-    fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h cloned
-    return $ CoordSeq fptr
-
--- must not be destroyed directly
-getCoordinateSequence_ :: Geometry -> Geos CoordSeqConst
-getCoordinateSequence_ g = withGeos $ \h ->  do
-  ptr <- throwIfNull  "getCoordinateSequence" $ 
-          withGeometry g $ I.geos_GetCoordSeq h 
-  return $ CoordSeqConst ptr
+  ptr <- withGeos $ \h ->
+          throwIfNull  "getCoordinateSequence" $ withGeometry g $ I.geos_GetCoordSeq h
+  createCoordinateSequence ptr
 
 
-getNum_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO CInt)
-            -> Geometry
-            -> Geos Int
+
+getNum_ :: Geometry a
+        => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO CInt)
+        -> a
+        -> Geos Int
 getNum_ f g = withGeos $ \h ->  do
   i <- throwIfNeg (mkErrorMessage "getNumCoordinates")  $
-      withGeometry g $ f h 
+      withGeometry g $ f h
   return $ fromIntegral i
 
-getNumCoordinates :: Geometry -> Geos Int
-getNumCoordinates = getNum_ I.geos_GetNumCoordinates 
+getNumCoordinates :: Geometry a => a -> Geos Int
+getNumCoordinates = getNum_ I.geos_GetNumCoordinates
 
 ---- Polygons
-getNumInteriorRings :: Geometry -> Geos Int
+getNumInteriorRings :: Geometry a => a -> Geos Int
 getNumInteriorRings = getNum_ I.geos_GetNumInteriorRings
 
 --- multi geometries
-getNumGeometries :: Geometry -> Geos Int
+getNumGeometries :: Geometry a => a -> Geos Int
 getNumGeometries = getNum_ I.geos_GetNumGeometries
 
-getN_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CInt -> IO (Ptr I.GEOSGeometry)) 
-          -> Geometry 
-          -> Int 
-          -> Geos GeomConst
-getN_ f g i = withGeos $ \h ->  do
-  g' <- throwIfNull "getN" $ 
-        withGeometry g $ \gp ->
-          f h gp $ fromIntegral i 
-  return $ GeomConst g'
+getN_ :: (Geometry a , Geometry b)
+      => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CInt -> IO (Ptr I.GEOSGeometry))
+      -> a
+      -> Int
+      -> Geos b
+getN_ f g i = do
+  g' <- withGeos $ \h -> throwIfNull "getN" $ withGeometry g $ \gp ->
+          f h gp $ fromIntegral i
+  constructGeometry g'
 
 
-getGeometryN_ :: Geometry -> Int -> Geos GeomConst
-getGeometryN_ = getN_ I.geos_GetGeometryN
+getGeometryN :: (Geometry a, Geometry b) => a -> Int -> Geos b
+getGeometryN = getN_ I.geos_GetGeometryN
 
-getGeometryN :: Geometry -> Int -> Geos Geometry
-getGeometryN g i = do
-  cloned <- cloneConstGeometry =<< getGeometryN_ g i
+getExteriorRing :: (Geometry a, Geometry b) => a -> Geos b
+getExteriorRing  g = do
+  r <- withGeos $ \h ->
+        throwIfNull "getExteriorRing" $ withGeometry g $ I.geos_GetExteriorRing h
+  constructGeometry r
+
+getInteriorRingN :: (Geometry a, Geometry b) => a -> Int -> Geos b
+getInteriorRingN  = getN_ I.geos_GetInteriorRingN
+
+normalize :: Geometry a => a -> Geos a
+normalize g = do
+  cloned <- cloneGeometry g
   withGeos $ \h -> do
-    fptr <- withGeometry cloned $ newForeignPtrEnv I.geos_GeomDestroy h
-    return $ Geometry fptr
+    _ <- throwIfNeg (mkErrorMessage "normalize") $ withGeometry cloned $ I.geos_Normalize h
+    return ()
+  return cloned
+--
 
--- must not be destroyed directly
-getExteriorRing_ :: Geometry -> Geos GeomConst
-getExteriorRing_  g = withGeos $ \h ->  do
-  r <- throwIfNull "getExteriorRing" $ 
-        withGeometry g $ I.geos_GetExteriorRing h
-  return $ GeomConst r
+cloneGeometry :: Geometry a => a -> Geos a
+cloneGeometry g = do
+  gp <- withGeos $ \h -> withGeometry g $ I.geos_GeomClone h
+  constructGeometry gp
 
-
-getExteriorRing :: Geometry -> Geos Geometry
-getExteriorRing g = do
-  nr <- cloneConstGeometry =<< getExteriorRing_ g 
-  withGeos $ \h ->  do
-    fptr <- withGeometry nr $ newForeignPtrEnv I.geos_GeomDestroy h
-    return $ Geometry fptr
-
-
--- must not be destroyed directly
-getInteriorRingN_ :: Geometry -> Int -> Geos GeomConst
-getInteriorRingN_  = getN_ I.geos_GetInteriorRingN
-
-getInteriorRingN :: Geometry -> Int -> Geos Geometry  
-getInteriorRingN g i = do
-  nr <- cloneConstGeometry =<< getInteriorRingN_ g i
-  withGeos $ \h -> do
-    fptr <- withGeometry nr $ newForeignPtrEnv I.geos_GeomDestroy h
-    return $ Geometry fptr
-
-normalize :: Geometry -> Geos Geometry
-normalize g = withGeos $ \h -> do
-  cloned <- withGeometry g $ I.geos_GeomClone h
-  fp <- Geometry <$> newForeignPtrEnv I.geos_GeomDestroy h cloned
-  _ <- throwIfNeg (mkErrorMessage "normalize") $ withGeometry fp $ I.geos_Normalize h
-  return fp
-  
--- 
-
-cloneConstGeometry :: GeomConst -> Geos Geometry
-cloneConstGeometry g = withGeos $ \h -> do
-  gp <- withGeomConst g $ I.geos_GeomClone h
-  fp <- newForeignPtrEnv I.geos_GeomDestroy h gp
-  return $ Geometry fp
-  
  {-Geometry Constructors.-}
  {-GEOSCoordSequence* arguments will become ownership of the returned object.-}
  {-All functions return NULL on exception.-}
 
-createGeometry_ :: CoordinateSequence a 
-                => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> IO (Ptr I.GEOSGeometry)) 
-                -> a 
-                -> Geos Geometry
-createGeometry_ f c  = withGeos $ \h ->  do
-   g <- throwIfNull "createGeometry" $ withCoordinateSequence c $ \pcs -> do 
-   -- todo: clone for now, think of a better solution later
-     cloned <- throwIfNull  "cloneCoordinateSequence" $ I.geos_CoordSeqClone h pcs
-     f h cloned
-   fp <- newForeignPtrEnv I.geos_GeomDestroy h g
-   return $ Geometry fp
 
 -- Geometry Constructors
-createPoint :: CoordinateSequence a => a -> Geos Geometry
-createPoint = createGeometry_ I.geos_GeomCreatePoint
+{-|
+The following require CoordSeqConst as arguments since coordinate sequences become owned by the Geometry object.
 
-createLinearRing :: CoordinateSequence a => a -> Geos Geometry
-createLinearRing = createGeometry_ I.geos_GeomCreateLinearRing
+-}
+createPoint ::Geometry b => CoordSeqConst -> Geos b
+createPoint = createGeometryFromCoords I.geos_GeomCreatePoint
 
-createLineString :: CoordinateSequence a => a -> Geos Geometry
-createLineString = createGeometry_ I.geos_GeomCreateLineString
+createLinearRing :: Geometry a => CoordSeqConst -> Geos a
+createLinearRing = createGeometryFromCoords I.geos_GeomCreateLinearRing
+
+createLineString ::Geometry b => CoordSeqConst -> Geos b
+createLineString = createGeometryFromCoords I.geos_GeomCreateLineString
 
 -- TODO: Make this take a vector argument
 
 -- | The second argument is a list of geometries,
 -- | NOTE. geometries become owned by caller.
-createPolygon :: Geometry -> [Geometry] -> Geos Geometry
-createPolygon o hs = withGeos $ \h -> do
-  ptrs <- mapM (\v -> withGeometry v $ return) hs
-  g <- withGeometry o $ \op -> 
-        withArray ptrs $ \ph -> 
-          I.geos_GeomCreatePolygon h op ph $ fromIntegral $ length hs
-  fp <- newForeignPtrEnv I.geos_GeomDestroy h g
-  return $ Geometry fp
+createPolygon :: Geometry a => GeomConst -> [GeomConst] -> Geos a
+createPolygon o hs = do
+  g <- withGeos $ \h -> do
+        ptrs <- mapM (\v -> withGeometry v $ return) hs
+        withGeometry o $ \op ->
+          withArray ptrs $ \ph ->
+            I.geos_GeomCreatePolygon h op ph $ fromIntegral $ length hs
+  constructGeometry g
 
-createMulti_ :: I.GEOSGeomType -> [Geometry] -> Geos Geometry 
-createMulti_ t gs = withGeos $ \h -> do
-  ptrs <- mapM (\v -> withGeometry v $ return) gs
-  g <- withArray ptrs $ \ph ->
-    I.geos_GeomCreateCollection h (I.unGEOSGeomType t) ph $ fromIntegral $ length gs
-  fp <- newForeignPtrEnv I.geos_GeomDestroy h g
-  return $ Geometry fp
 
-createMultiPoint :: [Geometry] -> Geos Geometry 
-createMultiPoint = createMulti_ I.multiPointId 
+createMulti_ :: Geometry a => I.GEOSGeomType -> [GeomConst] -> Geos a
+createMulti_ t gs = do
+  g <- withGeos $ \h -> do
+      ptrs <- mapM (\v -> withGeometry v $ return) gs
+      withArray ptrs $ \ph ->
+          I.geos_GeomCreateCollection h (I.unGEOSGeomType t) ph $ fromIntegral $ length gs
+  constructGeometry g
 
-createMultiLineString :: [Geometry] -> Geos Geometry
+createMultiPoint :: Geometry a => [GeomConst] -> Geos a
+createMultiPoint = createMulti_ I.multiPointId
+
+createMultiLineString :: Geometry a => [GeomConst] -> Geos a
 createMultiLineString = createMulti_  I.multiLineStringId
 
-createMultiPolygon :: [Geometry] -> Geos Geometry
+createMultiPolygon :: Geometry a => [GeomConst] -> Geos a
 createMultiPolygon = createMulti_ I.multiPolygonId
 
-createCollection :: [Geometry] -> Geos Geometry
+createCollection :: Geometry a => [GeomConst] -> Geos a
 createCollection = createMulti_ I.geometryCollectionId
- 
 
-        
+
 --- Linear Referencing
 ----------------------
-geo_2_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO CDouble)
-          -> Geometry
-          -> Geometry
-          -> Geos Double
+geo_2_ :: Geometry a
+        => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO CDouble)
+        -> a
+        -> a
+        -> Geos Double
 geo_2_ f g p = withGeos $ \h -> do
    d <- withGeometry g $ \gp ->
-          withGeometry p $ f h gp 
+          withGeometry p $ f h gp
    return . realToFrac $ d
 
--- | @project p g@ returns the distance of point @p@ projected on @g@ from origin of @g@. Geometry @g@ must be a lineal geometry 
+-- | @project p g@ returns the distance of point @p@ projected on @g@ from origin of @g@. Geometry @g@ must be a lineal geometry
 --
-project :: Geometry -> Geometry -> Geos Double
+project :: Geometry a => a -> a -> Geos Double
 project = geo_2_ I.geos_Project
 
-projectNormalized :: Geometry -> Geometry -> Geos Double
+projectNormalized :: Geometry a => a -> a -> Geos Double
 projectNormalized = geo_2_ I.geos_ProjectNormalized
 
 
-geo_1_d :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CDouble -> IO (Ptr I.GEOSGeometry))
-          -> Geometry
+geo_1_d :: Geometry a
+          => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CDouble -> IO (Ptr I.GEOSGeometry))
+          -> a
           -> Double
-          -> Geos Geometry
-geo_1_d f g d = withGeos $ \h -> do
-  g' <- withGeometry g $ \gp ->   
-           f h gp $ realToFrac d
-  fptr <- newForeignPtrEnv I.geos_GeomDestroy h g'
-  return $ Geometry fptr
+          -> Geos Geom
+-- TODO: Check on this. I think we can be sure returned geometries aren't owned by inputs.
+geo_1_d f g d = do
+  g' <- withGeos $ \h -> withGeometry g $ \gp ->  f h gp $ realToFrac d
+  constructGeometry g'
 
--- | Return the closest point to given distance within geometry. Geometry must be a LineString 
+-- | Return the closest point to given distance within geometry. Geometry must be a LineString
 --
-interpolate :: Geometry -> Double -> Geos Geometry 
-interpolate = geo_1_d  I.geos_Interpolate 
+interpolate :: Geometry a => a -> Double -> Geos Geom
+interpolate = geo_1_d  I.geos_Interpolate
 
-interpolateNormalized :: Geometry -> Double -> Geos Geometry
+interpolateNormalized :: Geometry a => a -> Double -> Geos Geom
 interpolateNormalized = geo_1_d I.geos_InterpolateNormalized
 
 --Binary Predicates
 --------------------
-binaryPredicate_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO CChar)
-                    -> String
-                    -> Geometry
-                    -> Geometry 
-                    -> Geos Bool
+binaryPredicate_ :: Geometry a
+                  => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO CChar)
+                  -> String
+                  -> a
+                  -> a
+                  -> Geos Bool
 binaryPredicate_ f s g1 g2 = withGeos $ \h -> do
-  b <- throwIf ((==) 2) (mkErrorMessage s) $ 
+  b <- throwIf ((==) 2) (mkErrorMessage s) $
         withGeometry g1 $ \gp1 ->
           withGeometry g2 $ f h gp1
   return . toBool $  b
 
-disjoint :: Geometry -> Geometry -> Geos Bool
+disjoint :: Geometry a => a-> a -> Geos Bool
 disjoint = binaryPredicate_ I.geos_Disjoint "disjoint"
 
-touches :: Geometry -> Geometry -> Geos Bool
+touches :: Geometry a => a -> a -> Geos Bool
 touches = binaryPredicate_ I.geos_Touches "touches"
 
-intersects :: Geometry -> Geometry -> Geos Bool
+intersects :: Geometry a => a -> a -> Geos Bool
 intersects = binaryPredicate_ I.geos_Intersects "intersects"
 
-crosses :: Geometry -> Geometry -> Geos Bool
+crosses :: Geometry a => a -> a -> Geos Bool
 crosses = binaryPredicate_ I.geos_Crosses "crosses"
 
-within :: Geometry -> Geometry -> Geos Bool
+within :: Geometry a => a -> a -> Geos Bool
 within = binaryPredicate_ I.geos_Within "within"
 
-contains :: Geometry -> Geometry -> Geos Bool
+contains :: Geometry a => a -> a -> Geos Bool
 contains = binaryPredicate_ I.geos_Contains "contains"
 
-overlaps :: Geometry -> Geometry -> Geos Bool
+overlaps :: Geometry a => a -> a -> Geos Bool
 overlaps = binaryPredicate_ I.geos_Overlaps "overlaps"
 
-equals :: Geometry -> Geometry -> Geos Bool
-equals = binaryPredicate_ I.geos_Equals "equals" 
+equals :: Geometry a => a -> a -> Geos Bool
+equals = binaryPredicate_ I.geos_Equals "equals"
 
-equalsExact :: Geometry -> Geometry -> Double -> Geos Bool
+equalsExact :: Geometry a => a -> a -> Double -> Geos Bool
 equalsExact g1' g2' d = binaryPredicate_ (\h g1 g2 -> I.geos_EqualsExact h g1 g2 (realToFrac d)) "equalsExact" g1' g2'
 
-covers :: Geometry -> Geometry -> Geos Bool
+covers :: Geometry a => a -> a -> Geos Bool
 covers = binaryPredicate_ I.geos_Covers "covers"
 
-coveredBy :: Geometry -> Geometry -> Geos Bool
+coveredBy :: Geometry a => a -> a -> Geos Bool
 coveredBy = binaryPredicate_ I.geos_CoveredBy "coveredBy"
 
 -- Misc functions
 
-geo_1 :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr CDouble -> IO CInt) 
-          -> Geometry
-          -> Geos Double
+geo_1 ::  Geometry a
+      => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr CDouble -> IO CInt)
+      -> a
+      -> Geos Double
 geo_1 f g = withGeos $ \h -> alloca $ \dptr -> do
-    _ <- throwIfZero (mkErrorMessage "geo_1" ) $ withGeometry g $ \gp -> 
-        f h gp dptr 
+    _ <- throwIfZero (mkErrorMessage "geo_1" ) $ withGeometry g $ \gp ->
+        f h gp dptr
     s <- peek dptr
     return $ realToFrac s
 
-area :: Geometry -> Geos Double
+area :: Geometry a => a -> Geos Double
 area = geo_1 I.geos_Area
 
-geometryLength :: Geometry -> Geos Double
+geometryLength :: Geometry a => a -> Geos Double
 geometryLength = geo_1 I.geos_Length
 
-geo_2_d :: (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> Ptr CDouble -> IO CInt)
-          -> Geometry
-          -> Geometry
+geo_2_d :: Geometry a
+          => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> Ptr CDouble -> IO CInt)
+          -> a
+          -> a
           -> Geos Double
 geo_2_d f g p = withGeos $ \h -> alloca $ \dptr -> do
    d <- throwIfZero (mkErrorMessage "geo_2") $ withGeometry g $ \gp ->
@@ -382,15 +393,14 @@ geo_2_d f g p = withGeos $ \h -> alloca $ \dptr -> do
                f h gp pp dptr
    return $ realToFrac  d
 
-distance :: Geometry -> Geometry -> Geos Double
+distance :: Geometry a => a -> a -> Geos Double
 distance = geo_2_d I.geos_Distance
 
-hausdorffDistance :: Geometry -> Geometry -> Geos Double
+hausdorffDistance :: Geometry a => a -> a -> Geos Double
 hausdorffDistance = geo_2_d I.geos_HausdorffDistance
 
-nearestPoints :: Geometry -> Geometry -> Geos CoordSeq
-nearestPoints g p = withGeos $ \h -> do
-  ptr <-  withGeometry g $ \gp ->
+nearestPoints :: (Geometry a, CoordinateSequence b) => a -> a -> Geos b
+nearestPoints g p = do
+  ptr <- withGeos $ \h -> withGeometry g $ \gp ->
             withGeometry p $ I.geos_NearestPoints h gp
-  fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h ptr
-  return $ CoordSeq fptr
+  createCoordinateSequence ptr

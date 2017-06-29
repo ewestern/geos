@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Data.Geometry.Geos.Buffer (
     buffer
   , defaultBufferParams
@@ -10,6 +12,7 @@ import qualified Data.Geometry.Geos.Raw.Buffer as R
 import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Geometry
+import qualified Data.Geometry.Geos.Raw.Geometry as RG
 
 data BufferCapStyle = 
     RoundCap
@@ -56,13 +59,13 @@ defaultBufferParams = BufferParams {
 
 buffer :: Geometry a -> Double -> Int -> Some Geometry 
 buffer g width quadsegs = runGeos $  do
-    rg <- convertGeometryToRaw g
+    rg :: RG.Geom <- convertGeometryToRaw g
     rg' <- R.buffer rg width quadsegs
     convertGeometryFromRaw rg'
 
 bufferWithParams :: Geometry a -> Double -> BufferParams -> Some Geometry
 bufferWithParams g width bp = runGeos $ do
-  rg <- convertGeometryToRaw g
+  rg :: RG.Geom <- convertGeometryToRaw g
   rbp <- R.createBufferParams 
   R.setEndCapStyle rbp (convertCapStyle $ capStyle bp) 
   R.setJoinStyle rbp (convertJoinStyle $ joinStyle bp)
