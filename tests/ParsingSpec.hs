@@ -36,5 +36,27 @@ parsingSpecs = describe "Tests Serialization" $ do
                 ls@(LineStringGeometry _ _) -> ls
                 _ -> error "asda"
     lsg `shouldBe` linestring
+  it "can parse lots of things" $ do
+    polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
+    (length polygons) `shouldBe` 98
+    points <- (fmap ensurePoint) <$> loadThingsFromFile "tests/sampledata/points.csv"
+    (length points) `shouldBe` 34582
+    let matchingPoints = searchPoints points <$> polygons
+    (length matchingPoints) `shouldBe` 98
+    mapM_ (print . length) matchingPoints
+    1 `shouldBe` 1
 
 
+ensurePoint :: Some Geometry -> Geometry Point
+ensurePoint g = withSomeGeometry g $ \g' -> case g' of
+  PointGeometry _ _ -> g'
+  _ -> error "This geometry was expected to be a Point"
+
+ensurePolygon :: Some Geometry -> Geometry Polygon
+ensurePolygon g = withSomeGeometry g $ \g' -> case g' of
+  PolygonGeometry _ _  -> g'
+  _ -> error "This geometry was expected to be a Polygon"
+
+searchPoints :: [Geometry Point] -> Geometry Polygon -> [Geometry Point]
+searchPoints points polygon = filter f points
+  where f point = contains polygon point
