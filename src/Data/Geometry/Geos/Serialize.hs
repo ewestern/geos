@@ -3,6 +3,7 @@
 
 module Data.Geometry.Geos.Serialize (
     readHex
+  , readLotsOfHex
   , writeHex
   , readWkt
   , writeWkt
@@ -20,6 +21,16 @@ readHex bs = runGeos $ do
   r <- S.createReader
   g <- S.readHex r bs
   convertGeometryFromRaw g
+
+readLotsOfHex :: [BC.ByteString] -> [Some Geometry]
+readLotsOfHex bs = runGeos $ do
+  r <- S.createReader
+  x <- traverse (S.readHex r) bs
+  traverse convertGeometryFromRaw x
+
+--foo :: (Traversable f) => Geos Reader -> f BC.ByteString -> Geos (f (Some Geometry))
+--foo r = mapM (convertGeometryFromRaw <$> S.readHex r)
+--foo = convertGeometryFromRaw <$> S.readHex
 
 writeHex :: Geometry a -> BC.ByteString
 writeHex g = runGeos $ do

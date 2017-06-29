@@ -28,6 +28,11 @@ loadThingsFromFile fp = do
   rows <- BS8.readFile fp
   return $ readHex <$> (BS8.lines rows)
 
+loadThingsFromFile' :: FilePath -> IO [Some Geometry]
+loadThingsFromFile' fp = do
+  rows <- BS8.readFile fp
+  return $ readLotsOfHex (BS8.lines rows)
+
 makeMultiPolygon = MultiPolygon . V.fromList . (fmap makePolygon)
 makeMultiPolygonGeo polygons = MultiPolygonGeometry (makeMultiPolygon polygons) Nothing
 polygon1 =  makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]

@@ -37,6 +37,7 @@ parsingSpecs = describe "Tests Serialization" $ do
                 _ -> error "asda"
     lsg `shouldBe` linestring
   it "can parse lots of things" $ do
+    pendingWith "This definitely causes problems"
     polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
     (length polygons) `shouldBe` 98
     points <- (fmap ensurePoint) <$> loadThingsFromFile "tests/sampledata/points.csv"
@@ -45,6 +46,23 @@ parsingSpecs = describe "Tests Serialization" $ do
     (length matchingPoints) `shouldBe` 98
     mapM_ (print . length) matchingPoints
     1 `shouldBe` 1
+  it "can read a long list" $ do
+    points <- (fmap ensurePoint) <$> loadThingsFromFile "tests/sampledata/points.csv"
+    (length points) `shouldBe` 34582
+    -- Because we're in Australia (below the equator) all the points in this set should have a latitude < 0
+    let filteredPoints = filter (\(PointGeometry (Point (Coordinate2 lat long)) _) -> long > 0) points
+    -- running this test multiple times will generate a random length list
+    length filteredPoints `shouldBe` 0
+  it "can read a long list in one op" $ do
+    pendingWith "o"
+    points <- (fmap ensurePoint) <$> loadThingsFromFile' "tests/sampledata/points.csv"
+    (length points) `shouldBe` 34582
+    -- Because we're in Australia (below the equator) all the points in this set should have a latitude < 0
+    let filteredPoints = filter (\(PointGeometry (Point (Coordinate2 lat long)) _) -> long > 0) points
+    -- running this test multiple times will generate a random length list
+    length filteredPoints `shouldBe` 0
+
+
 
 
 ensurePoint :: Some Geometry -> Geometry Point
