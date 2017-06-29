@@ -32,9 +32,9 @@ main = hspec $ do
   describe "raw geometry" $ do
 
     it "Creates a Coordinate Sequence" $  do
-      let (size, dim) = runGeos $ do
+      let (size, dim) = runGeos $ do 
             cs :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
-            size <-  RC.getCoordinateSequenceSize cs
+            size <-  RC.getCoordinateSequenceSize cs 
             dim <-  RC.getCoordinateSequenceDimensions cs
             return (size, dim)
       size `shouldBe` (2 :: Int)
@@ -42,8 +42,8 @@ main = hspec $ do
     it "Sets a Coordinate Sequence" $ do
       let (d1, d2) = runGeos $ do
             c :: RC.CoordSeq <- RC.createCoordinateSequence 2 2
-            RC.setCoordinateSequenceX c 0 5.0
-            RC.setCoordinateSequenceY c 0 10.0
+            RC.setCoordinateSequenceX c 0 5.0 
+            RC.setCoordinateSequenceY c 0 10.0 
             d1 <- RC.getCoordinateSequenceX c 0
             d2 <- RC.getCoordinateSequenceY c 0
             return (d1, d2)
