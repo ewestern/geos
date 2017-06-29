@@ -52,8 +52,8 @@ main = hspec $ do
     it "Gets a Coordinate Sequence from a geometry" $ do
       let cs = runGeos $ do
             c <- RC.createCoordinateSequence 2 2
-            RC.setCoordinateSequenceX c 0 5.0
-            RC.setCoordinateSequenceY c 0 10.0
+            RC.setCoordinateSequenceX c 0 5.0 
+            RC.setCoordinateSequenceY c 0 10.0 
             return c
           cs' = runGeos $ do
             g <- R.createLineString cs
@@ -83,7 +83,7 @@ main = hspec $ do
             R.getTypeId rp
       t `shouldBe` 3
     it "Tests disjoint" $ do
-      (disjoint (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing)) `shouldBe` False
+      (disjoint (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing)) `shouldBe` False 
     it "Tests intersects" $ do
       intersects (PolygonGeometry polygon1 Nothing) (PolygonGeometry polygon2 Nothing) `shouldBe` True
 
