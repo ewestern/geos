@@ -33,6 +33,7 @@ Library
     , vector
     , transformers
     , mtl
+    , cassava
   build-tools: hsc2hs
   exposed-modules:
       Data.Geometry.Geos.Topology
@@ -86,6 +87,7 @@ test-suite test
     , mtl
     , geos
     , hspec
+    , cassava
   default-extensions:
       LambdaCase
     , GADTs
