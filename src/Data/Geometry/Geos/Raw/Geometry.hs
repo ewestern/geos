@@ -156,15 +156,14 @@ getTypeId g = withGeos $ \h -> do
   i <- throwIfNeg (mkErrorMessage "getTypeId") $ withGeometry g $ I.geos_GeomTypeId h
   return $ geomTypeId (fromIntegral i)
 
-{-|
-Never a good case for using this with a finalizer. 
--}
-getCoordinateSequence :: Geometry a => a -> Geos CoordSeqConst
-getCoordinateSequence g = do
-  ptr <- withGeos $ \h ->
-          throwIfNull  "getCoordinateSequence" $ withGeometry g $ I.geos_GetCoordSeq h
-  createCoordinateSequence ptr
 
+getCoordinateSequence :: Geometry a => a -> Geos CoordSeq
+getCoordinateSequence g = withGeos $ \h -> 
+    withGeometry g $ \gptr -> do
+        cptr <- throwIfNull "getCoordinateSequence" $ I.geos_GetCoordSeq h gptr
+        cptr' <- I.geos_CoordSeqClone h cptr
+        fptr <- newForeignPtrEnv I.geos_CoordSeqDestroy h cptr'
+        return $ CoordSeq fptr
 
 
 getNum_ :: Geometry a
