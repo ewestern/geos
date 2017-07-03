@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 
 module SpatialOperationsSpec where
 
@@ -9,6 +10,7 @@ import qualified Data.Vector as V
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Geometry
 import Data.Geometry.Geos.Topology
+import Data.Geometry.Geos.STRTree
 
 import SpecSampleData
 
@@ -41,18 +43,21 @@ spatialOpsSpecs = describe "Tests Contains" $ do
         pointOut     = makePointGeo (2.5, 0.5)
     (contains multiPoly pointIn) `shouldBe` True
     (contains multiPoly pointOut) `shouldBe` False
+
   it "Projects a point against a linestring" $ do
       let lr = makeLineStringGeo [(0,0), (0, 1), (1, 1)]
           p = makePointGeo (0.5, 1.0)
 -- The point on this line string nearest (0.5, 1.0) is 1.5 units from the origin. i.e., halfway between the second and third point.
       project lr p `shouldBe` 1.5
       interpolate lr 1.5 `shouldBe` p
+
   it "Tests disjoint geometries" $ do
     let poly = makePolygonGeo [[(0,0), (0,1), (1,1), (1,0), (0,0)]]
         p1 = makePointGeo (2,2)
         p2 = makePointGeo (0.5, 0.5)
     disjoint poly p1 `shouldBe` True
     disjoint poly p2 `shouldBe` False
+
   it "creates an envelope / boundary of a geometry" $ do
     let poly1 = makePolygonGeo [[(0,0), (0,1), (1,1), (1.5, 1.5), (1,0), (0,0)]]
         env1 = makePolygonGeo [[(0.0, 0.0), (1.5, 0.0), (1.5, 1.5), (0.0, 1.5), (0.0, 0.0)]]
@@ -64,3 +69,25 @@ spatialOpsSpecs = describe "Tests Contains" $ do
     (ensurePoint $ envelope point) `shouldBe` point
     (ensureMultiLineString $ boundary poly2) `shouldBe` env2
     convexHull poly2 `shouldBe` env3
+
+  it "can use STRTrees" $ do
+    let points = makePointGeo <$> [(0.1,0.1), (0.9, 0.9)]
+        polygon = makePolygonGeo [[(0,0),(0,1),(1,1),(1,0),(0,0)]]
+        foo = V.fromList $ zip points [(0::Int)..]
+        tree = createSTR foo
+        result = querySTR tree polygon
+    1 `shouldBe` 1
+    --let result = querySTR tree polygon
+    result `shouldBe` V.fromList [0,1]
+
+  it "foo" $ do
+    points <- fmap ensurePoint <$> loadThingsFromFile "points.csv"
+    polygons <- fmap ensurePolygon <$> loadThingsFromFile "polygons.csv"
+    let tree = createSTR $ zip polygons [(0::Int)..]
+    --let result = querySTR tree polygon
+    print . head $ points
+    print . head $ polygons
+    let result = querySTR tree (head polygons)
+    print result
+    -- length results `shouldBe` 98
+    1 `shouldBe` 1
