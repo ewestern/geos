@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase, ScopedTypeVariables #-} 
+{-# LANGUAGE LambdaCase, ScopedTypeVariables #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -7,6 +7,13 @@ module Data.Geometry.Geos.Geometry (
     convertGeometryFromRaw
   , convertGeometryToRaw
   , convertMultiPolygonFromRaw
+  , ensurePoint
+  , ensureLineString
+  , ensureLinearRing
+  , ensurePolygon
+  , ensureMultiPoint
+  , ensureMultiPolygon
+  , ensureMultiLineString
   , interpolate
   , interpolateNormalized
   , project
@@ -183,6 +190,46 @@ convertGeometryFromRaw rg = do
           return $ Some (MultiPolygonGeometry mp s)
         R.GeometryCollectionTypeId -> error "GeometryCollection currently unsupported"
 
+
+-- The following methods are useful when the type of a (Some Geometry) is known a priori
+-- (i.e. the result of calling centroid is always a point)
+
+ensurePoint :: Some Geometry -> Geometry Point
+ensurePoint g = withSomeGeometry g $ \g' -> case g' of
+  PointGeometry _ _ -> g'
+  _ -> error "This geometry was expected to be a Point"
+
+ensureLineString :: Some Geometry -> Geometry LineString
+ensureLineString g = withSomeGeometry g $ \g' -> case g' of
+  LineStringGeometry _ _ -> g'
+  _ -> error "This geometry was expected to be a LineString"
+
+ensureLinearRing :: Some Geometry -> Geometry LinearRing
+ensureLinearRing g = withSomeGeometry g $ \g' -> case g' of
+  LinearRingGeometry _ _ -> g'
+  _ -> error "This geometry was expected to be a LinearRing"
+
+ensurePolygon :: Some Geometry -> Geometry Polygon
+ensurePolygon g = withSomeGeometry g $ \g' -> case g' of
+  PolygonGeometry _ _  -> g'
+  _ -> error "This geometry was expected to be a Polygon"
+
+ensureMultiPoint :: Some Geometry -> Geometry MultiPoint
+ensureMultiPoint g = withSomeGeometry g $ \p' -> case p' of
+  MultiPointGeometry _ _ -> p'
+  _ -> error "This geometry was expected to be a MultiPoint"
+
+ensureMultiLineString :: Some Geometry -> Geometry MultiLineString
+ensureMultiLineString g = withSomeGeometry g $ \p' -> case p' of
+  MultiLineStringGeometry _ _ -> p'
+  _ -> error "This geometry was expected to be a MultiLineString"
+
+ensureMultiPolygon :: Some Geometry -> Geometry MultiPolygon
+ensureMultiPolygon g = withSomeGeometry g $ \p' -> case p' of
+  MultiPolygonGeometry _ _ -> p'
+  _ -> error "This geometry was expected to be a MultiPolygon"
+
+
 getPosition :: RC.CoordinateSequence a => a -> Int -> Geos Coordinate
 getPosition cs i =  do
     dim <- RC.getCoordinateSequenceDimensions cs
@@ -208,7 +255,7 @@ convertSequenceFromRaw g = do
   size <- R.getNumCoordinates g
   V.generateM size (getPosition cs)
 
-convertLineStringFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca) 
+convertLineStringFromRaw :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca)
                           => a -> Geos LineString
 convertLineStringFromRaw g = LineString <$> convertSequenceFromRaw g
 

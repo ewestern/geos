@@ -20,9 +20,9 @@ makePolygon = Polygon . V.fromList . (fmap makeLinearRing)
 makePolygonGeo cs = PolygonGeometry (makePolygon cs) Nothing
 makeMultiLineString =  MultiLineString . V.fromList . (fmap  makeLineString)
 makeMultiLineStringGeo lss = MultiLineStringGeometry (makeMultiLineString lss) Nothing
-
 makeMultiPolygon = MultiPolygon . V.fromList . (fmap makePolygon)
 makeMultiPolygonGeo polygons = MultiPolygonGeometry (makeMultiPolygon polygons) Nothing
+
 polygon1 =  makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]
 polygon2 = makePolygon [[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]]
 
