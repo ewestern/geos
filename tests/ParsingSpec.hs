@@ -37,7 +37,6 @@ parsingSpecs = describe "Tests Serialization" $ do
                 _ -> error "asda"
     lsg `shouldBe` linestring
   it "can parse lots of things" $ do
-    pendingWith "This definitely causes problems"
     polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
     (length polygons) `shouldBe` 98
     points <- (fmap ensurePoint) <$> loadThingsFromFile "tests/sampledata/points.csv"
@@ -54,7 +53,6 @@ parsingSpecs = describe "Tests Serialization" $ do
     -- running this test multiple times will generate a random length list
     length filteredPoints `shouldBe` 0
   it "can read a long list in one op" $ do
-    pendingWith "o"
     points <- (fmap ensurePoint) <$> loadThingsFromFile' "tests/sampledata/points.csv"
     (length points) `shouldBe` 34582
     -- Because we're in Australia (below the equator) all the points in this set should have a latitude < 0

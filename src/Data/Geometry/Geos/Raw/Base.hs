@@ -1,8 +1,8 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, RankNTypes #-} 
+{-# LANGUAGE GeneralizedNewtypeDeriving, RankNTypes #-}
 
 module Data.Geometry.Geos.Raw.Base (
     Geos
-  , runGeos  
+  , runGeos
   , throwIfZero
   , withGeos
   , mkErrorMessage
@@ -23,7 +23,7 @@ m >>< f = do
   _ <- f a
   return a
 
-newtype GEOSHandle = GEOSHandle { 
+newtype GEOSHandle = GEOSHandle {
   unGEOSHandle :: MV.MVar (ForeignPtr I.GEOSContextHandle_HS)
 }
 
@@ -32,21 +32,21 @@ newtype Geos a = Geos { unGeos :: ReaderT GEOSHandle IO a }
 -- don't derive MonadIO to restrict user from performing arbitrary IO
 
 withGeos :: (I.GEOSContextHandle_t -> IO a) -> Geos a
-withGeos f = Geos . ReaderT $ \gh -> MV.withMVar (unGEOSHandle gh) $ \fp -> withForeignPtr fp f
+withGeos f = Geos . ReaderT $ foo
+  where foo gh = MV.withMVar (unGEOSHandle gh) bar
+        bar fp = withForeignPtr fp f
 
 runGeos :: Geos a -> a
 runGeos g = unsafePerformIO $ do
-  ptrC <- I.geos_init    
+  ptrC <- I.geos_init
   fptr <- newForeignPtr I.geos_finish ptrC
   mv <- MV.newMVar fptr
   v <- runReaderT (unGeos g) $ GEOSHandle mv
   return v
-  
+
 
 throwIfZero :: (Eq a, Num a) => (a -> String) -> IO a -> IO a
 throwIfZero f m = throwIf (\v -> v == 0) f m
 
-mkErrorMessage :: Show a => String -> (a -> String) 
+mkErrorMessage :: Show a => String -> (a -> String)
 mkErrorMessage s = \n -> s  <> " has thrown an error:  " <> show n
-
-
