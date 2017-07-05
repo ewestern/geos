@@ -4,7 +4,6 @@ module Data.Geometry.Geos.Raw.CoordSeq (
     CoordinateSequence (..)
   , CoordSeqConst (CoordSeqConst)
   , CoordSeq (CoordSeq)
-  , cloneCoordinateSequence
   , getCoordinateSequenceX
   , getCoordinateSequenceY
   , getCoordinateSequenceZ
@@ -102,10 +101,7 @@ instance CoordinateSequence CoordSeqConst where
   createCoordinateSequence ptr = return $ CoordSeqConst ptr
 
 
-cloneCoordinateSequence :: CoordinateSequence a => a -> Geos CoordSeq
-cloneCoordinateSequence cs = do
-  cloned <- withGeos $ \h -> withCoordinateSequence cs $ I.geos_CoordSeqClone h
-  createCoordinateSequence cloned
+
 
 getCoordinateSequenceD_ :: CoordinateSequence a 
                           => (I.GEOSContextHandle_t -> Ptr I.GEOSCoordSequence -> CUInt -> Ptr CDouble -> IO CInt) 
