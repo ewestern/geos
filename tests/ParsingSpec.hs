@@ -45,7 +45,6 @@ parsingSpecs = describe "Tests Serialization" $ do
     -- running this test multiple times will generate a random length list
     length filteredPoints `shouldBe` 0
   it "can read a long list in one op" $ do
-    pendingWith "o"
     points <- (fmap ensurePoint) <$> loadThingsFromFile' "tests/sampledata/points.csv"
     (length points) `shouldBe` 34582
     -- Because we're in Australia (below the equator) all the points in this set should have a latitude < 0
@@ -53,16 +52,6 @@ parsingSpecs = describe "Tests Serialization" $ do
     -- running this test multiple times will generate a random length list
     length filteredPoints `shouldBe` 0
 
-
-ensurePoint :: Some Geometry -> Geometry Point
-ensurePoint g = withSomeGeometry g $ \g' -> case g' of
-  PointGeometry _ _ -> g'
-  _ -> error "This geometry was expected to be a Point"
-
-ensurePolygon :: Some Geometry -> Geometry Polygon
-ensurePolygon g = withSomeGeometry g $ \g' -> case g' of
-  PolygonGeometry _ _  -> g'
-  _ -> error "This geometry was expected to be a Polygon"
 
 searchPoints :: [Geometry Point] -> Geometry Polygon -> [Geometry Point]
 searchPoints points polygon = filter f points
