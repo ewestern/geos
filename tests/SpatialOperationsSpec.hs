@@ -47,6 +47,8 @@ spatialOpsSpecs = describe "Tests Contains" $ do
 -- The point on this line string nearest (0.5, 1.0) is 1.5 units from the origin. i.e., halfway between the second and third point.
       project lr p `shouldBe` 1.5
       interpolate lr 1.5 `shouldBe` p
+      projectNormalized lr p `shouldBe` 0.75
+      interpolateNormalized lr 0.75 `shouldBe` p
   it "Tests disjoint geometries" $ do
     let poly = makePolygonGeo [[(0,0), (0,1), (1,1), (1,0), (0,0)]]
         p1 = makePointGeo (2,2)
