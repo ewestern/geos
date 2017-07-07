@@ -51,11 +51,11 @@ project g1 g2 = runGeos $ do
   R.project g1' g2'
 
 -- | Like @project@, but returns the distance as a Double between 0 and 1.
-projectNormalized :: Geometry Point -> Geometry LineString -> Double
+projectNormalized :: Geometry LineString -> Geometry Point -> Double
 projectNormalized g1 g2 = runGeos $ do
   g1' :: R.Geom <- convertGeometryToRaw g1
   g2' :: R.Geom <- convertGeometryToRaw g2
-  R.project g1' g2'
+  R.projectNormalized g1' g2'
 
 -- | Given a distance, returns the point (or closest point) within the geometry LineString that distance.
 interpolate :: Geometry LineString -> Double -> Geometry Point
