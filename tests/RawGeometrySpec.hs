@@ -12,6 +12,7 @@ import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
 import qualified Data.Geometry.Geos.Raw.Serialize as RS
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Vector as V
+import Data.Maybe (fromJust)
 
 import SpecSampleData
 
@@ -35,19 +36,6 @@ rawGeometrySpecs = describe "raw geometry" $ do
           return (d1, d2)
     d1 `shouldBe` (5.0 :: Double)
     d2 `shouldBe` (10.0 :: Double)
-  it "Gets a Coordinate Sequence from a geometry" $ do
-    -- CoordSeqConst, becuase required by createLineString
-    let cs1 = runGeos $ do
-          c <- RC.createEmptyCoordinateSequence 2 2 -- will become owned by geometry
-          RC.setCoordinateSequenceX c 0 5.0
-          RC.setCoordinateSequenceY c 0 10.0
-          return c
-        cs2  = runGeos $ do
-          g  :: R.Geom <- R.createLineString cs1 
-          cs' :: RC.CoordSeqConst <- R.getCoordinateSequence g
-          return cs'
-    cs1 `shouldBe` cs2
-
   it "Creates a LineString " $ do
     let tid = runGeos $ do
           cs :: RC.CoordSeqConst <- RC.createEmptyCoordinateSequence 2 2
@@ -76,7 +64,7 @@ rawGeometrySpecs = describe "raw geometry" $ do
     let (x,y) = runGeos $ do
           r <- RS.createReader
           mpr <- RS.readHex r multiPolygonStringBS
-          MultiPolygon vps <- convertMultiPolygonFromRaw mpr
+          MultiPolygon vps <- convertMultiPolygonFromRaw $ fromJust mpr
           let (Polygon vlr) = vps V.! 0
               (LinearRing vc) = vlr V.! 0
               (Coordinate2 x y) = vc V.! 0
@@ -92,9 +80,9 @@ rawGeometrySpecs = describe "raw geometry" $ do
       let (x,y) = runGeos $ do
               r <- RS.createReader
               g <- RS.readHex r multiPolygonStringBS
-              gi :: R.GeomConst <- R.getGeometryN g 0
+              gi :: R.GeomConst <- R.getGeometryN (fromJust g) 0
               ir :: R.GeomConst <- R.getExteriorRing gi
-              cs :: RC.CoordSeqConst <- R.getCoordinateSequence ir
+              cs <- R.getCoordinateSequence ir
               x <- RC.getCoordinateSequenceX cs 0
               y <- RC.getCoordinateSequenceY cs 0
               return (x,y)

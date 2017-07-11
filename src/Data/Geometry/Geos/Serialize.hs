@@ -15,22 +15,21 @@ import qualified Data.Geometry.Geos.Raw.Serialize as S
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import Data.Geometry.Geos.Types
 import qualified Data.ByteString.Char8 as BC
+import Data.Maybe (catMaybes)
 
-readHex :: BC.ByteString -> Some Geometry
+readHex :: BC.ByteString -> Maybe (Some Geometry)
 readHex bs = runGeos $ do
   r <- S.createReader
   g <- S.readHex r bs
-  convertGeometryFromRaw g
+  case g of
+    Just g' -> Just <$> convertGeometryFromRaw g'
+    Nothing -> return Nothing
 
 readLotsOfHex :: [BC.ByteString] -> [Some Geometry]
 readLotsOfHex bs = runGeos $ do
   r <- S.createReader
   x <- traverse (S.readHex r) bs
-  traverse convertGeometryFromRaw x
-
---foo :: (Traversable f) => Geos Reader -> f BC.ByteString -> Geos (f (Some Geometry))
---foo r = mapM (convertGeometryFromRaw <$> S.readHex r)
---foo = convertGeometryFromRaw <$> S.readHex
+  traverse convertGeometryFromRaw $ catMaybes x
 
 writeHex :: Geometry a -> BC.ByteString
 writeHex g = runGeos $ do

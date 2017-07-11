@@ -8,6 +8,7 @@ import qualified Data.Vector as V
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Serialize
 import Data.Geometry.Geos.CSV
+import Data.Maybe (catMaybes)
 
 point = PointGeometry (Point $ Coordinate2 36.1 (-119.1)) (Just 4326)
 makePoint (c1, c2) = Point $ Coordinate2 c1 c2
@@ -25,7 +26,7 @@ makeMultiLineStringGeo lss = MultiLineStringGeometry (makeMultiLineString lss) N
 loadThingsFromFile :: FilePath -> IO [Some Geometry]
 loadThingsFromFile fp = do
   rows <- BS8.readFile fp
-  return $ readHex <$> (BS8.lines rows)
+  return $ catMaybes $ readHex <$> (BS8.lines rows)
 
 loadThingsFromFile' :: FilePath -> IO [Some Geometry]
 loadThingsFromFile' fp = do
