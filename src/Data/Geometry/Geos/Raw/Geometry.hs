@@ -387,9 +387,10 @@ geo_2_d :: Geometry a
           -> a
           -> Geos Double
 geo_2_d f g p = withGeos $ \h -> alloca $ \dptr -> do
-   d <- throwIfZero (mkErrorMessage "geo_2") $ withGeometry g $ \gp ->
+   _ <- throwIfZero (mkErrorMessage "geo_2") $ withGeometry g $ \gp ->
           withGeometry p $ \pp ->
                f h gp pp dptr
+   d <- peek dptr
    return $ realToFrac  d
 
 distance :: Geometry a => a -> a -> Geos Double
