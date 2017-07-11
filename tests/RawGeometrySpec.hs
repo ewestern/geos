@@ -103,15 +103,8 @@ rawGeometrySpecs = describe "raw geometry" $ do
       y `shouldBe` -27.377412
   it "Tests Distance" $ do
     let a = makePointGeo (0,0)
-        a' = makePointGeo (542468.6625822315, 6898582.684523995)
         b = makePointGeo (0,2)
-        b' = makePointGeo (542430.7894194172, 6898574.506188475)
     let d = distance a b
         hd = hausdorffDistance a b
-    let d' = distance a' b'
-        hd' = hausdorffDistance a' b'
-    print $ (d,hd,d',hd')
     d   `shouldBe` 2.0
-    hd  `shouldNotBe` 1.0
-    d'  `shouldNotBe` 1.0
-    hd' `shouldNotBe` 1.0
+    hd  `shouldBe` 2.0
