@@ -47,10 +47,6 @@ data GEOSWKTWriter
 data GEOSWKTReader
 
 
-foreign import ccall
-  "notice_handlers.h init_GEOS"
-   geom_is_zero :: Ptr GEOSGeometry -> IO CChar
-
 foreign import ccall  
   "notice_handlers.h init_GEOS"
    geos_init :: IO GEOSContextHandle_t
