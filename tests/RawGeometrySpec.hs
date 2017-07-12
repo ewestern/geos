@@ -35,19 +35,6 @@ rawGeometrySpecs = describe "raw geometry" $ do
           return (d1, d2)
     d1 `shouldBe` (5.0 :: Double)
     d2 `shouldBe` (10.0 :: Double)
-  it "Gets a Coordinate Sequence from a geometry" $ do
-    -- CoordSeqConst, becuase required by createLineString
-    let cs1 = runGeos $ do
-          c <- RC.createEmptyCoordinateSequence 2 2 -- will become owned by geometry
-          RC.setCoordinateSequenceX c 0 5.0
-          RC.setCoordinateSequenceY c 0 10.0
-          return c
-        cs2  = runGeos $ do
-          g  :: R.Geom <- R.createLineString cs1
-          cs' :: RC.CoordSeq <- R.getCoordinateSequence g
-          return cs'
-    -- cs1 `shouldBe` cs2
-    1 `shouldBe` 1
 
   it "Creates a LineString " $ do
     let tid = runGeos $ do
