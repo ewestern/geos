@@ -158,7 +158,7 @@ getTypeId g = withGeos $ \h -> do
 
 
 getCoordinateSequence :: Geometry a => a -> Geos CoordSeq
-getCoordinateSequence g = withGeos $ \h -> 
+getCoordinateSequence g = withGeos $ \h ->
     withGeometry g $ \gptr -> do
         cptr <- throwIfNull "getCoordinateSequence" $ I.geos_GetCoordSeq h gptr
         cptr' <- I.geos_CoordSeqClone h cptr
@@ -373,7 +373,7 @@ geo_1 f g = withGeos $ \h -> alloca $ \dptr -> do
     _ <- throwIfZero (mkErrorMessage "geo_1" ) $ withGeometry g $ \gp ->
         f h gp dptr
     s <- peek dptr
-    return $ realToFrac s
+    pure $ realToFrac s
 
 area :: Geometry a => a -> Geos Double
 area = geo_1 I.geos_Area
@@ -391,7 +391,7 @@ geo_2_d f g p = withGeos $ \h -> alloca $ \dptr -> do
           withGeometry p $ \pp ->
                f h gp pp dptr
    d <- peek dptr
-   return $ realToFrac  d
+   pure . realToFrac $ d
 
 distance :: Geometry a => a -> a -> Geos Double
 distance = geo_2_d I.geos_Distance
