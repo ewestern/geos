@@ -54,16 +54,6 @@ parsingSpecs = describe "Tests Serialization" $ do
     length filteredPoints `shouldBe` 0
 
 
-ensurePoint :: Some Geometry -> Geometry Point
-ensurePoint g = withSomeGeometry g $ \g' -> case g' of
-  PointGeometry _ _ -> g'
-  _ -> error "This geometry was expected to be a Point"
-
-ensurePolygon :: Some Geometry -> Geometry Polygon
-ensurePolygon g = withSomeGeometry g $ \g' -> case g' of
-  PolygonGeometry _ _  -> g'
-  _ -> error "This geometry was expected to be a Polygon"
-
 searchPoints :: [Geometry Point] -> Geometry Polygon -> [Geometry Point]
 searchPoints points polygon = filter f points
   where f point = contains polygon point
