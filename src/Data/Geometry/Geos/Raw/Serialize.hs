@@ -64,7 +64,7 @@ read_ f r bs = withGeos $ \h ->
                BC.useAsCStringLen bs $
                  \(cs, l) -> f h rp cs $ fromIntegral l
             if mptr == nullPtr
-              then return Nothing
+              then pure Nothing
               else Just . Geom <$> newForeignPtrEnv I.geos_GeomDestroy h mptr
 
 read :: Reader -> BC.ByteString -> Geos (Maybe Geom)
