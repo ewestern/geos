@@ -35,6 +35,7 @@ rawGeometrySpecs = describe "raw geometry" $ do
           return (d1, d2)
     d1 `shouldBe` (5.0 :: Double)
     d2 `shouldBe` (10.0 :: Double)
+
   it "Creates a LineString " $ do
     let tid = runGeos $ do
           cs :: RC.CoordSeqConst <- RC.createEmptyCoordinateSequence 2 2
@@ -87,3 +88,10 @@ rawGeometrySpecs = describe "raw geometry" $ do
               return (x,y)
       x `shouldBe` 153.160525
       y `shouldBe` -27.377412
+  it "Tests Distance" $ do
+    let a = makePointGeo (0,0)
+        b = makePointGeo (0,2)
+    let d = distance a b
+        hd = hausdorffDistance a b
+    d   `shouldBe` 2.0
+    hd  `shouldBe` 2.0

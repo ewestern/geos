@@ -52,7 +52,6 @@ parsingSpecs = describe "Tests Serialization" $ do
     -- running this test multiple times will generate a random length list
     length filteredPoints `shouldBe` 0
 
-
 searchPoints :: [Geometry Point] -> Geometry Polygon -> [Geometry Point]
 searchPoints points polygon = filter f points
   where f point = contains polygon point
