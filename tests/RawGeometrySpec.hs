@@ -82,7 +82,7 @@ rawGeometrySpecs = describe "raw geometry" $ do
               g <- RS.readHex r multiPolygonStringBS
               gi :: R.GeomConst <- R.getGeometryN g 0
               ir :: R.GeomConst <- R.getExteriorRing gi
-              cs :: RC.CoordSeq <- R.getCoordinateSequence ir
+              cs <- R.getCoordinateSequence ir
               x <- RC.getCoordinateSequenceX cs 0
               y <- RC.getCoordinateSequenceY cs 0
               return (x,y)
