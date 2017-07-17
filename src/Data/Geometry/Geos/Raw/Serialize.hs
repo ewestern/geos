@@ -31,9 +31,6 @@ newtype WktWriter = WktWriter { _unWktWriter :: ForeignPtr I.GEOSWKTWriter }
 withWriter :: Writer -> (Ptr I.GEOSWKBWriter -> IO b) -> IO b
 withWriter (Writer w) f = withForeignPtr w f
 
-withWktReader :: WktReader -> (Ptr I.GEOSWKTReader -> IO b) -> IO b
-withWktReader (WktReader r) f = withForeignPtr r f
-
 withWktWriter :: WktWriter -> (Ptr I.GEOSWKTWriter -> IO b) -> IO b
 withWktWriter (WktWriter w) f = withForeignPtr w f
 
@@ -76,9 +73,9 @@ readHex :: Reader -> BC.ByteString -> Geos (Maybe Geom)
 readHex  = read_ I.geos_WKBReaderReadHex
 
 readWkt :: WktReader -> BC.ByteString -> Geos (Maybe Geom)
-readWkt r bs = do
+readWkt (WktReader r) bs = do
   withGeos $ \h -> do
-    ptr <- withWktReader r $ \rp ->
+    ptr <- withForeignPtr r $ \rp ->
               BC.useAsCString bs $ \cs ->
                 I.geos_WKTReaderRead h rp cs
     g <- wrapUpGeom h ptr
