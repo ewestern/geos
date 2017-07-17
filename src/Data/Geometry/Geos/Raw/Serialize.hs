@@ -52,25 +52,20 @@ createWktReader = withGeos $ \h -> do
     fp <- newForeignPtrEnv I.geos_WKTReaderDestroy h ptr
     return $ WktReader fp
 
-read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry)) 
-            -> Reader 
-            -> BC.ByteString 
+read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry))
+            -> Reader
+            -> BC.ByteString
             -> Geos (Maybe Geom)
-read_ f r bs = withGeos $ \h -> 
+read_ f r bs = withGeos $ \h ->
     onException (readBlock h) (return Nothing)
       where
         readBlock h =  do
-            mptr <- withReader r $ \rp -> 
-               BC.useAsCStringLen bs $ \(cs, l) -> do
-                        p <- f h rp cs $ fromIntegral l
-                        if p == nullPtr
-                          then return Nothing
-                          else return $ Just p
-            case mptr of
-              Just ptr -> do
-                  fp <- newForeignPtrEnv I.geos_GeomDestroy h ptr
-                  return . Just $ Geom fp
-              Nothing -> return Nothing
+            mptr <- withReader r $ \rp ->
+               BC.useAsCStringLen bs $
+                 \(cs, l) -> f h rp cs $ fromIntegral l
+            if mptr == nullPtr
+              then pure Nothing
+              else Just . Geom <$> newForeignPtrEnv I.geos_GeomDestroy h mptr
 
 read :: Reader -> BC.ByteString -> Geos (Maybe Geom)
 read = read_ I.geos_WKBReaderRead
