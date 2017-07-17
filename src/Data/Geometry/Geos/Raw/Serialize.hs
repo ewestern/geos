@@ -28,12 +28,6 @@ newtype Writer = Writer { _unWriter :: ForeignPtr I.GEOSWKBWriter }
 newtype WktReader = WktReader { _unWktReader :: ForeignPtr I.GEOSWKTReader }
 newtype WktWriter = WktWriter { _unWktWriter :: ForeignPtr I.GEOSWKTWriter }
 
-withWriter :: Writer -> (Ptr I.GEOSWKBWriter -> IO b) -> IO b
-withWriter (Writer w) f = withForeignPtr w f
-
-withWktWriter :: WktWriter -> (Ptr I.GEOSWKTWriter -> IO b) -> IO b
-withWktWriter (WktWriter w) f = withForeignPtr w f
-
 createReader :: Geos Reader
 createReader = withGeos $ \h -> do
     ptr <- throwIfNull "Create Reader" $ I.geos_WKBReaderCreate h
@@ -99,8 +93,8 @@ write_ :: Geometry a
         -> Writer
         -> a
         -> Geos BC.ByteString
-write_ f w g = withGeos $ \h ->  do
-  clen <- withWriter w $ \wp ->
+write_ f (Writer w) g = withGeos $ \h ->  do
+  clen <- withForeignPtr w $ \wp ->
           withGeometry g $ \gp ->
             alloca $ \lp -> do
               cs <- f h wp gp lp
@@ -116,8 +110,8 @@ writeHex :: Geometry a => Writer -> a -> Geos BC.ByteString
 writeHex = write_ I.geos_WKBWriterWriteHex
 
 writeWkt :: Geometry a => WktWriter -> a -> Geos BC.ByteString
-writeWkt w g = withGeos $ \h ->  do
-  wkt <- withWktWriter w $ \wp ->
+writeWkt (WktWriter w) g = withGeos $ \h ->  do
+  wkt <- withForeignPtr w $ \wp ->
           withGeometry g $ \gp -> do
             cs <- I.geos_WKTWriterWrite h wp gp
             return cs
