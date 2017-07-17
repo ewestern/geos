@@ -51,7 +51,6 @@ parsingSpecs = describe "Tests Serialization" $ do
     let bs = "2D50491A5DC024275C1ED5DE4040" :: BS.ByteString
     Nothing `shouldBe` (fmap ensurePoint $ readHex bs)
 
-
 searchPoints :: [Geometry Point] -> Geometry Polygon -> [Geometry Point]
 searchPoints points polygon = filter f points
   where f point = contains polygon point
