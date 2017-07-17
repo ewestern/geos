@@ -37,12 +37,15 @@ writeHex g = runGeos $ do
   r :: R.Geom <- convertGeometryToRaw g
   S.writeHex w r
 
-readWkt :: Maybe Int -> BC.ByteString -> Some Geometry
+readWkt :: Maybe Int -> BC.ByteString -> Maybe (Some Geometry)
 readWkt srid bs = runGeos $ do
   r <- S.createWktReader
   g <- S.readWkt r bs
-  g' <- R.setSRID srid g
-  convertGeometryFromRaw g'
+  case g of
+    Just g' -> do
+      g'' <- R.setSRID srid g'
+      Just <$> convertGeometryFromRaw g''
+    Nothing -> return Nothing
 
 writeWkt :: Geometry a -> BC.ByteString
 writeWkt g = runGeos $ do
