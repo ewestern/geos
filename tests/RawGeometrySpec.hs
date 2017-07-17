@@ -12,6 +12,7 @@ import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
 import qualified Data.Geometry.Geos.Raw.Serialize as RS
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Vector as V
+import Data.Maybe (fromJust)
 
 import SpecSampleData
 
@@ -64,7 +65,7 @@ rawGeometrySpecs = describe "raw geometry" $ do
     let (x,y) = runGeos $ do
           r <- RS.createReader
           mpr <- RS.readHex r multiPolygonStringBS
-          MultiPolygon vps <- convertMultiPolygonFromRaw mpr
+          MultiPolygon vps <- convertMultiPolygonFromRaw $ fromJust mpr
           let (Polygon vlr) = vps V.! 0
               (LinearRing vc) = vlr V.! 0
               (Coordinate2 x y) = vc V.! 0
@@ -80,9 +81,9 @@ rawGeometrySpecs = describe "raw geometry" $ do
       let (x,y) = runGeos $ do
               r <- RS.createReader
               g <- RS.readHex r multiPolygonStringBS
-              gi :: R.GeomConst <- R.getGeometryN g 0
+              gi :: R.GeomConst <- R.getGeometryN (fromJust g) 0
               ir :: R.GeomConst <- R.getExteriorRing gi
-              cs :: RC.CoordSeq <- R.getCoordinateSequence ir
+              cs <- R.getCoordinateSequence ir
               x <- RC.getCoordinateSequenceX cs 0
               y <- RC.getCoordinateSequenceY cs 0
               return (x,y)
