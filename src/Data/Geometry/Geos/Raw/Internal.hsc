@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP, ForeignFunctionInterface, EmptyDataDecls #-}
+
 module Data.Geometry.Geos.Raw.Internal where
 
 import Foreign
@@ -584,4 +585,8 @@ foreign import ccall
   geos_STRTreeDestroy :: FunPtr (GEOSContextHandle_t -> Ptr GEOSSTRTree -> IO ())
 
 #endif
+
+foreign import ccall 
+  "geos_c.h GEOSisValid_r"
+  geos_isValid :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO CChar
 

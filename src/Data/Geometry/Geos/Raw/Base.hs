@@ -35,7 +35,7 @@ runGeos g = unsafePerformIO $ do
   
 
 throwIfZero :: (Eq a, Num a) => (a -> String) -> IO a -> IO a
-throwIfZero f m = throwIf ((==) 0) f m
+throwIfZero = throwIf ((==) 0)
 
 mkErrorMessage :: Show a => String -> (a -> String) 
 mkErrorMessage s = \n -> s  <> " has thrown an error:  " <> show n

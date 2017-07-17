@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Data.Geometry.Geos.Raw.Serialize (
     createReader
   , createWriter
@@ -18,6 +19,7 @@ import Foreign
 import Foreign.C.String
 import Foreign.C.Types
 import qualified Data.ByteString.Char8 as BC
+import Control.Exception (onException)
 
 
 newtype Reader = Reader { _unReader :: ForeignPtr I.GEOSWKBReader }
@@ -40,34 +42,40 @@ withWktWriter (WktWriter w) f = withForeignPtr w f
 
 createReader :: Geos Reader
 createReader = withGeos $ \h -> do
-    ptr <- throwIfNull "Create Reader" $
-      I.geos_WKBReaderCreate h
+    ptr <- throwIfNull "Create Reader" $ I.geos_WKBReaderCreate h
     fp <- newForeignPtrEnv I.geos_WKBReaderDestroy h ptr
     return $ Reader fp
 
 createWktReader :: Geos WktReader
 createWktReader = withGeos $ \h -> do
-    ptr <- throwIfNull "Create WKT Reader" $
-      I.geos_WKTReaderCreate h
+    ptr <- throwIfNull "Create WKT Reader" $ I.geos_WKTReaderCreate h
     fp <- newForeignPtrEnv I.geos_WKTReaderDestroy h ptr
     return $ WktReader fp
 
 read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> IO (Ptr I.GEOSGeometry)) 
             -> Reader 
             -> BC.ByteString 
-            -> Geos Geom
-read_ f r bs = withGeos $ \h -> do
-  ptr <- withReader r $ \rp -> 
-            BC.useAsCStringLen bs $ \(cs, l) -> 
-              f h rp cs $ fromIntegral l 
-  fp <- newForeignPtrEnv I.geos_GeomDestroy h ptr
-  return $ Geom fp
-  
+            -> Geos (Maybe Geom)
+read_ f r bs = withGeos $ \h -> 
+    onException (readBlock h) (return Nothing)
+      where
+        readBlock h =  do
+            mptr <- withReader r $ \rp -> 
+               BC.useAsCStringLen bs $ \(cs, l) -> do
+                        p <- f h rp cs $ fromIntegral l
+                        if p == nullPtr
+                          then return Nothing
+                          else return $ Just p
+            case mptr of
+              Just ptr -> do
+                  fp <- newForeignPtrEnv I.geos_GeomDestroy h ptr
+                  return . Just $ Geom fp
+              Nothing -> return Nothing
 
-read :: Reader -> BC.ByteString -> Geos Geom
+read :: Reader -> BC.ByteString -> Geos (Maybe Geom)
 read = read_ I.geos_WKBReaderRead
 
-readHex :: Reader -> BC.ByteString -> Geos Geom
+readHex :: Reader -> BC.ByteString -> Geos (Maybe Geom)
 readHex = read_ I.geos_WKBReaderReadHex
 
 readWkt :: WktReader -> BC.ByteString -> Geos Geom
