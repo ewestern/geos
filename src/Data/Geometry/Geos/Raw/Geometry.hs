@@ -70,7 +70,6 @@ newtype Geom = Geom (ForeignPtr I.GEOSGeometry)
 
 newtype GeomConst = GeomConst ( Ptr I.GEOSGeometry)
 
-
 class Geometry a where
     type CoordSeqInput a
 
@@ -178,10 +177,11 @@ getNum_ :: Geometry a
         => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO CInt)
         -> a
         -> Geos Int
-getNum_ f g = withGeos $ \h ->  do
-  i <- throwIfNeg (mkErrorMessage "getNumCoordinates")  $
-      withGeometry g $ f h
-  return $ fromIntegral i
+getNum_ f g = withGeos $ \h ->
+  withGeometry g $ \g' -> do
+    i <- throwIfNeg (mkErrorMessage "getNumCoordinates") $ f h g'
+    return $ fromIntegral i
+
 
 getNumCoordinates :: Geometry a => a -> Geos Int
 getNumCoordinates = getNum_ I.geos_GetNumCoordinates
@@ -191,32 +191,34 @@ getNumInteriorRings :: Geometry a => a -> Geos Int
 getNumInteriorRings = getNum_ I.geos_GetNumInteriorRings
 
 --- multi geometries
+-- Returned object is a pointer to internal storage: it must NOT be destroyed directly.
 getNumGeometries :: Geometry a => a -> Geos Int
 getNumGeometries = getNum_ I.geos_GetNumGeometries
 
-getN_ :: (Geometry a , Geometry b)
+getN_ :: Geometry a
       => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> CInt -> IO (Ptr I.GEOSGeometry))
       -> a
       -> Int
-      -> Geos b
+      -> Geos GeomConst
 getN_ f g i = 
   withGeos $ \h ->  withGeometry g $ \gp ->  do
       gp' <- throwIfNull "getN" $ f h gp $ fromIntegral i
-      constructGeometry h gp'
+      I.geos_GeomClone h gp' >>= constructGeometry h
 
 
-getGeometryN :: (Geometry a, Geometry b) => a -> Int -> Geos b
+getGeometryN :: Geometry a => a -> Int -> Geos GeomConst
 getGeometryN = getN_ I.geos_GetGeometryN
 
-getExteriorRing :: (Geometry a, Geometry b) => a -> Geos b
+-- Returned object is a pointer to internal storage: it must NOT be destroyed directly.
+getExteriorRing :: Geometry a => a -> Geos GeomConst
 getExteriorRing  g = do
   withGeos $ \h -> do
       withGeometry g $ \gp ->  do
         gp' <- throwIfNull "getExteriorRing" $ I.geos_GetExteriorRing h gp 
-        constructGeometry h gp'
+        I.geos_GeomClone h gp' >>= constructGeometry h
   
 
-getInteriorRingN :: (Geometry a, Geometry b) => a -> Int -> Geos b
+getInteriorRingN :: Geometry a => a -> Int -> Geos GeomConst
 getInteriorRingN  = getN_ I.geos_GetInteriorRingN
 
 normalize :: Geometry a => a -> Geos a
@@ -233,11 +235,6 @@ cloneGeometry g = do
   withGeos $ \h -> withGeometry g $ \gp -> 
     I.geos_GeomClone h gp >>= constructGeometry h
 
- {-Geometry Constructors.-}
- {-GEOSCoordSequence* arguments will become ownership of the returned object.-}
- {-All functions return NULL on exception.-}
-
-
 -- Geometry Constructors
 {-|
 The following require CoordSeqConst as arguments since coordinate sequences become owned by the Geometry object.
@@ -252,18 +249,17 @@ createLinearRing = createGeometryFromCoords I.geos_GeomCreateLinearRing
 createLineString ::Geometry b => CoordSeqConst -> Geos b
 createLineString = createGeometryFromCoords I.geos_GeomCreateLineString
 
--- TODO: Make this take a vector argument
-
 -- | The second argument is a list of geometries,
 -- | NOTE. geometries become owned by caller.
 createPolygon :: Geometry a => GeomConst -> [GeomConst] -> Geos a
 createPolygon o hs = do
   withGeos $ \h -> do
         ptrs <- mapM (\v -> withGeometry v $ return) hs
-        withGeometry o $ \op ->
-          withArray ptrs $ \ph -> do
-            g' <- I.geos_GeomCreatePolygon h op ph $ fromIntegral $ length hs
-            constructGeometry h g'
+        withGeometry o $ \op -> do
+          g' <- case ptrs of
+                  [] -> I.geos_GeomCreatePolygon h op nullPtr 0
+                  xs -> withArray xs $ \ph -> I.geos_GeomCreatePolygon h op ph $ fromIntegral $ length hs
+          constructGeometry h g'
 
 
 createMulti_ :: Geometry a => I.GEOSGeomType -> [GeomConst] -> Geos a
