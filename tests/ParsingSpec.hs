@@ -19,15 +19,15 @@ import SpecSampleData
 
 parsingSpecs = describe "Tests Serialization" $ do
   it "Parses a bytestring to a linestring" $  do
-    (fmap ensureLineString (readHex linestringBS)) `shouldBe` (Just linestring)
+    ensureLineString <$> readHex linestringBS `shouldBe` Just linestring
   it "Parse a multipolygon" $ do
-    (fmap ensureMultiPolygon (readHex multiPolygonStringBS)) `shouldBe` (Just multiPolygon)
+    ensureMultiPolygon <$> readHex multiPolygonStringBS `shouldBe` Just multiPolygon
   it "Serializes a LineString into a bytestring" $ do
     linestringBS `shouldBe` writeHex linestring
   it "Serializes a LineString to WKT" $ do
     linestringWkt `shouldBe` (writeWkt linestring)
   it "Can parse WKT" $ do
-    ensureLineString (readWkt (Just 4326) linestringWkt) `shouldBe` linestring
+    ensureLineString <$> readWkt (Just 4326) linestringWkt `shouldBe` Just linestring
   it "can parse lots of things" $ do
     polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
     (length polygons) `shouldBe` 98
