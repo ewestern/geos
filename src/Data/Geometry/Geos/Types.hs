@@ -5,7 +5,7 @@ import qualified Data.Vector as V
 import Data.Monoid
 import Data.Data
 
-class Geo a where
+class Relatable a where
   contains ::  a -> Geometry b -> Bool
   coveredBy :: a -> Geometry b -> Bool
   covers :: a -> Geometry b -> Bool

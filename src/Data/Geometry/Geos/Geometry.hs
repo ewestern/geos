@@ -80,7 +80,7 @@ binaryPredicate_ :: (R.GeomConst -> R.GeomConst -> Geos Bool)
                   -> Bool
 binaryPredicate_ f g1 g2 = runGeos . join $ (f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
 
-instance Geo (Geometry a) where
+instance Relatable (Geometry a) where
   disjoint = binaryPredicate_ R.disjoint
   touches = binaryPredicate_ R.touches
   intersects = binaryPredicate_ R.intersects
