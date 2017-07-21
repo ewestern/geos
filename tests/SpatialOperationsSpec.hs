@@ -82,13 +82,13 @@ spatialOpsSpecs = describe "Tests Contains" $ do
   it "can run STRTrees on larger data" $ do
     points <- (fmap ensurePoint) <$> loadThingsFromFile "tests/sampledata/points.csv"
     polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
-    -- count <- timeIt $! layerIntersect polygons points -- 23.4 seconds
-    let count = 176
-    count `shouldBe` 176
+
+    -- The following line takes a long time to run (>20 seconds) but gives us a real baseline count
+    -- count <- timeIt $! layerIntersect polygons points
+    -- count `shouldBe` 110
+    let count = 110
     count' <- timeIt $ layerIntersectSTR polygons points
     count' `shouldBe` count
-    count'' <- timeIt $ layerIntersectSTR' points polygons
-    count'' `shouldBe` count'
 
 layerIntersect :: [Geometry Polygon] -> [Geometry Point] -> IO Int
 layerIntersect polygons points = do
@@ -98,14 +98,8 @@ layerIntersect polygons points = do
 
 layerIntersectSTR :: [Geometry Polygon] -> [Geometry Point] -> IO Int
 layerIntersectSTR polygons points = do
-  let tree = STR.fromList $ zip polygons [(0::Int)..]
-  let results = fmap (\p -> STR.lookup p tree) $ points
-  let count = sum $ fmap V.length results
-  if (count > 0) then pure count else pure 0
-
-layerIntersectSTR' :: [Geometry Point] -> [Geometry Polygon] -> IO Int
-layerIntersectSTR' points polygons = do
   let tree = STR.fromList $ zip points [(0::Int)..]
-  let results = fmap (\p -> STR.lookup p tree) $ polygons
-  let count = sum $ fmap V.length results
+  let results = fmap (\p -> (p, STR.lookup p tree)) $ polygons
+  let pointsV = V.fromList points
+  let count = sum $ fmap (\(polygon, is) -> V.length $ (V.filter (\i -> contains polygon (pointsV V.! i))) $ is) results
   if (count > 0) then pure count else pure 0
