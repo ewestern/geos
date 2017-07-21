@@ -47,12 +47,12 @@ data GEOSWKTWriter
 data GEOSWKTReader
 
 
-foreign import ccall  
+foreign import ccall
   "notice_handlers.h init_GEOS"
    geos_init :: IO GEOSContextHandle_t
 
-foreign import ccall 
-  "geos_c.h &finishGEOS_r"
+foreign import ccall
+  "notice_handlers.h &finalise_GEOS"
   geos_finish :: FunPtr (GEOSContextHandle_t -> IO ())
 
 foreign import ccall 
