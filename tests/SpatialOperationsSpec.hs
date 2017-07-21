@@ -13,6 +13,7 @@ import Data.Geometry.Geos.Geometry
 import Data.Geometry.Geos.Topology
 import qualified Data.Geometry.Geos.STRTree as STR
 import Data.Word
+import System.TimeIt
 
 import SpecSampleData
 
@@ -75,13 +76,36 @@ spatialOpsSpecs = describe "Tests Contains" $ do
     let points = makePointGeo <$> [(0.1,0.1), (0.9, 0.9)]
         polygon = makePolygonGeo [[(0,0),(0,1),(1,1),(1,0),(0,0)]]
         tree = STR.fromList $ zip points [(0::Int)..]
-        result = STR.lookup polygon tree 
+        result = STR.lookup polygon tree
     result `shouldBe` V.fromList [0,1]
 
   it "can run STRTrees on larger data" $ do
     points <- (fmap ensurePoint) <$> loadThingsFromFile "tests/sampledata/points.csv"
     polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
-    let tree = STR.fromList $ zip polygons [(0::Int)..]
-    let results = fmap (\p -> STR.lookup p tree) $ take 5000 points
-    let total = sum $ fmap sum results
-    total `shouldBe` 45
+    -- count <- timeIt $! layerIntersect polygons points -- 23.4 seconds
+    let count = 176
+    count `shouldBe` 176
+    count' <- timeIt $ layerIntersectSTR polygons points
+    count' `shouldBe` count
+    count'' <- timeIt $ layerIntersectSTR' points polygons
+    count'' `shouldBe` count'
+
+layerIntersect :: [Geometry Polygon] -> [Geometry Point] -> IO Int
+layerIntersect polygons points = do
+  let things = sum $ fmap (f points) polygons
+  if (things > 0) then pure things else pure 0
+  where f points polygon = length $ filter (\p -> contains polygon p) points
+
+layerIntersectSTR :: [Geometry Polygon] -> [Geometry Point] -> IO Int
+layerIntersectSTR polygons points = do
+  let tree = STR.fromList $ zip polygons [(0::Int)..]
+  let results = fmap (\p -> STR.lookup p tree) $ points
+  let count = sum $ fmap V.length results
+  if (count > 0) then pure count else pure 0
+
+layerIntersectSTR' :: [Geometry Point] -> [Geometry Polygon] -> IO Int
+layerIntersectSTR' points polygons = do
+  let tree = STR.fromList $ zip points [(0::Int)..]
+  let results = fmap (\p -> STR.lookup p tree) $ polygons
+  let count = sum $ fmap V.length results
+  if (count > 0) then pure count else pure 0

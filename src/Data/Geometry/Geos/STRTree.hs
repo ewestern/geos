@@ -29,12 +29,11 @@ toVector = foldr V.cons V.empty
 fromList :: Storable b => [(Geometry a, b)] -> RT.STRTree b
 fromList = fromFoldable
 
-
-insert :: Storable a => Geometry b -> a -> RT.STRTree a -> RT.STRTree a
-insert geom item tree = runGeos $ do
-    rg :: RG.GeomConst <- convertGeometryToRaw geom
-    RT.insert tree rg item
-    return tree
+--insert :: Storable a => Geometry b -> a -> RT.STRTree a -> RT.STRTree a
+--insert geom item tree = runGeos $ do
+--    rg :: RG.GeomConst <- convertGeometryToRaw geom
+--    RT.insert tree rg item
+--    return tree
 
 fromFoldable :: (Foldable f, Storable b) => f (Geometry a, b) -> RT.STRTree b
 fromFoldable things = runGeos $ do
@@ -44,7 +43,6 @@ fromFoldable things = runGeos $ do
   where ins tree' (g,b) = do
           rg :: RG.GeomConst <- convertGeometryToRaw g
           RT.insert tree' rg b
-
 
 lookup :: Storable b => Geometry a -> RT.STRTree b -> V.Vector b
 lookup g tree = runGeos $ do
