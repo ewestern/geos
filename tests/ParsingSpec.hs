@@ -14,6 +14,7 @@ import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
 import qualified Data.Geometry.Geos.Raw.Serialize as RS
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Vector as V
+import Data.Maybe (fromJust)
 
 import SpecSampleData
 
@@ -50,6 +51,23 @@ parsingSpecs = describe "Tests Serialization" $ do
   it "handles nonesense properly" $ do
     let bs = "2D50491A5DC024275C1ED5DE4040" :: BS.ByteString
     Nothing `shouldBe` (fmap ensurePoint $ readHex bs)
+
+  it "can write/read with zero loss of information" $ do
+    let bs = "0105000020C46E000001000000010200000004000000EE2DE25E859A20410829F224364B5A41BD757FB6679A204115C6D8E9304B5A4177111862469A2041A03F04E32C4B5A41BC1D3ADD459A2041793C8CD92C4B5A41" :: BS.ByteString
+        srid = Just 28356
+        points = [[(544066.685319362, 6892760.57728029),
+                   (544051.856441192, 6892739.65385582),
+                   (544035.191589876, 6892723.54713431),
+                   (544034.932084016, 6892723.39918434)]]
+        expectedGeo = MultiLineStringGeometry (makeMultiLineString points) srid
+        parsedGeo = fromJust (fmap ensureMultiLineString $ readHex bs)
+    parsedGeo `shouldBe` expectedGeo
+    let encodedHex = writeHex expectedGeo
+    encodedHex `shouldBe` bs
+
+
+
+
 
 searchPoints :: [Geometry Point] -> Geometry Polygon -> [Geometry Point]
 searchPoints points polygon = filter f points
