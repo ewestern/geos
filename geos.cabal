@@ -2,7 +2,7 @@ name:                geos
 
 version:             0.1.0.0
 
-synopsis:  Bindings for GEOS.          
+synopsis:  Bindings for GEOS.
 
 description:   This is a Haskell binding to Geos, the open-source geometry library, which includes geometry types, predicate functions and other operations, spatially indexed geometries, and parsers for WKB and WKT formats.
 
@@ -26,14 +26,13 @@ Library
   cc-options: -fPIC
   c-sources:           cbits/noticehandlers.c
   include-dirs:        cbits
-  GHC-options: -Wall 
-  build-depends:       
+  GHC-options: -Wall
+  build-depends:
       base
-    , bytestring 
+    , bytestring
     , vector
     , transformers
     , mtl
-    , cassava
   build-tools: hsc2hs
   exposed-modules:
       Data.Geometry.Geos.Topology
@@ -42,6 +41,7 @@ Library
     , Data.Geometry.Geos.Serialize
     , Data.Geometry.Geos.Buffer
     , Data.Geometry.Geos.Prepared
+    , Data.Geometry.Geos.STRTree
 
   other-modules:
       Data.Geometry.Geos.Raw.Base
@@ -58,7 +58,7 @@ Library
   default-extensions:
       LambdaCase
     , GADTs
-    , ExistentialQuantification 
+    , ExistentialQuantification
     , DeriveDataTypeable
     , RankNTypes
     , DataKinds
@@ -88,14 +88,15 @@ test-suite test
     , geos
     , hspec
     , cassava
+    , timeit
   default-extensions:
       LambdaCase
     , GADTs
-    , ExistentialQuantification 
+    , ExistentialQuantification
     , DeriveDataTypeable
     , RankNTypes
     , DataKinds
-    , KindSignatures   
+    , KindSignatures
   other-modules:
       Data.Geometry.Geos.Geometry
     , Data.Geometry.Geos.Raw.Internal
@@ -112,4 +113,4 @@ test-suite test
 
 source-repository head
   type:     git
-  location: https://github.com/ewestern/geos 
+  location: https://github.com/ewestern/geos

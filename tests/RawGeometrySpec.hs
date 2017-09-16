@@ -44,7 +44,7 @@ rawGeometrySpecs = describe "raw geometry" $ do
           R.getTypeId ls
     tid `shouldBe` R.LineStringTypeId
   it "Creates a Geometry" $ do
-    pending
+    pendingWith "No test yet :)"
 
   it "Converts a LineString" $ do
     let (srid, tid, tn) = runGeos $ do
