@@ -14,7 +14,7 @@ author:              Peter France
 
 maintainer:          pfrance@gmail.com
 
-category:            GIS
+category:            Geometry
 
 build-type:          Simple
 Extra-source-files:  cbits/noticehandlers.h
