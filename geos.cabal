@@ -14,7 +14,7 @@ author:              Peter France
 
 maintainer:          pfrance@gmail.com
 
-category:            GIS
+category:            Geometry
 
 build-type:          Simple
 Extra-source-files:  cbits/noticehandlers.h
@@ -26,10 +26,10 @@ Library
   cc-options: -fPIC
   c-sources:           cbits/noticehandlers.c
   include-dirs:        cbits
-  GHC-options: -Wall
-  build-depends:
-      base
-    , bytestring
+  GHC-options: -Wall 
+  build-depends:       
+      base <= 4.10.1
+    , bytestring 
     , vector
     , transformers
     , mtl

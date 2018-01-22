@@ -41,7 +41,7 @@ queryPrepared :: (RP.PreparedGeometry -> RG.GeomConst -> Geos Bool)
               -> Bool 
 queryPrepared f pg g = runGeos $ G.convertGeometryToRaw g >>= (f pg)
 
-instance Geo (RP.PreparedGeometry) where
+instance Relatable (RP.PreparedGeometry) where
   contains = queryPrepared RP.contains
   coveredBy = queryPrepared RP.coveredBy 
   covers = queryPrepared RP.covers 
