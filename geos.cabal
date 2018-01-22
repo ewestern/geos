@@ -1,6 +1,6 @@
 name:                geos
 
-version:             0.1.0.0
+version:             0.1.0.1
 
 synopsis:  Bindings for GEOS.          
 
@@ -33,7 +33,6 @@ Library
     , vector
     , transformers
     , mtl
-    , cassava
   build-tools: hsc2hs
   exposed-modules:
       Data.Geometry.Geos.Topology
