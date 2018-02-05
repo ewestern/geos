@@ -19,7 +19,6 @@ import Foreign
 import Foreign.C.String
 import Foreign.C.Types
 import qualified Data.ByteString.Char8 as BC
-import Control.Exception (onException)
 
 
 newtype Reader = Reader { _unReader :: ForeignPtr I.GEOSWKBReader }
@@ -42,15 +41,14 @@ read_ :: (I.GEOSContextHandle_t -> Ptr I.GEOSWKBReader -> CString  -> CSize -> I
             -> Reader
             -> BC.ByteString
             -> Geos (Maybe Geom)
-read_ f (Reader r) bs = withGeos $ \h ->
-    onException (readBlock h) (pure Nothing)
-      where
-        readBlock h =  do
-             ptr <- withForeignPtr r $ \rp ->
-               BC.useAsCStringLen bs $
-                 \(cs, l) -> f h rp cs $ fromIntegral l
-             g <- wrapUpGeom h ptr
-             pure g
+read_ f (Reader r) bs = withGeos readBlock
+    where
+      readBlock h =  do
+           ptr <- withForeignPtr r $ \rp ->
+             BC.useAsCStringLen bs $
+               \(cs, l) -> f h rp cs $ fromIntegral l
+           g <- wrapUpGeom h ptr
+           pure g
 
 wrapUpGeom :: I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO (Maybe Geom)
 wrapUpGeom h ptr

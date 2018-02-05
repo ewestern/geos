@@ -7,7 +7,6 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Vector as V
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Serialize
-import Data.Geometry.Geos.CSV
 import Data.Maybe (catMaybes)
 
 point = PointGeometry (Point $ Coordinate2 36.1 (-119.1)) (Just 4326)
