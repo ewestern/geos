@@ -66,8 +66,14 @@ import Foreign.Ptr (nullPtr)
 import Foreign.C.Types
 import Foreign.C.String
 
+{- | 
+A Geom is a wrapper around the C data structure that has finalizers associated with it.
+-}
 newtype Geom = Geom (ForeignPtr I.GEOSGeometry)
 
+{- |
+A GeomConst is a wrapper around the C data structure that does *not* have finalizers attached to it. A typical use case for GemoConst is when retrieving a child geometry from a composite geometry. If the parent geometry has finalizers associated with it, we can not separately attempt to deallocate memory occupied by the child geometry.
+-}
 newtype GeomConst = GeomConst ( Ptr I.GEOSGeometry)
 
 class Geometry a where
@@ -203,7 +209,7 @@ getN_ :: Geometry a
 getN_ f g i = 
   withGeos $ \h ->  withGeometry g $ \gp ->  do
       gp' <- throwIfNull "getN" $ f h gp $ fromIntegral i
-      I.geos_GeomClone h gp' >>= constructGeometry h
+      constructGeometry h gp'
 
 
 getGeometryN :: Geometry a => a -> Int -> Geos GeomConst
@@ -215,7 +221,7 @@ getExteriorRing  g = do
   withGeos $ \h -> do
       withGeometry g $ \gp ->  do
         gp' <- throwIfNull "getExteriorRing" $ I.geos_GetExteriorRing h gp 
-        I.geos_GeomClone h gp' >>= constructGeometry h
+        constructGeometry h gp'
   
 
 getInteriorRingN :: Geometry a => a -> Int -> Geos GeomConst
