@@ -13,7 +13,7 @@ import Foreign
 import qualified Data.Vector as V
 
 -- can't make instance of Foldable because of Storable constraint
-foldr :: Storable a => (a -> b -> b) -> b -> RT.STRTree a -> b
+foldr :: (RT.STRTreeLike t, Storable a) => (a -> b -> b) -> b -> t a -> b
 foldr f a = runGeos . RT.foldr f a
 
 
@@ -29,12 +29,17 @@ toVector = foldr V.cons V.empty
 fromList :: Storable b => [(Geometry a, b)] -> RT.STRTree b
 fromList = fromFoldable
 
+empty :: RT.STRTreeBuilder a
+empty = runGeos $ RT.createSTRTreeBuilder 10
 
-insert :: Storable a => Geometry b -> a -> RT.STRTree a -> RT.STRTree a
+build :: RT.STRTreeBuilder a -> RT.STRTree a
+build = runGeos . RT.build 
+
+insert :: Storable a => Geometry b -> a -> RT.STRTreeBuilder a -> ()
 insert geom item tree = runGeos $ do
     rg :: RG.GeomConst <- convertGeometryToRaw geom
     RT.insert tree rg item
-    return tree
+    return ()
 
 {-|
 `fromFoldable` creates an STRTree with a default node capacity of 10. For finer-grained control over the node capacity, `fromFoldable_` accepts a node-capacity argument.
@@ -44,9 +49,9 @@ fromFoldable  = fromFoldable_ 10
 
 fromFoldable_ :: (Foldable f, Storable b) => Int -> f (Geometry a, b) -> RT.STRTree b
 fromFoldable_ capacity things = runGeos $ do
-  tree <- RT.createSTRTree capacity
+  tree <- RT.createSTRTreeBuilder capacity
   mapM_ (ins tree) things
-  return tree
+  RT.build tree
   where ins tree' (g,b) = do
           rg :: RG.GeomConst <- convertGeometryToRaw g
           RT.insert tree' rg b
