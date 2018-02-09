@@ -36,9 +36,15 @@ insert geom item tree = runGeos $ do
     RT.insert tree rg item
     return tree
 
+{-|
+`fromFoldable` creates an STRTree with a default node capacity of 10. For finer-grained control over the node capacity, `fromFoldable_` accepts a node-capacity argument.
+-}
 fromFoldable :: (Foldable f, Storable b) => f (Geometry a, b) -> RT.STRTree b
-fromFoldable things = runGeos $ do
-  tree <- RT.createSTRTree $ max 4 $ length things
+fromFoldable  = fromFoldable_ 10
+
+fromFoldable_ :: (Foldable f, Storable b) => Int -> f (Geometry a, b) -> RT.STRTree b
+fromFoldable_ capacity things = runGeos $ do
+  tree <- RT.createSTRTree capacity
   mapM_ (ins tree) things
   return tree
   where ins tree' (g,b) = do

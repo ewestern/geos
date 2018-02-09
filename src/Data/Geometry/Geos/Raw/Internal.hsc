@@ -14,6 +14,7 @@ newtype GEOSGeomType = GEOSGeomType { unGEOSGeomType :: CInt }
 #{ enum GEOSGeomType, GEOSGeomType,
     pointId = GEOS_POINT
   , lineStringId = GEOS_LINESTRING
+  , linearRingId = GEOS_LINEARRING
   , polygonId = GEOS_POLYGON
   , multiPointId = GEOS_MULTIPOINT
   , multiLineStringId = GEOS_MULTILINESTRING
