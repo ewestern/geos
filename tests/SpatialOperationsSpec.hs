@@ -1,14 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 
 module SpatialOperationsSpec where
 
 import Test.Hspec
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
+import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Geometry
 import Data.Geometry.Geos.Topology
+import qualified Data.Geometry.Geos.STRTree as STR
+import Data.Word
 
 import SpecSampleData
 
@@ -66,3 +70,18 @@ spatialOpsSpecs = describe "Tests Contains" $ do
     (ensurePoint $ envelope point) `shouldBe` point
     (ensureMultiLineString $ boundary poly2) `shouldBe` env2
     convexHull poly2 `shouldBe` env3
+
+  it "can use STRTrees" $ do
+    let points = makePointGeo <$> [(0.1,0.1), (0.9, 0.9)]
+        polygon = makePolygonGeo [[(0,0),(0,1),(1,1),(1,0),(0,0)]]
+        tree = STR.fromList $ zip points [(0::Int)..]
+        result = STR.lookup polygon tree 
+    result `shouldBe` V.fromList [0,1]
+
+  it "can run STRTrees on larger data" $ do
+    points <- (fmap ensurePoint) <$> loadThingsFromFile "tests/sampledata/points.csv"
+    polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
+    let tree = STR.fromList $ zip polygons [(0::Int)..]
+    let results = fmap (\p -> STR.lookup p tree) $ take 5000 points
+    let total = sum $ fmap sum results
+    total `shouldBe` 45

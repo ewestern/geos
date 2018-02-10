@@ -14,6 +14,7 @@ newtype GEOSGeomType = GEOSGeomType { unGEOSGeomType :: CInt }
 #{ enum GEOSGeomType, GEOSGeomType,
     pointId = GEOS_POINT
   , lineStringId = GEOS_LINESTRING
+  , linearRingId = GEOS_LINEARRING
   , polygonId = GEOS_POLYGON
   , multiPointId = GEOS_MULTIPOINT
   , multiLineStringId = GEOS_MULTILINESTRING
@@ -38,7 +39,8 @@ data GEOSBufferParams
 data GEOSPreparedGeometry
 type GEOSMessageHandler = FunPtr (CString -> (Ptr ()) -> IO ())
 type GEOSMessageHandler_r = FunPtr (CString -> (Ptr ()) -> IO ())
-type GEOSQueryCallback = FunPtr (Ptr () -> Ptr () -> IO ())
+type GEOSQueryCallback a = FunPtr (Ptr a -> Ptr () -> IO ())
+type GEOSDistanceCallback = FunPtr (Ptr () -> Ptr () -> CDouble -> Ptr () -> IO ())
 
 -- read/write
 data GEOSWKBWriter
@@ -570,15 +572,20 @@ foreign import ccall
 
 foreign import ccall
   "geos_c.h GEOSSTRtree_insert_r"
-  geos_STRTreeInsert :: GEOSContextHandle_t -> Ptr GEOSSTRTree -> Ptr GEOSGeometry -> Ptr () -> IO ()
+  geos_STRTreeInsert :: GEOSContextHandle_t -> Ptr GEOSSTRTree -> Ptr GEOSGeometry -> Ptr a -> IO ()
 
 foreign import ccall
   "geos_c.h GEOSSTRtree_query_r"
-  geos_STRTreeQuery :: GEOSContextHandle_t -> Ptr GEOSSTRTree -> Ptr GEOSGeometry -> GEOSQueryCallback -> Ptr () -> IO ()
+  geos_STRTreeQuery :: GEOSContextHandle_t -> Ptr GEOSSTRTree -> Ptr GEOSGeometry -> GEOSQueryCallback a -> Ptr () -> IO ()
 
 foreign import ccall
   "geos_c.h GEOSSTRtree_iterate_r"
-  geos_STRTreeIterate :: GEOSContextHandle_t -> Ptr GEOSSTRTree -> GEOSQueryCallback -> Ptr () -> IO ()
+  geos_STRTreeIterate :: GEOSContextHandle_t -> Ptr GEOSSTRTree -> GEOSQueryCallback a -> Ptr () -> IO ()
+
+foreign import ccall 
+  "geos_c.h GEOSSTRtree_nearest_generic_r"
+  geos_STRTreNearestGeneric :: GEOSContextHandle_t -> Ptr GEOSSTRTree -> Ptr GEOSGeometry -> GEOSDistanceCallback -> IO ()
+
 
 foreign import ccall
   "geos_c.h &GEOSSTRtree_destroy_r"
