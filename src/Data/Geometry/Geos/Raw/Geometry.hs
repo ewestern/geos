@@ -209,7 +209,7 @@ getN_ :: Geometry a
 getN_ f g i = 
   withGeos $ \h ->  withGeometry g $ \gp ->  do
       gp' <- throwIfNull "getN" $ f h gp $ fromIntegral i
-      I.geos_GeomClone h gp' >>= constructGeometry h
+      constructGeometry h gp'
 
 
 getGeometryN :: Geometry a => a -> Int -> Geos GeomConst
@@ -221,7 +221,7 @@ getExteriorRing  g = do
   withGeos $ \h -> do
       withGeometry g $ \gp ->  do
         gp' <- throwIfNull "getExteriorRing" $ I.geos_GetExteriorRing h gp 
-        I.geos_GeomClone h gp' >>= constructGeometry h
+        constructGeometry h gp'
   
 
 getInteriorRingN :: Geometry a => a -> Int -> Geos GeomConst
