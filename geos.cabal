@@ -1,6 +1,6 @@
 name:                geos
 
-version:             0.1.1.0
+version:             0.1.1.1
 
 synopsis:  Bindings for GEOS.
 
@@ -32,7 +32,7 @@ Library
   c-sources:           cbits/noticehandlers.c
   include-dirs:        cbits
   build-depends:       
-      base <= 4.10.1
+      base <= 4.10.1.0
     , bytestring 
     , vector
     , transformers
@@ -86,7 +86,7 @@ test-suite test
   main-is: Main.hs
 
   build-depends:
-      base
+      base <= 4.10.1.0
     , bytestring
     , vector
     , mtl
