@@ -1,8 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleInstances #-}
-
-
 {-|
 Module      : Data.Geometry.Geos.Raw.Geometery
 

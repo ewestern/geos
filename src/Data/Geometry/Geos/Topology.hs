@@ -14,7 +14,6 @@ module Data.Geometry.Geos.Topology (
   , node
   , delaunayTriangulation
 ) where
-import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Geometry
 import qualified Data.Geometry.Geos.Raw.Topology as R

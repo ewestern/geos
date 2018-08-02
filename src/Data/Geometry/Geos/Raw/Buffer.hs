@@ -11,7 +11,6 @@ module Data.Geometry.Geos.Raw.Buffer (
   , setQuadrantSegments
   , setSingleSided
   , bufferWithStyle
-  , bufferWithParams
   , offsetCurve
   , capRound
   , capFlat
@@ -30,15 +29,6 @@ newtype BufferParams =  BufferParams (ForeignPtr GEOSBufferParams) deriving (Sho
 
 withBufferParams :: BufferParams -> (Ptr GEOSBufferParams -> IO a ) -> IO a
 withBufferParams (BufferParams g) f = withForeignPtr g f
-
-
--- | Create a buffer around a geometry, where quadsegs is the number of line segments to use to approximate a quarter of a circle.
-buffer :: RG.Geometry a => a -> Double -> Int -> Geos a
-buffer geo width quadsegs = do 
-  withGeos $ \h -> 
-        RG.withGeometry geo $ \gp -> do
-          g' <- geos_Buffer h gp (realToFrac width) $ fromIntegral quadsegs
-          RG.constructGeometry h g'
 
 
 createBufferParams :: Geos BufferParams 
@@ -79,8 +69,8 @@ setSingleSided bp b = withGeos $ \h -> do
     geos_BufferParamsSetSingleSided h bpp $ fromBool b
   return ()
 
-bufferWithParams :: RG.Geometry a => a -> BufferParams -> Double -> Geos a
-bufferWithParams g b width = 
+buffer :: RG.Geometry a => a -> BufferParams -> Double -> Geos a
+buffer g b width = 
   withGeos $ \h -> do
     RG.withGeometry g $ \gp ->
       withBufferParams b $ \bp ->  do

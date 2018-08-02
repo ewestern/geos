@@ -1,10 +1,23 @@
 {-# LANGUAGE LambdaCase, ScopedTypeVariables #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Data.Geometry.Geos.Geometry (
-    convertGeometryFromRaw
+    Geometry(..)
+  , Point(..)
+  , LinearRing(..)
+  , LineString(..)
+  , Polygon(..)
+  , MultiPoint(..)
+  , MultiLineString(..)
+  , MultiPolygon(..)
+  , Some(..)
+  , SRID
+  , binaryPredicate
+  , convertGeometryFromRaw
   , convertGeometryToRaw
   , convertMultiPolygonFromRaw
   , ensurePoint
@@ -18,30 +31,99 @@ module Data.Geometry.Geos.Geometry (
   , interpolateNormalized
   , project
   , projectNormalized
-  , covers
-  , coveredBy
   , equalsExact
   , equals
-  , overlaps
-  , contains
-  , within
-  , crosses
-  , touches
-  , disjoint
   , area
   , geometryLength
   , distance
   , hausdorffDistance
   , nearestPoints
+  , withSomeGeometry
 
 ) where
 
-import Data.Geometry.Geos.Types
+import Data.Data
+-- import Data.Typeable
+import Data.Monoid ((<>))
 import qualified Data.Vector as V
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
 import Data.Geometry.Geos.Raw.Base
 import Control.Monad
+import Control.Applicative ((<*>))
+
+type SRID = Maybe Int
+
+data Some :: (* -> *) -> * where
+  Some :: f a -> Some f
+
+withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
+withSomeGeometry (Some p) f = f p
+
+
+instance Show (Some Geometry) where
+  show (Some a) = "Some (" <> show a <> ")"
+
+data Geometry a where
+  PointGeometry :: Point -> SRID -> Geometry Point
+  LineStringGeometry :: LineString -> SRID -> Geometry LineString
+  LinearRingGeometry :: LinearRing -> SRID -> Geometry LinearRing
+  PolygonGeometry :: Polygon -> SRID -> Geometry Polygon
+  MultiPointGeometry :: MultiPoint -> SRID -> Geometry MultiPoint
+  MultiLineStringGeometry :: MultiLineString -> SRID -> Geometry MultiLineString
+  MultiPolygonGeometry :: MultiPolygon -> SRID -> Geometry MultiPolygon
+  {-CollectionGeometry :: GeometryCollection -> Geometry GeometryCollection-}
+
+deriving instance Eq (Geometry a)
+deriving instance Show (Geometry a)
+
+data Coordinate =
+    Coordinate2 {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+  | Coordinate3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double  deriving (Read, Ord, Show, Eq, Data, Typeable)
+
+
+dimensionsCoordinate :: Coordinate -> Int
+dimensionsCoordinate = length . gmapQ (const ())
+
+type CoordinateSequence = V.Vector Coordinate
+
+dimensionsCoordinateSequence :: CoordinateSequence -> Int
+dimensionsCoordinateSequence = dimensionsCoordinate . V.head
+
+newtype Point = Point Coordinate
+ deriving (Read, Ord, Show, Eq, Data, Typeable)
+
+-- A LinearRing is a LineString that is closed
+newtype LinearRing = LinearRing CoordinateSequence
+ deriving (Read, Ord, Show, Eq, Data, Typeable)
+
+instance Monoid LinearRing where
+  mempty  = LinearRing V.empty
+  mappend (LinearRing a) (LinearRing b) =  LinearRing (a <> b)
+
+newtype LineString = LineString CoordinateSequence
+ deriving (Read, Ord, Show, Eq, Data, Typeable)
+
+instance Monoid LineString where
+  mempty  = LineString V.empty
+  mappend (LineString a) (LineString b) =  LineString (a <> b)
+
+-- | In a polygon, the fist LinearRing is the shell, and any following are holes.
+newtype Polygon = Polygon (V.Vector LinearRing)
+ deriving (Read, Ord, Show, Eq, Data, Typeable)
+
+newtype MultiPoint = MultiPoint (V.Vector Point)
+ deriving (Read, Ord, Show, Eq, Data, Typeable)
+
+instance Monoid MultiPoint where
+  mempty  = MultiPoint V.empty
+  mappend (MultiPoint a) (MultiPoint b) =  MultiPoint (a <> b)
+
+newtype MultiLineString = MultiLineString (V.Vector LineString)
+ deriving (Read, Ord, Show, Eq, Data, Typeable)
+
+newtype MultiPolygon = MultiPolygon (V.Vector Polygon)
+ deriving (Read, Ord, Show, Eq, Data, Typeable)
 
 -- | Returns the distance from the origin of LineString to the point projected on the geometry (that is to a point of the line the closest to the given point).
 project :: Geometry LineString -> Geometry Point -> Double
@@ -74,30 +156,18 @@ interpolateNormalized g d = runGeos $ do
   p <- convertPointFromRaw =<<  (R.interpolateNormalized g' $ realToFrac d)
   return $ PointGeometry p s
 
-binaryPredicate_ :: (R.GeomConst -> R.GeomConst -> Geos Bool)
+binaryPredicate :: (R.GeomConst -> R.GeomConst -> Geos Bool)
                   -> Geometry a
                   -> Geometry b
                   -> Bool
-binaryPredicate_ f g1 g2 = runGeos . join $ (f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
+binaryPredicate f g1 g2 = runGeos . join $ (f <$> convertGeometryToRaw g1 <*> convertGeometryToRaw g2)
 
-instance Relatable (Geometry a) where
-  disjoint = binaryPredicate_ R.disjoint
-  touches = binaryPredicate_ R.touches
-  intersects = binaryPredicate_ R.intersects
-  contains = binaryPredicate_ R.contains
-  within = binaryPredicate_ R.within
-  crosses = binaryPredicate_ R.crosses
-  overlaps = binaryPredicate_ R.overlaps
-  covers = binaryPredicate_ R.covers
-  coveredBy = binaryPredicate_ R.coveredBy
-
--- | Returns True if the DE-9IM intersection matrix for the two geometries is T*F**FFF*.
 equals :: Geometry a -> Geometry a -> Bool
-equals = binaryPredicate_ R.equals
+equals = binaryPredicate R.equals
 
 -- | Returns True if the two geometries are exactly equal, up to a specified tolerance. The tolerance value should be a floating point number representing the error tolerance in the comparison, e.g., @equalsExact g1 g2 0.001 @  will compare equality to within one thousandth of a unit.
 equalsExact :: Geometry a -> Geometry a -> Double -> Bool
-equalsExact g1 g2 d = binaryPredicate_ (\g1' g2' -> R.equalsExact g1' g2' d) g1 g2
+equalsExact g1 g2 d = binaryPredicate (\g1' g2' -> R.equalsExact g1' g2' d) g1 g2
 
 convertGeometryToRaw :: (R.Geometry a, R.CoordSeqInput a ~ cb, RC.CoordinateSequence cb) => Geometry b -> Geos a
 convertGeometryToRaw = \case
@@ -305,7 +375,7 @@ geometryLength g = runGeos $ do
   l <- R.geometryLength r
   return l
 
--- | NOTE: Data.Geometry.Geos distance calculations are linear – in other words, Data.Geometry.Geos does not perform a spherical calculation even if the SRID specifies a geographic coordinate system.
+-- | NOTE: @distance@ calculations are linear – in other words, @distance@ does not perform a spherical calculation even if the SRID specifies a geographic coordinate system.
 distance :: Geometry a -> Geometry a -> Double
 distance p g = runGeos $ do
   p' :: R.Geom <- convertGeometryToRaw p
@@ -327,3 +397,5 @@ nearestPoints g1 g2 = runGeos $ do
   p1 <- getPosition cs 0
   p2 <- getPosition cs 1
   return (p1, p2)
+
+

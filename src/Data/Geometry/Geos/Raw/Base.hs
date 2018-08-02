@@ -17,7 +17,6 @@ import Control.Monad.Reader
 
 newtype GEOSHandle = GEOSHandle (MV.MVar (ForeignPtr I.GEOSContextHandle_HS))
 
--- idea: stores list of (Handle -> IO) actions
 newtype Geos a = Geos { unGeos :: ReaderT GEOSHandle IO a }
   deriving (MonadReader GEOSHandle, Monad, Functor, Applicative)
 -- don't derive MonadIO to restrict user from performing arbitrary IO
@@ -30,8 +29,7 @@ runGeos g = unsafePerformIO $ do
   ptrC <- I.geos_init
   fptr <- newForeignPtr I.geos_finish ptrC
   mv <- MV.newMVar fptr
-  v <- runReaderT (unGeos g) $ GEOSHandle mv
-  return v
+  runReaderT (unGeos g) $ GEOSHandle mv
   
 
 throwIfZero :: (Eq a, Num a) => (a -> String) -> IO a -> IO a
@@ -39,5 +37,3 @@ throwIfZero = throwIf ((==) 0)
 
 mkErrorMessage :: Show a => String -> (a -> String) 
 mkErrorMessage s = \n -> s  <> " has thrown an error:  " <> show n
-
-

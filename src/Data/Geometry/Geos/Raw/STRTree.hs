@@ -16,9 +16,6 @@ import qualified Foreign.Concurrent as FC
 import Data.IORef
 import qualified Data.Vector as V
 
---A query-only R-tree created using the Sort-Tile-Recursive (STR) algorithm. For two-dimensional spatial data.
-
---The STR packed R-tree is simple to implement and maximizes space utilization; that is, as many leaves as possible are filled to capacity. Overlap between nodes is far less than in a basic R-tree. However, once the tree has been built (explicitly or on the first call to query), items may not be added or removed.
 
 class STRTreeLike t where
     withSTRTree :: t a -> (Ptr I.GEOSSTRTree -> IO b ) -> IO b

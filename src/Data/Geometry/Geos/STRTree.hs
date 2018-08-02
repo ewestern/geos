@@ -1,19 +1,42 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-|
+Module      : Data.Geometry.Geos.STRTree
+Maintainer  : pfrance@gmail.com
+
+A query-only R-tree created using the Sort-Tile-Recursive (STR) algorithm. For two-dimensional spatial data.
+
+The STR packed R-tree is simple to implement and maximizes space utilization; that is, as many leaves as possible are filled to capacity. Overlap between nodes is far less than in a basic R-tree. However, once the tree has been built (explicitly or on the first call to query), items may not be added or removed.
+
+Described in: P. Rigaux, Michel Scholl and Agnes Voisard. Spatial Databases With Application To GIS. Morgan Kaufmann, San Francisco, 2002.
+
+-}
 
 
-module Data.Geometry.Geos.STRTree where
+module Data.Geometry.Geos.STRTree ( 
+  foldr, 
+  toList,
+  toVector,
+  fromList,
+  empty,
+  build,
+  insert,
+  fromFoldable,
+  fromFoldable_,
+  lookup,
+  RT.STRTree,
+  RT.STRTreeBuilder
+) where
 
-import Prelude hiding (foldr)
+import Prelude hiding (foldr, lookup)
 import qualified Data.Geometry.Geos.Raw.STRTree as RT
 import qualified Data.Geometry.Geos.Raw.Geometry as RG
-import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Geometry
 import Data.Geometry.Geos.Raw.Base
 import Foreign
 import qualified Data.Vector as V
 
 -- can't make instance of Foldable because of Storable constraint
-foldr :: (RT.STRTreeLike t, Storable a) => (a -> b -> b) -> b -> t a -> b
+foldr :: (Storable a) => (a -> b -> b) -> b -> RT.STRTree a -> b
 foldr f a = runGeos . RT.foldr f a
 
 
@@ -23,8 +46,6 @@ toList = foldr (:) []
 
 toVector :: Storable a => RT.STRTree a -> V.Vector a
 toVector = foldr V.cons V.empty
-
--- would like to expose 'empty' as is common for haskell collections, but when initializing an STRTree we have to know the node size before hand
 
 fromList :: Storable b => [(Geometry a, b)] -> RT.STRTree b
 fromList = fromFoldable
@@ -57,6 +78,10 @@ fromFoldable_ capacity things = runGeos $ do
           RT.insert tree' rg b
 
 
+{-| 
+Queries the index for all items whose extents intersect the given search Envelope.
+Note that some kinds of indexes may also return objects which do not in fact intersect the query envelope.
+-}
 lookup :: Storable b => Geometry a -> RT.STRTree b -> V.Vector b
 lookup g tree = runGeos $ do
   rg :: RG.GeomConst <- convertGeometryToRaw g

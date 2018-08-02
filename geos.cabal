@@ -1,6 +1,6 @@
 name:                geos
 
-version:             0.1.1.2
+version:             0.2.0
 
 synopsis:  Bindings for GEOS.
 
@@ -44,11 +44,11 @@ Library
   exposed-modules:
       Data.Geometry.Geos.Topology
     , Data.Geometry.Geos.Geometry
-    , Data.Geometry.Geos.Types
     , Data.Geometry.Geos.Serialize
     , Data.Geometry.Geos.Buffer
     , Data.Geometry.Geos.Prepared
     , Data.Geometry.Geos.STRTree
+    , Data.Geometry.Geos.Relatable
 
   other-modules:
       Data.Geometry.Geos.Raw.Base
@@ -113,9 +113,11 @@ test-suite test
     , Data.Geometry.Geos.Raw.Geometry
     , Data.Geometry.Geos.Raw.Serialize
     , Data.Geometry.Geos.Raw.Topology
+    , Data.Geometry.Geos.Raw.STRTree
     , Data.Geometry.Geos.Serialize
     , Data.Geometry.Geos.Types
     , Data.Geometry.Geos.Topology
+    , Data.Geometry.Geos.STRTree
     , ParsingSpec
     , RawGeometrySpec
     , SpatialOperationsSpec
