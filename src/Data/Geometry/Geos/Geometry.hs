@@ -43,8 +43,7 @@ module Data.Geometry.Geos.Geometry (
 ) where
 
 import Data.Data
--- import Data.Typeable
-import Data.Monoid ((<>))
+import Data.Semigroup as Sem
 import qualified Data.Vector as V
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
@@ -97,16 +96,20 @@ newtype Point = Point Coordinate
 newtype LinearRing = LinearRing CoordinateSequence
  deriving (Read, Ord, Show, Eq, Data, Typeable)
 
+instance Sem.Semigroup LinearRing where
+  (<>) (LinearRing a) (LinearRing b) =  LinearRing (a <> b)
+
 instance Monoid LinearRing where
   mempty  = LinearRing V.empty
-  mappend (LinearRing a) (LinearRing b) =  LinearRing (a <> b)
 
 newtype LineString = LineString CoordinateSequence
  deriving (Read, Ord, Show, Eq, Data, Typeable)
 
+instance Sem.Semigroup LineString where
+  (<>) (LineString a) (LineString b) =  LineString (a <> b)
+
 instance Monoid LineString where
   mempty  = LineString V.empty
-  mappend (LineString a) (LineString b) =  LineString (a <> b)
 
 -- | In a polygon, the fist LinearRing is the shell, and any following are holes.
 newtype Polygon = Polygon (V.Vector LinearRing)
@@ -115,9 +118,11 @@ newtype Polygon = Polygon (V.Vector LinearRing)
 newtype MultiPoint = MultiPoint (V.Vector Point)
  deriving (Read, Ord, Show, Eq, Data, Typeable)
 
+instance Sem.Semigroup MultiPoint where
+  (<>) (MultiPoint a) (MultiPoint b) =  MultiPoint (a <> b)
+
 instance Monoid MultiPoint where
   mempty  = MultiPoint V.empty
-  mappend (MultiPoint a) (MultiPoint b) =  MultiPoint (a <> b)
 
 newtype MultiLineString = MultiLineString (V.Vector LineString)
  deriving (Read, Ord, Show, Eq, Data, Typeable)
