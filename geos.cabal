@@ -35,7 +35,7 @@ Library
   c-sources:           cbits/noticehandlers.c
   include-dirs:        cbits
   build-depends:       
-      base <= 4.10.1.0
+      base <= 5
     , bytestring 
     , vector
     , transformers
@@ -90,7 +90,7 @@ test-suite test
   main-is: Main.hs
 
   build-depends:
-      base <= 4.10.1.0
+      base <= 5
     , bytestring
     , vector
     , mtl
