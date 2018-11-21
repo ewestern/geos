@@ -15,6 +15,7 @@ module Data.Geometry.Geos.Geometry (
   , MultiLineString(..)
   , MultiPolygon(..)
   , Some(..)
+  , Coordinate(..)
   , SRID
   , binaryPredicate
   , convertGeometryFromRaw
