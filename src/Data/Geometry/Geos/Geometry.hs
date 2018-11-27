@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -51,6 +52,7 @@ import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
 import Data.Geometry.Geos.Raw.Base
 import Control.Monad
 import Control.Applicative ((<*>))
+import GHC.Generics (Generic)
 
 type SRID = Maybe Int
 
@@ -79,7 +81,8 @@ deriving instance Show (Geometry a)
 
 data Coordinate =
     Coordinate2 {-# UNPACK #-} !Double {-# UNPACK #-} !Double
-  | Coordinate3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double  deriving (Read, Ord, Show, Eq, Data, Typeable)
+  | Coordinate3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
+  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 
 dimensionsCoordinate :: Coordinate -> Int
@@ -91,11 +94,11 @@ dimensionsCoordinateSequence :: CoordinateSequence -> Int
 dimensionsCoordinateSequence = dimensionsCoordinate . V.head
 
 newtype Point = Point Coordinate
- deriving (Read, Ord, Show, Eq, Data, Typeable)
+ deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 -- A LinearRing is a LineString that is closed
 newtype LinearRing = LinearRing CoordinateSequence
- deriving (Read, Ord, Show, Eq, Data, Typeable)
+ deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 instance Sem.Semigroup LinearRing where
   (<>) (LinearRing a) (LinearRing b) =  LinearRing (a <> b)
@@ -104,7 +107,7 @@ instance Monoid LinearRing where
   mempty  = LinearRing V.empty
 
 newtype LineString = LineString CoordinateSequence
- deriving (Read, Ord, Show, Eq, Data, Typeable)
+ deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 instance Sem.Semigroup LineString where
   (<>) (LineString a) (LineString b) =  LineString (a <> b)
@@ -114,10 +117,10 @@ instance Monoid LineString where
 
 -- | In a polygon, the fist LinearRing is the shell, and any following are holes.
 newtype Polygon = Polygon (V.Vector LinearRing)
- deriving (Read, Ord, Show, Eq, Data, Typeable)
+ deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 newtype MultiPoint = MultiPoint (V.Vector Point)
- deriving (Read, Ord, Show, Eq, Data, Typeable)
+ deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 instance Sem.Semigroup MultiPoint where
   (<>) (MultiPoint a) (MultiPoint b) =  MultiPoint (a <> b)
@@ -126,10 +129,10 @@ instance Monoid MultiPoint where
   mempty  = MultiPoint V.empty
 
 newtype MultiLineString = MultiLineString (V.Vector LineString)
- deriving (Read, Ord, Show, Eq, Data, Typeable)
+ deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 newtype MultiPolygon = MultiPolygon (V.Vector Polygon)
- deriving (Read, Ord, Show, Eq, Data, Typeable)
+ deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
 -- | Returns the distance from the origin of LineString to the point projected on the geometry (that is to a point of the line the closest to the given point).
 project :: Geometry LineString -> Geometry Point -> Double
