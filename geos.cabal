@@ -1,3 +1,4 @@
+cabal-version:       2.2
 name:                geos
 
 version:             0.2.2
@@ -18,7 +19,6 @@ category:            Geometry
 
 
 build-type:          Simple
-cabal-version:       >=1.18.0
 Extra-Source-Files:  cbits/noticehandlers.h
 
 Flag Debug
