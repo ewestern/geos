@@ -114,8 +114,8 @@ test-suite test
     , Data.Geometry.Geos.Raw.Serialize
     , Data.Geometry.Geos.Raw.Topology
     , Data.Geometry.Geos.Raw.STRTree
+    , Data.Geometry.Geos.Relatable
     , Data.Geometry.Geos.Serialize
-    , Data.Geometry.Geos.Types
     , Data.Geometry.Geos.Topology
     , Data.Geometry.Geos.STRTree
     , ParsingSpec

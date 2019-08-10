@@ -54,6 +54,7 @@ import Control.Monad
 import Control.Applicative ((<*>))
 import GHC.Generics (Generic)
 
+-- | In all geometry types, SRID is used for compatability and is NOT used in calculations. For example, the `distance` between two PointGeometry with an SRID of `Just 4326` will return a distance between two points in Euclidean space in the units the PointGeometry is initialized with. It will not calculate the distance on a spheroid.
 type SRID = Maybe Int
 
 data Some :: (* -> *) -> * where

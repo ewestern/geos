@@ -21,7 +21,7 @@ module Data.Geometry.Geos.Prepared (
   , overlaps
   , touches
   , within
-) where 
+) where
 
 import qualified Data.Geometry.Geos.Raw.Prepared as RP
 import qualified Data.Geometry.Geos.Raw.Geometry as RG
@@ -35,22 +35,22 @@ prepare g = runGeos $ do
   RP.prepare r
 
 
-queryPrepared :: (RP.PreparedGeometry -> RG.GeomConst -> Geos Bool) 
+queryPrepared :: (RP.PreparedGeometry -> RG.GeomConst -> Geos Bool)
               -> RP.PreparedGeometry
               -> Geometry b
-              -> Bool 
-queryPrepared f pg g = runGeos $ convertGeometryToRaw g >>= (f pg)
+              -> Bool
+queryPrepared f pg g = runGeos $ convertGeometryToRaw g >>= f pg
 
 instance Relatable (RP.PreparedGeometry) where
-  contains = queryPrepared RP.contains
-  coveredBy = queryPrepared RP.coveredBy 
-  covers = queryPrepared RP.covers 
-  crosses = queryPrepared RP.crosses 
-  disjoint = queryPrepared RP.disjoint 
-  intersects = queryPrepared RP.intersects 
-  overlaps = queryPrepared RP.overlaps
-  touches = queryPrepared RP.touches 
-  within = queryPrepared RP.within 
+  contains   = queryPrepared RP.contains
+  coveredBy  = queryPrepared RP.coveredBy
+  covers     = queryPrepared RP.covers
+  crosses    = queryPrepared RP.crosses
+  disjoint   = queryPrepared RP.disjoint
+  intersects = queryPrepared RP.intersects
+  overlaps   = queryPrepared RP.overlaps
+  touches    = queryPrepared RP.touches
+  within     = queryPrepared RP.within
 
 {-|
 The containsProperly predicate has the following equivalent definitions:
@@ -65,5 +65,5 @@ An example use case is computing the intersections of a set of geometries with a
 
 containsProperly :: RP.PreparedGeometry
                   -> Geometry a
-                  -> Bool 
+                  -> Bool
 containsProperly = queryPrepared RP.containsProperly
