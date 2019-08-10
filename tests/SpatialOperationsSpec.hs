@@ -8,8 +8,8 @@ import Test.Hspec
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 import Data.Geometry.Geos.Raw.Base
-import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Geometry
+import Data.Geometry.Geos.Relatable
 import Data.Geometry.Geos.Topology
 import qualified Data.Geometry.Geos.STRTree as STR
 import Data.Word

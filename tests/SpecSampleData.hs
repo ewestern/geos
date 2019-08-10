@@ -5,16 +5,16 @@ module SpecSampleData where
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Vector as V
-import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Serialize
+import Data.Geometry.Geos.Geometry
 import Data.Maybe (catMaybes)
 
 point = PointGeometry (Point $ Coordinate2 36.1 (-119.1)) (Just 4326)
 makePoint (c1, c2) = Point $ Coordinate2 c1 c2
 makePointGeo c = PointGeometry (makePoint c) Nothing
-makeLinearRing cs = LinearRing . V.map (uncurry Coordinate2) . V.fromList $ cs
+makeLinearRing = LinearRing . V.map (uncurry Coordinate2) . V.fromList
 makeLinearRingGeo cs = LinearRingGeometry (makeLinearRing cs) Nothing
-makeLineString cs = LineString . V.map (uncurry Coordinate2) . V.fromList $ cs
+makeLineString = LineString . V.map (uncurry Coordinate2) . V.fromList
 makeLineStringGeo cs = LineStringGeometry  (makeLineString cs ) Nothing
 makePolygon = Polygon . V.fromList . (fmap makeLinearRing)
 makePolygonGeo cs = PolygonGeometry (makePolygon cs) Nothing

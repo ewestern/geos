@@ -1,10 +1,9 @@
-{-# LANGUAGE OverloadedStrings, LambdaCase, ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 import qualified Data.ByteString as BS
 import Test.Hspec
 import Control.Exception
-import Data.Geometry.Geos.Types
 import Data.Geometry.Geos.Serialize
 import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Geometry
