@@ -17,7 +17,7 @@ import Data.Geometry.Geos.Raw.Internal
 import Data.Geometry.Geos.Raw.Base
 import qualified Data.Geometry.Geos.Raw.Geometry as RG
 import Foreign.Marshal.Utils
-import Foreign
+import Foreign hiding (throwIf)
 import Foreign.C.Types
 
 
@@ -41,11 +41,11 @@ queryPrepared :: RG.Geometry a
               -> PreparedGeometry
               -> a
               -> Geos Bool
-queryPrepared f s pg g = withGeos $ \h -> do
-  b <-  throwIf (\v -> v == 2) (mkErrorMessage s) $ 
-          RG.withGeometry g $ \gp -> 
-            withPreparedGeometry pg $ \pp ->
-              f h pp gp
+queryPrepared f s pg g = do
+  b <- throwIf (2 ==) (mkErrorMessage s) $ 
+    withGeos $ \h -> 
+      RG.withGeometry g $ \gp -> 
+        withPreparedGeometry pg $ flip (f h) gp
   return . toBool $ b
 
 contains :: RG.Geometry a => PreparedGeometry -> a-> Geos Bool

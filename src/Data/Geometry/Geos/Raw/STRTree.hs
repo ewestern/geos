@@ -1,7 +1,4 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-
-
 
 
 module Data.Geometry.Geos.Raw.STRTree where
@@ -21,10 +18,10 @@ class STRTreeLike t where
     withSTRTree :: t a -> (Ptr I.GEOSSTRTree -> IO b ) -> IO b
 
 instance STRTreeLike STRTree where
-    withSTRTree (STRTree t) f = withForeignPtr t f
+    withSTRTree (STRTree t) = withForeignPtr t
        
 instance STRTreeLike STRTreeBuilder where
-    withSTRTree (STRTreeBuilder t) f = withForeignPtr t f
+    withSTRTree (STRTreeBuilder t) = withForeignPtr t
 
 {-|
   A query-only data structure
@@ -85,14 +82,18 @@ insert (STRTreeBuilder tree) geometry item =
   withGeos $ \h -> do
     ptr <- malloc
     poke ptr item
-    _ <- withForeignPtr tree $ \st -> do
+    _ <- withForeignPtr tree $ \st ->
         RG.withGeometry geometry $ \gr ->
           I.geos_STRTreeInsert h st gr ptr
     let cleanup = free ptr
     FC.addForeignPtrFinalizer tree cleanup
     return ()
 
-foldr :: (STRTreeLike t, Storable a) => (a -> b -> b) -> b -> t a -> Geos b
+foldr :: (STRTreeLike t, Storable a) 
+      => (a -> b -> b) 
+      -> b 
+      -> t a 
+      -> Geos b
 foldr func acc tree = withGeos $ \h -> do
     b <- newIORef acc
     callback <- wrap2 $ \a _ -> do
@@ -111,10 +112,9 @@ query t g  =
     r <- newIORef V.empty
     callback <- wrap2 $ \a _ -> do
         i <- peek a
-        modifyIORef' r (flip V.snoc i)
+        modifyIORef' r (`V.snoc` i)
     _ <- RG.withGeometry g $ \rg ->
           withSTRTree t $ \st -> 
             I.geos_STRTreeQuery h st rg callback nullPtr
     freeHaskellFunPtr callback
     readIORef r
-

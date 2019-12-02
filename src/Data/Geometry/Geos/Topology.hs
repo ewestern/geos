@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Data.Geometry.Geos.Topology (
     envelope
@@ -13,6 +12,7 @@ module Data.Geometry.Geos.Topology (
   , centroid
   , node
   , delaunayTriangulation
+  , voronoiDiagram
 ) where
 import Data.Geometry.Geos.Raw.Base
 import Data.Geometry.Geos.Geometry
@@ -89,13 +89,15 @@ node = geo_1 R.node
 
 -- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use.
 delaunayTriangulation ::  Geometry a -> Double -> Geometry MultiLineString
-delaunayTriangulation g d = ensureMultiLineString (geo_1 (flip R.delaunayTriangulation $ d) g)
+delaunayTriangulation g d = ensureMultiLineString (geo_1 (`R.delaunayTriangulation` d) g)
 
-#if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
-voronoiDiagram :: Geometry a -> Geometry b -> Double -> Bool -> Some Geometry
-voronoiDiagram g env tol onlyEdges = runGeos $ do
-  g' <- convertGeometryToRaw g
-  env' <- convertGeometryToRaw env
-	convertGeometryFromRaw =<< R.voronoiDiagram g' env' tol onlyEndges
-
-#endif
+-- | Returns the Voronoi polygons of a set of Vertices given as input
+voronoiDiagram :: Geometry a 
+               -> Maybe (Geometry b)
+               -> Double 
+               -> Bool 
+               -> Some Geometry
+voronoiDiagram g menv tol onlyEdges = runGeos $ do
+  g':: RG.GeomConst <- convertGeometryToRaw g
+  env' <- traverse convertGeometryToRaw menv
+  convertGeometryFromRaw =<< R.voronoiDiagram g' env' tol onlyEdges

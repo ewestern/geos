@@ -352,20 +352,32 @@ foreign import ccall
   geos_PointsOnSurface :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
 
 foreign import ccall
+  "geos_c.h GEOSMinimumBoundingCircle_r"
+  geos_MinimumBoundingCircle :: GEOSContextHandle_t 
+                            -> Ptr GEOSGeometry 
+                            -> Ptr CDouble 
+                            -> Ptr (Ptr GEOSGeometry) 
+                            -> IO (Ptr GEOSGeometry)
+
+foreign import ccall
   "geos_c.h GEOSNode_r"
   geos_Node :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
 
 
 foreign import ccall
+  "geos_c.h GEOSPolygonize_valid_r"
+  geos_Polygonize_valid :: GEOSContextHandle_t 
+                        -> Ptr (Ptr GEOSGeometry)
+                        -> CUInt
+                        -> IO (Ptr GEOSGeometry)
+
+foreign import ccall
   "geos_c.h GEOSDelaunayTriangulation_r"
   geos_DelaunayTriangulation :: GEOSContextHandle_t -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry)
 
-
-#if GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR > 4
 foreign import ccall
   "geos_c.h GEOSVoronoiDiagram_r"
   geos_VoronoiDiagram :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> CDouble -> CInt -> IO (Ptr GEOSGeometry)
-#endif
 
 -----
 --Binary Predicates.
@@ -564,7 +576,6 @@ foreign import ccall
 
 -- STRTREE
 
-#if GEOS_VERSION_MAJOR >= 3 && GEOS_VERSION_MINOR > 4
 foreign import ccall
   "geos_c.h GEOSSTRtree_create_r"
   geos_STRTreeCreate :: GEOSContextHandle_t -> CSize -> IO (Ptr GEOSSTRTree)
@@ -591,7 +602,6 @@ foreign import ccall
   "geos_c.h &GEOSSTRtree_destroy_r"
   geos_STRTreeDestroy :: FunPtr (GEOSContextHandle_t -> Ptr GEOSSTRTree -> IO ())
 
-#endif
 
 foreign import ccall
   "geos_c.h GEOSisValid_r"

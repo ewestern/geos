@@ -17,7 +17,7 @@ module Data.Geometry.Geos.Raw.CoordSeq (
 
 import qualified Data.Geometry.Geos.Raw.Internal as I
 import Data.Geometry.Geos.Raw.Base
-import Foreign
+import Foreign hiding (throwIfNull)
 import Foreign.C.Types
 import Control.Monad
 
@@ -84,8 +84,7 @@ coordSeqShow a = runGeos $ do
 instance CoordinateSequence CoordSeq where
   withCoordinateSequence (CoordSeq fp) f = withForeignPtr fp f
   createEmptyCoordinateSequence size dim = do
-    ptr <- withGeos $ \h ->
-      throwIfNull "createEmptyCoordinateSequence" $ I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
+    ptr <- throwIfNull "createEmptyCoordinateSequence" $ withGeos $ \h ->  I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
     createCoordinateSequence ptr
 
   createCoordinateSequence ptr = withGeos $ \h -> do
@@ -95,8 +94,8 @@ instance CoordinateSequence CoordSeq where
 instance CoordinateSequence CoordSeqConst where
   withCoordinateSequence (CoordSeqConst p) f = f p
   createEmptyCoordinateSequence size dim = do
-    ptr <- withGeos $ \h ->
-      throwIfNull "createEmptyCoordinateSequence" $ I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
+    ptr <- throwIfNull "createEmptyCoordinateSequence" $ withGeos $ \h ->I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
+    
     createCoordinateSequence ptr
   createCoordinateSequence ptr = return $ CoordSeqConst ptr
 
@@ -108,13 +107,13 @@ getCoordinateSequenceD_ :: CoordinateSequence a
                           -> a
                           -> Int
                           -> Geos Double 
-getCoordinateSequenceD_ f cs idx = withGeos $ \h -> 
-  alloca $ \dptr -> do
-    _ <- throwIfZero (mkErrorMessage "getCoordiniateSequenceN") $
-          withCoordinateSequence cs $ \pcs -> f h pcs (fromIntegral idx) dptr
-    d <- peek dptr
-    return $ realToFrac d
-  
+getCoordinateSequenceD_ f cs idx = 
+  withGeos' $ \h -> 
+    alloca $ \dptr -> do
+      eitherRet <- throwIfZero' (mkErrorMessage "getCoordiniateSequenceN") $
+            withCoordinateSequence cs $ \pcs -> f h pcs (fromIntegral idx) dptr
+      traverse (\_ -> marshallDouble dptr) eitherRet
+    
 getCoordinateSequenceX :: CoordinateSequence a => a -> Int -> Geos Double
 getCoordinateSequenceX = getCoordinateSequenceD_ I.geos_CoordSeqGetX
 
@@ -125,22 +124,20 @@ getCoordinateSequenceZ :: CoordinateSequence a => a -> Int -> Geos Double
 getCoordinateSequenceZ = getCoordinateSequenceD_ I.geos_CoordSeqGetZ
 
 getCoordinateSequenceSize :: CoordinateSequence a => a -> Geos Int 
-getCoordinateSequenceSize c =  withGeos $ \h -> 
+getCoordinateSequenceSize c =  withGeos' $ \h -> 
   alloca $ \ptr -> do
-    _ <- throwIfZero (mkErrorMessage "getCoordinateSequenceSize") $ 
+    eitherRet <- throwIfZero' (mkErrorMessage "getCoordinateSequenceSize") $ 
           withCoordinateSequence c $ \pc ->
             I.geos_CoordSeqGetSize h pc ptr
-    s <- peek ptr
-    return $ fromIntegral s
+    traverse (\_ -> marshallInt ptr) eitherRet
 
 getCoordinateSequenceDimensions :: CoordinateSequence a => a -> Geos Int 
-getCoordinateSequenceDimensions c = withGeos $ \h -> 
+getCoordinateSequenceDimensions c = withGeos' $ \h -> 
   alloca $ \ptr -> do
-    _ <- throwIfZero (mkErrorMessage "getCoordinateSeqenceDimensions") $ 
+    eitherRet <- throwIfZero' (mkErrorMessage "getCoordinateSeqenceDimensions") $ 
             withCoordinateSequence c $ \pc ->
               I.geos_CoordSeqGetDimensions h pc ptr
-    s <- peek ptr
-    return $ fromIntegral s
+    traverse (\_ -> marshallInt ptr) eitherRet
 
 ---
 setCoordinateSequence_ ::  CoordinateSequence a 
@@ -149,11 +146,10 @@ setCoordinateSequence_ ::  CoordinateSequence a
                         -> Int 
                         -> Double 
                         -> Geos ()
-setCoordinateSequence_ f cs idx val = withGeos $ \h -> do
-  _ <- throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ 
-        withCoordinateSequence cs $ \pcs -> 
-          f h pcs (fromIntegral idx) (realToFrac val)
-  return  ()
+setCoordinateSequence_ f cs idx val = fmap (\_ -> ()) $
+  throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ withGeos $ \h ->
+    withCoordinateSequence cs $ \pcs -> 
+            f h pcs (fromIntegral idx) (realToFrac val)
 
 
 setCoordinateSequenceX :: CoordinateSequence a => a -> Int -> Double -> Geos ()
@@ -165,9 +161,9 @@ setCoordinateSequenceY = setCoordinateSequence_ I.geos_CoordSeqSetY
 setCoordinateSequenceZ :: CoordinateSequence a => a -> Int -> Double -> Geos () 
 setCoordinateSequenceZ = setCoordinateSequence_ I.geos_CoordSeqSetZ
 
-setCoordinateSequenceOrd :: CoordinateSequence a => a -> Int -> Int  -> Double -> Geos Int
-setCoordinateSequenceOrd cs idx dim v = withGeos $ \h -> do
-  i <- throwIfZero (mkErrorMessage "setCoordinateSequenceN") $ 
-          withCoordinateSequence cs $ \pcs -> 
-            I.geos_CoordSeqSetOrdinate h pcs (fromIntegral idx) (fromIntegral dim) (realToFrac v)
-  return $ fromIntegral i
+setCoordinateSequenceOrd :: CoordinateSequence a => a -> Int -> Int  -> Double -> Geos ()
+setCoordinateSequenceOrd cs idx dim v = fmap (\_ -> ()) $ 
+  throwIfZero (mkErrorMessage "setCoordinateSequenceN") $ 
+    withGeos $ \h -> 
+        withCoordinateSequence cs $ \pcs -> 
+          I.geos_CoordSeqSetOrdinate h pcs (fromIntegral idx) (fromIntegral dim) (realToFrac v)

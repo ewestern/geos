@@ -28,7 +28,8 @@ parsingSpecs = describe "Tests Serialization" $ do
   it "Serializes a LineString to WKT" $ do
     linestringWkt `shouldBe` (writeWkt linestring)
   it "Can parse WKT" $ do
-    ensureLineString <$> readWkt (Just 4326) linestringWkt `shouldBe` Just linestring
+    let Just (LineStringGeometry ls _) =  ensureLineString <$> readWkt linestringWkt 
+    LineStringGeometry ls (Just 4326) `shouldBe` linestring
   it "can parse lots of things" $ do
     polygons <- (fmap ensurePolygon) <$> loadThingsFromFile "tests/sampledata/polygons.csv"
     (length polygons) `shouldBe` 98
@@ -42,7 +43,8 @@ parsingSpecs = describe "Tests Serialization" $ do
     -- running this test multiple times will generate a random length list
     length filteredPoints `shouldBe` 0
   it "can read a long list in one op" $ do
-    points <- (fmap ensurePoint) <$> loadThingsFromFile' "tests/sampledata/points.csv"
+    maybeGeoms <- (fmap fromJust) $ loadThingsFromFile' "tests/sampledata/points.csv"
+    let points = fmap ensurePoint maybeGeoms
     (length points) `shouldBe` 34582
     -- Because we're in Australia (below the equator) all the points in this set should have a latitude < 0
     let filteredPoints = filter (\(PointGeometry (Point (Coordinate2 lat long)) _) -> long > 0) points

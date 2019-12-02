@@ -27,7 +27,7 @@ loadThingsFromFile fp = do
   rows <- BS8.readFile fp
   return $ catMaybes $ readHex <$> (BS8.lines rows)
 
-loadThingsFromFile' :: FilePath -> IO [Some Geometry]
+loadThingsFromFile' :: FilePath -> IO (Maybe [Some Geometry])
 loadThingsFromFile' fp = do
   rows <- BS8.readFile fp
   return $ readLotsOfHex (BS8.lines rows)

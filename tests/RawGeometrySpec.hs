@@ -62,10 +62,10 @@ rawGeometrySpecs = describe "raw geometry" $ do
           R.getTypeId rp
     t `shouldBe` R.PolygonTypeId
   it "Converts a MultiPolygon from Raw" $ do
-    let (x,y) = runGeos $ do
+    let (Just (x,y)) = runGeosM $ do
           r <- RS.createReader
           mpr <- RS.readHex r multiPolygonStringBS
-          MultiPolygon vps <- convertMultiPolygonFromRaw $ fromJust mpr
+          MultiPolygon vps <- convertMultiPolygonFromRaw mpr
           let (Polygon vlr) = vps V.! 0
               (LinearRing vc) = vlr V.! 0
               (Coordinate2 x y) = vc V.! 0
@@ -81,7 +81,7 @@ rawGeometrySpecs = describe "raw geometry" $ do
       let (x,y) = runGeos $ do
               r <- RS.createReader
               g <- RS.readHex r multiPolygonStringBS
-              gi :: R.GeomConst <- R.getGeometryN (fromJust g) 0
+              gi :: R.GeomConst <- R.getGeometryN g 0
               ir :: R.GeomConst <- R.getExteriorRing gi
               cs <- R.getCoordinateSequence ir
               x <- RC.getCoordinateSequenceX cs 0

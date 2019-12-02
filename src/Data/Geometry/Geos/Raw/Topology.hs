@@ -12,22 +12,21 @@ module Data.Geometry.Geos.Raw.Topology (
   , centroid
   , node
   , delaunayTriangulation
+  , voronoiDiagram
 ) where
 import qualified Data.Geometry.Geos.Raw.Internal as I
 import Data.Geometry.Geos.Raw.Base
 import qualified Data.Geometry.Geos.Raw.Geometry as R
-import Foreign
+import Foreign hiding (throwIfNull)
 
 geo_1 :: R.Geometry a 
       => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry)) 
       -> String 
       -> a
       -> Geos a
-geo_1 f s g = 
-  withGeos $ \h -> 
-    R.withGeometry g $ \gp -> do
-      ptr <- throwIfNull s $ f h gp
-      R.constructGeometry h ptr
+geo_1 f s g = withGeos' $ \h -> do
+  eitherPtr <- throwIfNull' s $ R.withGeometry g $ f h 
+  traverse (R.constructGeometry h) eitherPtr
 
 geo_2 :: R.Geometry a
       => (I.GEOSContextHandle_t -> Ptr I.GEOSGeometry -> Ptr I.GEOSGeometry -> IO (Ptr I.GEOSGeometry))
@@ -35,12 +34,11 @@ geo_2 :: R.Geometry a
       -> a
       -> a
       -> Geos a
-geo_2 f s g1 g2  = do
-  withGeos $ \h -> 
-    R.withGeometry g1 $ \gp -> 
-      R.withGeometry g2 $ \gp2 -> do
-        ptr <- throwIfNull s $ f h gp gp2
-        R.constructGeometry h ptr
+geo_2 f s g1 g2  =  withGeos' $ \h -> do
+  eitherPtr <- throwIfNull' s $  R.withGeometry g1 $ \gp -> 
+      R.withGeometry g2 (f h gp)
+  traverse (R.constructGeometry h) eitherPtr
+
 
 
 envelope :: R.Geometry a => a -> Geos a
@@ -78,20 +76,13 @@ node = geo_1 I.geos_Node "node"
 
 -- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use.
 delaunayTriangulation :: R.Geometry a => a -> Double -> Geos a
-delaunayTriangulation g tol = do
-  withGeos $ \h -> do
-    R.withGeometry g $ \gp -> do 
-      ptr <- throwIfNull "delaunayTriangulation" $ I.geos_DelaunayTriangulation h gp (realToFrac tol) $ fromBool True
-      R.constructGeometry h ptr
+delaunayTriangulation g tol = withGeos' $ \h -> do
+  eitherPtr <- throwIfNull' "delaunayTriangulation" $ R.withGeometry g $ \gp -> 
+      I.geos_DelaunayTriangulation h gp (realToFrac tol) $ fromBool True
+  traverse (R.constructGeometry h) eitherPtr
             
-#if GEOS_VERSION_MAJOR > 3 && GEOS_VERSION_MINOR > 4
--- | 
--- TODO: make env Maybe Geometry
 voronoiDiagram :: R.Geometry a => a -> Maybe a -> Double -> Bool -> Geos a
-voronoiDiagram g menv tol oe = do
-  withGeos $ \h ->
-    R.withGeometry g $ \gp -> 
-      R.withMaybeGeometry env $ \ep -> 
-        ptr <- throwIfNull "voronoiDiagram" $ I.geos_VoronoiDiagram hp gp ep (realToFrac tol) $ fromBool oe 
-        R.constructGeometry h ptr
-#endif
+voronoiDiagram g menv tol oe = withGeos' $ \h -> do
+  eitherPtr <- throwIfNull' "voronoiDiagram" $ R.withGeometry g $ \gp -> 
+    R.withMaybeGeometry menv $ \ep -> I.geos_VoronoiDiagram h gp ep (realToFrac tol) $ fromBool oe 
+  traverse (R.constructGeometry h) eitherPtr
