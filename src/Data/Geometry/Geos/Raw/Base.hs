@@ -10,6 +10,7 @@ module Data.Geometry.Geos.Raw.Base (
   , throwIfNull
   , throwIfNull'
   , throwIf
+  , throwIf'
   , withGeos
   , withGeos'
   , mkErrorMessage

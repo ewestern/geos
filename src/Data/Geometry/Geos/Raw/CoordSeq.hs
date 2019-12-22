@@ -17,7 +17,7 @@ module Data.Geometry.Geos.Raw.CoordSeq (
 
 import qualified Data.Geometry.Geos.Raw.Internal as I
 import Data.Geometry.Geos.Raw.Base
-import Foreign hiding (throwIfNull)
+import Foreign hiding (throwIfNull, void)
 import Foreign.C.Types
 import Control.Monad
 
@@ -82,7 +82,7 @@ coordSeqShow a = runGeos $ do
     
 
 instance CoordinateSequence CoordSeq where
-  withCoordinateSequence (CoordSeq fp) f = withForeignPtr fp f
+  withCoordinateSequence (CoordSeq fp) = withForeignPtr fp
   createEmptyCoordinateSequence size dim = do
     ptr <- throwIfNull "createEmptyCoordinateSequence" $ withGeos $ \h ->  I.geos_CoordSeqCreate h (fromIntegral size) (fromIntegral dim)
     createCoordinateSequence ptr
@@ -146,7 +146,7 @@ setCoordinateSequence_ ::  CoordinateSequence a
                         -> Int 
                         -> Double 
                         -> Geos ()
-setCoordinateSequence_ f cs idx val = fmap (\_ -> ()) $
+setCoordinateSequence_ f cs idx val = void $
   throwIfZero (mkErrorMessage "setCoordinateSEquenceN") $ withGeos $ \h ->
     withCoordinateSequence cs $ \pcs -> 
             f h pcs (fromIntegral idx) (realToFrac val)
@@ -162,7 +162,7 @@ setCoordinateSequenceZ :: CoordinateSequence a => a -> Int -> Double -> Geos ()
 setCoordinateSequenceZ = setCoordinateSequence_ I.geos_CoordSeqSetZ
 
 setCoordinateSequenceOrd :: CoordinateSequence a => a -> Int -> Int  -> Double -> Geos ()
-setCoordinateSequenceOrd cs idx dim v = fmap (\_ -> ()) $ 
+setCoordinateSequenceOrd cs idx dim v = void $ 
   throwIfZero (mkErrorMessage "setCoordinateSequenceN") $ 
     withGeos $ \h -> 
         withCoordinateSequence cs $ \pcs -> 

@@ -41,6 +41,7 @@ module Data.Geometry.Geos.Geometry (
   , hausdorffDistance
   , nearestPoints
   , withSomeGeometry
+  , mapSomeGeometry
 
 ) where
 
@@ -62,6 +63,10 @@ data Some :: (* -> *) -> * where
 
 withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
 withSomeGeometry (Some p) f = f p
+
+-- | the same as `withSomeGeometry` with its arguments reversed.
+mapSomeGeometry :: (forall a . Geometry a -> b) -> Some Geometry -> b
+mapSomeGeometry f (Some p) = f p
 
 
 instance Show (Some Geometry) where
@@ -278,41 +283,40 @@ convertGeometryFromRaw rg = do
 -- The following methods are useful when the type of a (Some Geometry) is known a priori
 -- (i.e. the result of calling centroid is always a point)
 
-ensurePoint :: Some Geometry -> Geometry Point
-ensurePoint g = withSomeGeometry g $ \g' -> case g' of
-  PointGeometry _ _ -> g'
-  _ -> error "This geometry was expected to be a Point"
+ensurePoint :: Some Geometry -> Maybe (Geometry Point)
+ensurePoint = mapSomeGeometry $ \case
+  g@(PointGeometry _ _) -> Just g
+  _ -> Nothing
 
-ensureLineString :: Some Geometry -> Geometry LineString
-ensureLineString g = withSomeGeometry g $ \g' -> case g' of
-  LineStringGeometry _ _ -> g'
-  _ -> error "This geometry was expected to be a LineString"
+ensureLineString :: Some Geometry -> Maybe (Geometry LineString)
+ensureLineString = mapSomeGeometry $ \case
+    g@(LineStringGeometry _ _) -> Just g
+    _ -> Nothing
 
-ensureLinearRing :: Some Geometry -> Geometry LinearRing
-ensureLinearRing g = withSomeGeometry g $ \g' -> case g' of
-  LinearRingGeometry _ _ -> g'
-  _ -> error "This geometry was expected to be a LinearRing"
+ensureLinearRing :: Some Geometry -> Maybe (Geometry LinearRing)
+ensureLinearRing = mapSomeGeometry $ \case 
+  g@(LinearRingGeometry _ _) -> Just g
+  _ -> Nothing
 
-ensurePolygon :: Some Geometry -> Geometry Polygon
-ensurePolygon g = withSomeGeometry g $ \g' -> case g' of
-  PolygonGeometry _ _  -> g'
-  _ -> error "This geometry was expected to be a Polygon"
+ensurePolygon :: Some Geometry -> Maybe (Geometry Polygon)
+ensurePolygon = mapSomeGeometry $ \case
+  g@(PolygonGeometry _ _)  -> Just g
+  _ -> Nothing
 
-ensureMultiPoint :: Some Geometry -> Geometry MultiPoint
-ensureMultiPoint g = withSomeGeometry g $ \p' -> case p' of
-  MultiPointGeometry _ _ -> p'
-  _ -> error "This geometry was expected to be a MultiPoint"
+ensureMultiPoint :: Some Geometry -> Maybe (Geometry MultiPoint)
+ensureMultiPoint = mapSomeGeometry $ \case
+  g@(MultiPointGeometry _ _) -> Just g
+  _ -> Nothing
 
-ensureMultiLineString :: Some Geometry -> Geometry MultiLineString
-ensureMultiLineString g = withSomeGeometry g $ \p' -> case p' of
-  MultiLineStringGeometry _ _ -> p'
-  _ -> error "This geometry was expected to be a MultiLineString"
+ensureMultiLineString :: Some Geometry -> Maybe (Geometry MultiLineString)
+ensureMultiLineString = mapSomeGeometry $ \case
+  g@(MultiLineStringGeometry _ _) -> Just g
+  _ -> Nothing
 
-ensureMultiPolygon :: Some Geometry -> Geometry MultiPolygon
-ensureMultiPolygon g = withSomeGeometry g $ \p' -> case p' of
-  MultiPolygonGeometry _ _ -> p'
-  _ -> error "This geometry was expected to be a MultiPolygon"
-
+ensureMultiPolygon :: Some Geometry -> Maybe (Geometry MultiPolygon)
+ensureMultiPolygon = mapSomeGeometry $ \case
+  g@(MultiPolygonGeometry _ _) -> Just g
+  _ -> Nothing
 
 getPosition :: RC.CoordinateSequence a => a -> Int -> Geos Coordinate
 getPosition cs i =  do
