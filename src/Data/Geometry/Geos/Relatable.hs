@@ -1,6 +1,6 @@
 module Data.Geometry.Geos.Relatable where
 
-import Data.Geometry.Geos.Geometry 
+import           Data.Geometry.Geos.Geometry
 import qualified Data.Geometry.Geos.Raw.Geometry as R
 
 class Relatable a where
@@ -16,14 +16,12 @@ class Relatable a where
 
 
 instance Relatable (Geometry a) where
-  disjoint = binaryPredicate R.disjoint
-  touches = binaryPredicate R.touches
+  disjoint   = binaryPredicate R.disjoint
+  touches    = binaryPredicate R.touches
   intersects = binaryPredicate R.intersects
-  contains = binaryPredicate R.contains
-  within = binaryPredicate R.within
-  crosses = binaryPredicate R.crosses
-  overlaps = binaryPredicate R.overlaps
-  covers = binaryPredicate R.covers
-  coveredBy = binaryPredicate R.coveredBy
-
-
+  contains   = binaryPredicate R.contains
+  within     = binaryPredicate R.within
+  crosses    = binaryPredicate R.crosses
+  overlaps   = binaryPredicate R.overlaps
+  covers     = binaryPredicate R.covers
+  coveredBy  = binaryPredicate R.coveredBy

@@ -12,28 +12,33 @@ Described in: P. Rigaux, Michel Scholl and Agnes Voisard. Spatial Databases With
 -}
 
 
-module Data.Geometry.Geos.STRTree ( 
-  foldr, 
-  toList,
-  toVector,
-  fromList,
-  empty,
-  build,
-  insert,
-  fromFoldable,
-  fromFoldable_,
-  lookup,
-  RT.STRTree,
-  RT.STRTreeBuilder
-) where
+module Data.Geometry.Geos.STRTree
+  ( foldr
+  , toList
+  , toVector
+  , fromList
+  , empty
+  , build
+  , insert
+  , fromFoldable
+  , fromFoldable_
+  , lookup
+  , RT.STRTree
+  , RT.STRTreeBuilder
+  )
+where
 
-import Prelude hiding (foldr, lookup)
-import qualified Data.Geometry.Geos.Raw.STRTree as RT
-import qualified Data.Geometry.Geos.Raw.Geometry as RG
-import Data.Geometry.Geos.Geometry
-import Data.Geometry.Geos.Raw.Base
-import Foreign
-import qualified Data.Vector as V
+import           Prelude                 hiding ( foldr
+                                                , lookup
+                                                )
+import qualified Data.Geometry.Geos.Raw.STRTree
+                                               as RT
+import qualified Data.Geometry.Geos.Raw.Geometry
+                                               as RG
+import           Data.Geometry.Geos.Geometry
+import           Data.Geometry.Geos.Raw.Base
+import           Foreign
+import qualified Data.Vector                   as V
 
 -- can't make instance of Foldable because of Storable constraint
 foldr :: (Storable a) => (a -> b -> b) -> b -> RT.STRTree a -> b
@@ -54,28 +59,30 @@ empty :: RT.STRTreeBuilder a
 empty = runGeos $ RT.createSTRTreeBuilder 10
 
 build :: RT.STRTreeBuilder a -> RT.STRTree a
-build = runGeos . RT.build 
+build = runGeos . RT.build
 
 insert :: Storable a => Geometry b -> a -> RT.STRTreeBuilder a -> ()
 insert geom item tree = runGeos $ do
-    rg :: RG.GeomConst <- convertGeometryToRaw geom
-    RT.insert tree rg item
-    return ()
+  rg :: RG.GeomConst <- convertGeometryToRaw geom
+  RT.insert tree rg item
+  return ()
 
 {-|
 `fromFoldable` creates an STRTree with a default node capacity of 10. For finer-grained control over the node capacity, `fromFoldable_` accepts a node-capacity argument.
 -}
 fromFoldable :: (Foldable f, Storable b) => f (Geometry a, b) -> RT.STRTree b
-fromFoldable  = fromFoldable_ 10
+fromFoldable = fromFoldable_ 10
 
-fromFoldable_ :: (Foldable f, Storable b) => Int -> f (Geometry a, b) -> RT.STRTree b
+fromFoldable_
+  :: (Foldable f, Storable b) => Int -> f (Geometry a, b) -> RT.STRTree b
 fromFoldable_ capacity things = runGeos $ do
   tree <- RT.createSTRTreeBuilder capacity
   mapM_ (ins tree) things
   RT.build tree
-  where ins tree' (g,b) = do
-          rg :: RG.GeomConst <- convertGeometryToRaw g
-          RT.insert tree' rg b
+ where
+  ins tree' (g, b) = do
+    rg :: RG.GeomConst <- convertGeometryToRaw g
+    RT.insert tree' rg b
 
 
 {-| 

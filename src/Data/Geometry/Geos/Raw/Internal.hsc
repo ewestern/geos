@@ -324,6 +324,24 @@ foreign import ccall
   geos_ConvexHull :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
 
 foreign import ccall
+  "geos_c.h GEOSMinimumRotatedRectangle_r"
+  geos_MinimumRotatedRectangle :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+foreign import ccall
+  "geos_c.h GEOSMinimumWidth_r"
+  geos_MinimumWidth :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+foreign import ccall
+  "geos_c.h GEOSMinimumClearanceLine_r"
+  geos_MinimumClearanceLine :: GEOSContextHandle_t -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
+
+
+foreign import ccall
+  "geos_c.h GEOSMinimumClearance_r"
+  geos_MinimumClearance :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr CDouble -> IO CInt
+
+
+foreign import ccall
   "geos_c.h GEOSDifference_r"
   geos_Difference :: GEOSContextHandle_t -> Ptr GEOSGeometry -> Ptr GEOSGeometry -> IO (Ptr GEOSGeometry)
 

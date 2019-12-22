@@ -7,22 +7,24 @@ Functions to read and write geometries in WKB and WKT formats.
 Empty Points cannot be represented in WKB; an IllegalArgumentException will be thrown if one is written. The WKB specification does not support representing 'LinearRing', they will be written as 'LineString'
 -}
 
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Data.Geometry.Geos.Serialize (
-    readHex
+module Data.Geometry.Geos.Serialize
+  ( readHex
   , readLotsOfHex
   , writeHex
   , readWkt
   , writeWkt
-) where
+  )
+where
 
-import Data.Geometry.Geos.Raw.Base
-import Data.Geometry.Geos.Geometry
-import qualified Data.Geometry.Geos.Raw.Serialize as S
-import qualified Data.Geometry.Geos.Raw.Geometry as R
-import qualified Data.ByteString.Char8 as BC
+import           Data.Geometry.Geos.Raw.Base
+import           Data.Geometry.Geos.Geometry
+import qualified Data.Geometry.Geos.Raw.Serialize
+                                               as S
+import qualified Data.Geometry.Geos.Raw.Geometry
+                                               as R
+import qualified Data.ByteString.Char8         as BC
 
 readHex :: BC.ByteString -> Maybe (Some Geometry)
 readHex bs = runGeosM $ do
@@ -38,7 +40,7 @@ readLotsOfHex bs = runGeosM $ do
 
 writeHex :: Geometry a -> BC.ByteString
 writeHex g = runGeos $ do
-  w <- S.createWriter
+  w           <- S.createWriter
   r :: R.Geom <- convertGeometryToRaw g
   S.writeHex w r
 
@@ -50,6 +52,6 @@ readWkt bs = runGeosM $ do
 
 writeWkt :: Geometry a -> BC.ByteString
 writeWkt g = runGeos $ do
-  w <- S.createWktWriter
+  w           <- S.createWktWriter
   r :: R.Geom <- convertGeometryToRaw g
   S.writeWkt w r

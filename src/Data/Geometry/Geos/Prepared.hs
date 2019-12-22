@@ -9,8 +9,8 @@ A given implementation may provide optimized implementations for only some of th
 
 -}
 
-module Data.Geometry.Geos.Prepared (
-    prepare
+module Data.Geometry.Geos.Prepared
+  ( prepare
   , contains
   , containsProperly
   , coveredBy
@@ -21,13 +21,18 @@ module Data.Geometry.Geos.Prepared (
   , overlaps
   , touches
   , within
-) where
+  )
+where
 
-import qualified Data.Geometry.Geos.Raw.Prepared as RP
-import qualified Data.Geometry.Geos.Raw.Geometry as RG
-import Data.Geometry.Geos.Raw.Base
-import Data.Geometry.Geos.Geometry (Geometry(..), convertGeometryToRaw)
-import Data.Geometry.Geos.Relatable
+import qualified Data.Geometry.Geos.Raw.Prepared
+                                               as RP
+import qualified Data.Geometry.Geos.Raw.Geometry
+                                               as RG
+import           Data.Geometry.Geos.Raw.Base
+import           Data.Geometry.Geos.Geometry    ( Geometry(..)
+                                                , convertGeometryToRaw
+                                                )
+import           Data.Geometry.Geos.Relatable
 
 prepare :: Geometry a -> RP.PreparedGeometry
 prepare g = runGeos $ do
@@ -35,13 +40,14 @@ prepare g = runGeos $ do
   RP.prepare r
 
 
-queryPrepared :: (RP.PreparedGeometry -> RG.GeomConst -> Geos Bool)
-              -> RP.PreparedGeometry
-              -> Geometry b
-              -> Bool
+queryPrepared
+  :: (RP.PreparedGeometry -> RG.GeomConst -> Geos Bool)
+  -> RP.PreparedGeometry
+  -> Geometry b
+  -> Bool
 queryPrepared f pg g = runGeos $ convertGeometryToRaw g >>= f pg
 
-instance Relatable (RP.PreparedGeometry) where
+instance Relatable RP.PreparedGeometry where
   contains   = queryPrepared RP.contains
   coveredBy  = queryPrepared RP.coveredBy
   covers     = queryPrepared RP.covers
@@ -63,7 +69,5 @@ An example use case is computing the intersections of a set of geometries with a
 
 -}
 
-containsProperly :: RP.PreparedGeometry
-                  -> Geometry a
-                  -> Bool
+containsProperly :: RP.PreparedGeometry -> Geometry a -> Bool
 containsProperly = queryPrepared RP.containsProperly

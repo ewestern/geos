@@ -3,25 +3,28 @@
 
 module Data.Geometry.Geos.Raw.STRTree where
 
-import Prelude hiding (foldr)
-import qualified Data.Geometry.Geos.Raw.Internal as I
-import qualified Data.Geometry.Geos.Raw.Geometry as RG
-import qualified Data.Geometry.Geos.Raw.CoordSeq as RC
-import Data.Geometry.Geos.Raw.Base
-import Foreign
-import qualified Foreign.Concurrent as FC
-import Data.IORef
-import qualified Data.Vector as V
+import           Prelude                 hiding ( foldr )
+import qualified Data.Geometry.Geos.Raw.Internal
+                                               as I
+import qualified Data.Geometry.Geos.Raw.Geometry
+                                               as RG
+import qualified Data.Geometry.Geos.Raw.CoordSeq
+                                               as RC
+import           Data.Geometry.Geos.Raw.Base
+import           Foreign
+import qualified Foreign.Concurrent            as FC
+import           Data.IORef
+import qualified Data.Vector                   as V
 
 
 class STRTreeLike t where
     withSTRTree :: t a -> (Ptr I.GEOSSTRTree -> IO b ) -> IO b
 
 instance STRTreeLike STRTree where
-    withSTRTree (STRTree t) = withForeignPtr t
-       
+  withSTRTree (STRTree t) = withForeignPtr t
+
 instance STRTreeLike STRTreeBuilder where
-    withSTRTree (STRTreeBuilder t) = withForeignPtr t
+  withSTRTree (STRTreeBuilder t) = withForeignPtr t
 
 {-|
   A query-only data structure
@@ -41,8 +44,8 @@ foreign import ccall "wrapper"
   wrap2 :: (Ptr a -> Ptr () -> IO ()) -> IO (I.GEOSQueryCallback a)
 
 foreign import ccall "dynamic"
-  unwrap :: FunPtr (Finalizer a b) -> Finalizer a b 
-  
+  unwrap :: FunPtr (Finalizer a b) -> Finalizer a b
+
 
 {- |
 Create a new R-tree using the Sort-Tile-Recursive algorithm (STRtree) for two-dimensional spatial data.
@@ -51,25 +54,25 @@ Create a new R-tree using the Sort-Tile-Recursive algorithm (STRtree) for two-di
 -}
 createSTRTreeBuilder :: Int -> Geos (STRTreeBuilder a)
 createSTRTreeBuilder nodeCapacity = withGeos $ \h -> do
-    t <- I.geos_STRTreeCreate h $ fromIntegral nodeCapacity
-    let cleanup = unwrap I.geos_STRTreeDestroy h t
-    fp <- FC.newForeignPtr t cleanup
-    return $ STRTreeBuilder fp
+  t <- I.geos_STRTreeCreate h $ fromIntegral nodeCapacity
+  let cleanup = unwrap I.geos_STRTreeDestroy h t
+  fp <- FC.newForeignPtr t cleanup
+  return $ STRTreeBuilder fp
 
 
 {- |
   "Builds" the STRTree by performing a trivial query on it.
 -}
 build :: STRTreeBuilder a -> Geos (STRTree a)
-build tree@(STRTreeBuilder fp) = do 
-  cs <- RC.createEmptyCoordinateSequence 1 2
-  p ::RG.Geom <- RG.createPoint cs
+build tree@(STRTreeBuilder fp) = do
+  cs           <- RC.createEmptyCoordinateSequence 1 2
+  p :: RG.Geom <- RG.createPoint cs
   withGeos $ \h -> do
-      callback <- wrap2 $ \_ _ -> return ()
-      RG.withGeometry p $ \rg ->
-          withSTRTree tree $ \st -> I.geos_STRTreeQuery h st rg callback nullPtr
+    callback <- wrap2 $ \_ _ -> return ()
+    RG.withGeometry p $ \rg ->
+      withSTRTree tree $ \st -> I.geos_STRTreeQuery h st rg callback nullPtr
   return $ STRTree fp
-  
+
 {-|
 Insert an item into an STRtree
 
@@ -77,44 +80,33 @@ Insert an item into an STRtree
 @param geometry a Geometry whose envelope corresponds to the extent of 'item'
 @param item the item to insert into the tree
 -}
-insert :: (Storable b, RG.Geometry a)  => STRTreeBuilder b -> a -> b -> Geos ()
-insert (STRTreeBuilder tree) geometry item =
-  withGeos $ \h -> do
-    ptr <- malloc
-    poke ptr item
-    _ <- withForeignPtr tree $ \st ->
-        RG.withGeometry geometry $ \gr ->
-          I.geos_STRTreeInsert h st gr ptr
-    let cleanup = free ptr
-    FC.addForeignPtrFinalizer tree cleanup
-    return ()
+insert :: (Storable b, RG.Geometry a) => STRTreeBuilder b -> a -> b -> Geos ()
+insert (STRTreeBuilder tree) geometry item = withGeos $ \h -> do
+  ptr <- malloc
+  poke ptr item
+  _ <- withForeignPtr tree $ \st ->
+    RG.withGeometry geometry $ \gr -> I.geos_STRTreeInsert h st gr ptr
+  let cleanup = free ptr
+  FC.addForeignPtrFinalizer tree cleanup
+  return ()
 
-foldr :: (STRTreeLike t, Storable a) 
-      => (a -> b -> b) 
-      -> b 
-      -> t a 
-      -> Geos b
+foldr :: (STRTreeLike t, Storable a) => (a -> b -> b) -> b -> t a -> Geos b
 foldr func acc tree = withGeos $ \h -> do
-    b <- newIORef acc
-    callback <- wrap2 $ \a _ -> do
-      i <- peek a
-      modifyIORef' b (func i)
-    _ <- withSTRTree tree $ \st -> I.geos_STRTreeIterate h st callback nullPtr
-    freeHaskellFunPtr callback
-    readIORef b
+  b        <- newIORef acc
+  callback <- wrap2 $ \a _ -> do
+    i <- peek a
+    modifyIORef' b (func i)
+  _ <- withSTRTree tree $ \st -> I.geos_STRTreeIterate h st callback nullPtr
+  freeHaskellFunPtr callback
+  readIORef b
 
-query :: (Storable b, RG.Geometry a) 
-      => STRTree b 
-      -> a
-      -> Geos (V.Vector b)
-query t g  =
-  withGeos $ \h -> do
-    r <- newIORef V.empty
-    callback <- wrap2 $ \a _ -> do
-        i <- peek a
-        modifyIORef' r (`V.snoc` i)
-    _ <- RG.withGeometry g $ \rg ->
-          withSTRTree t $ \st -> 
-            I.geos_STRTreeQuery h st rg callback nullPtr
-    freeHaskellFunPtr callback
-    readIORef r
+query :: (Storable b, RG.Geometry a) => STRTree b -> a -> Geos (V.Vector b)
+query t g = withGeos $ \h -> do
+  r        <- newIORef V.empty
+  callback <- wrap2 $ \a _ -> do
+    i <- peek a
+    modifyIORef' r (`V.snoc` i)
+  _ <- RG.withGeometry g $ \rg ->
+    withSTRTree t $ \st -> I.geos_STRTreeQuery h st rg callback nullPtr
+  freeHaskellFunPtr callback
+  readIORef r

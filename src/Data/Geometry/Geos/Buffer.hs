@@ -15,19 +15,21 @@ Since true buffer curves may contain circular arcs, computed buffer polygons can
 {-# LANGUAGE ScopedTypeVariables #-}
 
 
-module Data.Geometry.Geos.Buffer (
-    buffer
+module Data.Geometry.Geos.Buffer
+  ( buffer
   , defaultBufferParams
-  , BufferParams (..)
-  , BufferJoinStyle (..)
-  , BufferCapStyle (..)
-) where
+  , BufferParams(..)
+  , BufferJoinStyle(..)
+  , BufferCapStyle(..)
+  )
+where
 import qualified Data.Geometry.Geos.Raw.Buffer as R
-import Data.Geometry.Geos.Raw.Base
-import Data.Geometry.Geos.Geometry
-import qualified Data.Geometry.Geos.Raw.Geometry as RG
+import           Data.Geometry.Geos.Raw.Base
+import           Data.Geometry.Geos.Geometry
+import qualified Data.Geometry.Geos.Raw.Geometry
+                                               as RG
 
-data BufferCapStyle = 
+data BufferCapStyle =
   -- | the usual round end caps
     RoundCap
   -- | end caps are truncated flat at the line ends
@@ -38,13 +40,13 @@ data BufferCapStyle =
 data BufferJoinStyle =
     RoundJoin
   | MitreJoin
-  | BevelJoin   
+  | BevelJoin
 
 convertCapStyle :: BufferCapStyle -> R.BufferCapStyle
 convertCapStyle = \case
-  RoundCap -> R.capRound
+  RoundCap  -> R.capRound
   SquareCap -> R.capSquare
-  FlatCap -> R.capFlat
+  FlatCap   -> R.capFlat
 
 convertJoinStyle :: BufferJoinStyle -> R.BufferJoinStyle
 convertJoinStyle = \case
@@ -54,7 +56,7 @@ convertJoinStyle = \case
 
 data BufferParams = BufferParams {
     joinStyle :: BufferJoinStyle
-  , capStyle :: BufferCapStyle 
+  , capStyle :: BufferCapStyle
 {-
 Sets the limit on the mitre ratio used for very sharp corners.
 
@@ -90,23 +92,22 @@ The End Cap Style for single-sided buffers is always ignored, and forced to the 
 }
 
 defaultBufferParams :: BufferParams
-defaultBufferParams = BufferParams {
-    joinStyle = RoundJoin
-  , capStyle = RoundCap
-  , mitreLimit = 2.0 
-  , quadrantSegments = 8
-  , singleSided = False
-}
+defaultBufferParams = BufferParams { joinStyle        = RoundJoin
+                                   , capStyle         = RoundCap
+                                   , mitreLimit       = 2.0
+                                   , quadrantSegments = 8
+                                   , singleSided      = False
+                                   }
 
 -- | Returns a Geometry that represents all points whose distance from this geometry is less than or equal to the given width.
 buffer :: Geometry a -> Double -> BufferParams -> Some Geometry
 buffer g width bp = runGeos $ do
   rg :: RG.Geom <- convertGeometryToRaw g
-  rbp <- R.createBufferParams 
-  R.setEndCapStyle rbp (convertCapStyle $ capStyle bp) 
+  rbp           <- R.createBufferParams
+  R.setEndCapStyle rbp (convertCapStyle $ capStyle bp)
   R.setJoinStyle rbp (convertJoinStyle $ joinStyle bp)
   R.setMitreLimit rbp (mitreLimit bp)
   R.setQuadrantSegments rbp (quadrantSegments bp)
   R.setSingleSided rbp (singleSided bp)
-  rg' <- R.buffer rg rbp width  
+  rg' <- R.buffer rg rbp width
   convertGeometryFromRaw rg'
