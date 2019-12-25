@@ -129,8 +129,8 @@ polygonize vec =
   ensurePolygon
     =<< (runGeosM $ do
           listGeom :: [RG.Geom] <- traverse convertGeometryToRaw $ V.toList vec
-          polygon               <- R.polygonize listGeom
-          convertGeometryFromRaw polygon
+          pgon                  <- R.polygonize listGeom
+          convertGeometryFromRaw pgon
         )
 
 {-
