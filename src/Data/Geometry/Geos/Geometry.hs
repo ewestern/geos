@@ -8,15 +8,24 @@
 
 module Data.Geometry.Geos.Geometry
   ( Geometry(..)
-  , Point(..)
-  , LinearRing(..)
-  , LineString(..)
-  , Polygon(..)
-  , MultiPoint(..)
-  , MultiLineString(..)
-  , MultiPolygon(..)
+  , Point
+  , point
+  , LinearRing
+  , linearRing
+  , LineString
+  , lineString
+  , Polygon
+  , polygon
+  , MultiPoint
+  , multiPoint
+  , MultiLineString
+  , multiLineString
+  , MultiPolygon
+  , multiPolygon
   , Some(..)
-  , Coordinate(..)
+  , Coordinate
+  , coordinate2
+  , coordinate3
   , SRID
   , binaryPredicate
   , convertGeometryFromRaw
@@ -48,6 +57,7 @@ where
 import           Data.Data
 import           Data.Semigroup                as Sem
 import qualified Data.Vector                   as V
+import           Data.Validation
 import qualified Data.Geometry.Geos.Raw.Geometry
                                                as R
 import qualified Data.Geometry.Geos.Raw.CoordSeq
@@ -74,6 +84,11 @@ mapSomeGeometry f (Some p) = f p
 instance Show (Some Geometry) where
   show (Some a) = "Some (" <> show a <> ")"
 
+data GeometryConstructionError
+  = InvalidLinearRing
+  | InvalidLineString
+  | InvalidPolygon
+
 data Geometry a where
   PointGeometry ::Point -> SRID -> Geometry Point
   LineStringGeometry ::LineString -> SRID -> Geometry LineString
@@ -87,6 +102,8 @@ data Geometry a where
 deriving instance Eq (Geometry a)
 deriving instance Show (Geometry a)
 
+{-| Coordinate is the lightweight class used to store coordinates. Coordinate objects are two-dimensional points, with an additional z-ordinate. 
+|-}
 data Coordinate =
     Coordinate2 {-# UNPACK #-} !Double {-# UNPACK #-} !Double
   | Coordinate3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double
@@ -96,6 +113,13 @@ instance Show Coordinate where
   show (Coordinate2 x y) = "(" ++ show x ++ ", " ++ show y ++ ")"
   show (Coordinate3 x y z) =
     "(" ++ show x ++ ", " ++ show y ++ ", " ++ show z ++ ")"
+
+
+coordinate2 :: Double -> Double -> Coordinate
+coordinate2  = Coordinate2
+
+coordinate3 :: Double -> Double -> Double -> Coordinate
+coordinate3 = Coordinate3
 
 dimensionsCoordinate :: Coordinate -> Int
 dimensionsCoordinate = length . gmapQ (const ())
@@ -108,9 +132,23 @@ dimensionsCoordinateSequence = dimensionsCoordinate . V.head
 newtype Point = Point Coordinate
  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
+point :: Coordinate -> Point
+point = Point
+
 -- A LinearRing is a LineString that is closed
 newtype LinearRing = LinearRing {
   coordinateSequenceLinearRing :: CoordinateSequence } deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
+
+linearRing :: CoordinateSequence -> Validation GeometryConstructionError LinearRing
+linearRing  = validate InvalidLinearRing mkRing
+  where
+    mkRing vec = case V.length vec of
+      0 -> Just $ LinearRing vec                  
+      1 -> Nothing
+      2 -> Nothing
+      3 -> Nothing
+      _ -> if V.head vec == V.last vec then Just $ LinearRing vec else Nothing
+      
 
 instance Sem.Semigroup LinearRing where
   (<>) (LinearRing a) (LinearRing b) = LinearRing (a <> b)
@@ -120,6 +158,16 @@ instance Monoid LinearRing where
 
 newtype LineString = LineString {
   coordinateSequenceLineString :: CoordinateSequence } deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
+
+
+lineString :: CoordinateSequence -> Validation GeometryConstructionError LineString
+lineString  = validate InvalidLineString mkLine
+  where
+    mkLine vec = case V.length vec of
+                  0 -> Just $ LineString vec
+                  1 -> Nothing
+                  2 -> if V.head vec == V.last vec then Nothing else Just $ LineString vec
+                  _ -> Just $ LineString vec
 
 instance Sem.Semigroup LineString where
   (<>) (LineString a) (LineString b) = LineString (a <> b)
@@ -131,8 +179,15 @@ instance Monoid LineString where
 newtype Polygon = Polygon (V.Vector LinearRing)
  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
+-- TODO: do correct polygon validation
+polygon :: V.Vector LinearRing -> Validation GeometryConstructionError Polygon
+polygon = validate InvalidPolygon (Just . Polygon)
+
 newtype MultiPoint = MultiPoint (V.Vector Point)
  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
+
+multiPoint :: V.Vector Point -> MultiPoint
+multiPoint = MultiPoint
 
 instance Sem.Semigroup MultiPoint where
   (<>) (MultiPoint a) (MultiPoint b) = MultiPoint (a <> b)
@@ -143,8 +198,14 @@ instance Monoid MultiPoint where
 newtype MultiLineString = MultiLineString (V.Vector LineString)
  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
+multiLineString :: V.Vector LineString -> MultiLineString
+multiLineString = MultiLineString
+
 newtype MultiPolygon = MultiPolygon (V.Vector Polygon)
  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
+
+multiPolygon :: V.Vector Polygon -> MultiPolygon
+multiPolygon = MultiPolygon
 
 -- | Returns the distance from the origin of LineString to the point projected on the geometry (that is to a point of the line the closest to the given point).
 project :: Geometry LineString -> Geometry Point -> Double
