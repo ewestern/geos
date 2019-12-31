@@ -11,34 +11,23 @@ A given implementation may provide optimized implementations for only some of th
 
 module Data.Geometry.Geos.Prepared
   ( prepare
-  , contains
   , containsProperly
-  , coveredBy
-  , covers
-  , crosses
-  , disjoint
-  , intersects
-  , overlaps
-  , touches
-  , within
+  , queryPrepared
+  , RP.PreparedGeometry
   )
 where
 
-import qualified Data.Geometry.Geos.Raw.Prepared
-                                               as RP
-import qualified Data.Geometry.Geos.Raw.Geometry
-                                               as RG
+import qualified Data.Geometry.Geos.Raw.Prepared as RP
+import qualified Data.Geometry.Geos.Raw.Geometry as RG
 import           Data.Geometry.Geos.Raw.Base
 import           Data.Geometry.Geos.Geometry    ( Geometry(..)
                                                 , convertGeometryToRaw
                                                 )
-import           Data.Geometry.Geos.Relatable
 
 prepare :: Geometry a -> RP.PreparedGeometry
 prepare g = runGeos $ do
   r :: RG.Geom <- convertGeometryToRaw g
   RP.prepare r
-
 
 queryPrepared
   :: (RP.PreparedGeometry -> RG.GeomConst -> Geos Bool)
@@ -47,16 +36,6 @@ queryPrepared
   -> Bool
 queryPrepared f pg g = runGeos $ convertGeometryToRaw g >>= f pg
 
-instance Relatable RP.PreparedGeometry where
-  contains   = queryPrepared RP.contains
-  coveredBy  = queryPrepared RP.coveredBy
-  covers     = queryPrepared RP.covers
-  crosses    = queryPrepared RP.crosses
-  disjoint   = queryPrepared RP.disjoint
-  intersects = queryPrepared RP.intersects
-  overlaps   = queryPrepared RP.overlaps
-  touches    = queryPrepared RP.touches
-  within     = queryPrepared RP.within
 
 {-|
 The containsProperly predicate has the following equivalent definitions:
