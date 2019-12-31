@@ -40,7 +40,6 @@ Library
     , vector
     , transformers
     , mtl
-    , validation
   build-tools: hsc2hs
   exposed-modules:
       Data.Geometry.Geos.Topology
@@ -120,10 +119,10 @@ test-suite test
     , Data.Geometry.Geos.Serialize
     , Data.Geometry.Geos.Topology
     , Data.Geometry.Geos.STRTree
-    , ParsingSpec
-    , RawGeometrySpec
-    , SpatialOperationsSpec
-    , SpecSampleData
+    , Data.Geometry.Geos.TopologySpec
+    , Data.Geometry.Geos.RelatableSpec
+    , Data.Geometry.Geos.SerializeSpec
+    , Helpers
 
 source-repository head
   type:     git
