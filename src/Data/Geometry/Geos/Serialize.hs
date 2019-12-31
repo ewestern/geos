@@ -5,6 +5,8 @@ Maintainer  : pfrance@gmail.com
 Functions to read and write geometries in WKB and WKT formats.
 
 Empty Points cannot be represented in WKB; an IllegalArgumentException will be thrown if one is written. The WKB specification does not support representing 'LinearRing', they will be written as 'LineString'
+
+Note the WKT is not able to represent an SRID, so conversions of geometries which contain an SRID into WKT will be lossy.
 -}
 
 {-# LANGUAGE ScopedTypeVariables #-}

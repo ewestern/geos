@@ -98,14 +98,19 @@ node :: Geometry a -> Maybe (Some Geometry)
 node = geo_1 R.node
 
 -- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use.
-delaunayTriangulation
-  :: Geometry a -> Double -> Maybe (Geometry MultiLineString)
-delaunayTriangulation g d =
-  ensureMultiLineString =<< geo_1 (`R.delaunayTriangulation` d) g
+delaunayTriangulation :: Geometry a 
+                      -> Double 
+                      -> Bool
+                      -> Maybe (Some Geometry)
+delaunayTriangulation g d onlyEdges =
+  geo_1 (\g' -> R.delaunayTriangulation g' d onlyEdges) g
 
 -- | Returns the Voronoi polygons of a set of Vertices given as input
-voronoiDiagram
-  :: Geometry a -> Maybe (Geometry b) -> Double -> Bool -> Some Geometry
+voronoiDiagram :: Geometry a          -- ^ the input geometry whose vertex will be used as sites
+               -> Maybe (Geometry b)  -- ^ clipping envelope for the returned diagram, automatically determined if Nothing. The diagram will be clipped to the larger of this envelope or an envelope surrounding the sites 
+               -> Double              -- ^ snapping tolerance to use for improved robustness
+               -> Bool                -- ^ whether to return only edges of the Voronoi cells
+               -> Some Geometry
 voronoiDiagram g menv tol onlyEdges = runGeos $ do
   g' :: RG.GeomConst <- convertGeometryToRaw g
   env'               <- traverse convertGeometryToRaw menv
@@ -134,7 +139,7 @@ polygonize vec =
         )
 
 {-
- Returns the minimum rotated rectangular POLYGON which encloses the input geometry. The rectangle has width equal to the minimum diameter, and a longer length. If the convex hull of the input is degenerate (a line or point) a LINESTRING or POINT is returned. The minimum rotated rectangle can be used as an extremely generalized representation for the given geometry.
+ Returns the minimum rotated rectangular POLYGON which encloses the input geometry. The rectangle has width equal to the minimum diameter, and a longer length. If the convex hull of the input is degenerate (a line or point) Nothing is returned. The minimum rotated rectangle can be used as an extremely generalized representation for the given geometry.
 -}
 
 minimumRotatedRectangle :: Geometry a -> Maybe (Geometry Polygon)

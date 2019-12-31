@@ -129,10 +129,14 @@ minimumClearance geom = withGeos' $ \h ->
 
 
 -- | Return a Delaunay triangulation of the vertex of the given geometry @g@, where @tol@ is  the snapping tolerance to use.
-delaunayTriangulation :: R.Geometry a => a -> Double -> Geos a
-delaunayTriangulation g tol = withGeos' $ \h -> do
+delaunayTriangulation :: R.Geometry a 
+                      => a 
+                      -> Double 
+                      -> Bool
+                      -> Geos a
+delaunayTriangulation g tol onlyEdges = withGeos' $ \h -> do
   eitherPtr <- throwIfNull' "delaunayTriangulation" $ R.withGeometry g $ \gp -> 
-      I.geos_DelaunayTriangulation h gp (realToFrac tol) $ fromBool True
+      I.geos_DelaunayTriangulation h gp (realToFrac tol) $ fromBool onlyEdges
   traverse (R.constructGeometry h) eitherPtr
             
 voronoiDiagram :: R.Geometry a => a -> Maybe a -> Double -> Bool -> Geos a

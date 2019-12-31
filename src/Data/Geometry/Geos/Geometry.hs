@@ -8,6 +8,7 @@
 
 module Data.Geometry.Geos.Geometry
   ( Geometry(..)
+  , GeometryConstructionError
   , Point
   , point
   , LinearRing
@@ -22,6 +23,8 @@ module Data.Geometry.Geos.Geometry
   , multiLineString
   , MultiPolygon
   , multiPolygon
+  , GeometryCollection
+  , geometryCollection
   , Some(..)
   , Coordinate
   , coordinate2
@@ -38,6 +41,7 @@ module Data.Geometry.Geos.Geometry
   , ensureMultiPoint
   , ensureMultiPolygon
   , ensureMultiLineString
+  , ensureGeometryCollection
   , interpolate
   , interpolateNormalized
   , project
@@ -55,9 +59,9 @@ module Data.Geometry.Geos.Geometry
 where
 
 import           Data.Data
+import           Data.List                     (intercalate)
 import           Data.Semigroup                as Sem
 import qualified Data.Vector                   as V
-import           Data.Validation
 import qualified Data.Geometry.Geos.Raw.Geometry
                                                as R
 import qualified Data.Geometry.Geos.Raw.CoordSeq
@@ -72,6 +76,25 @@ type SRID = Maybe Int
 
 data Some :: (* -> *) -> * where
   Some ::f a -> Some f
+
+instance Eq (Some Geometry) where
+  (Some (PointGeometry p s)) == (Some (PointGeometry p2 s2)) = p == p2 && s == s2
+  (Some (PointGeometry _ _)) == (Some _) = False
+  (Some (LineStringGeometry g s)) == (Some (LineStringGeometry g2 s2)) = g == g2 && s == s2
+  (Some (LineStringGeometry _ _)) == (Some _) = False
+  (Some (PolygonGeometry g s)) == (Some (PolygonGeometry g2 s2)) = g == g2 && s == s2
+  (Some (PolygonGeometry _ _)) == (Some _) = False
+  (Some (MultiPointGeometry g s)) == (Some (MultiPointGeometry g2 s2)) = g == g2 && s == s2
+  (Some (MultiPointGeometry _ _)) == (Some _) = False
+  (Some (MultiLineStringGeometry g s)) == (Some (MultiLineStringGeometry g2 s2)) = g == g2 && s == s2
+  (Some (MultiLineStringGeometry _ _)) == (Some _) = False
+
+  (Some (MultiPolygonGeometry g s)) == (Some (MultiPolygonGeometry g2 s2)) = g == g2 && s == s2
+  (Some (MultiPolygonGeometry _ _)) == (Some _) = False
+  (Some (CollectionGeometry g s)) == (Some (CollectionGeometry g2 s2)) = g == g2 && s == s2
+  (Some (CollectionGeometry _ _)) == (Some _) = False
+  (Some (LinearRingGeometry g s)) == (Some (LinearRingGeometry g2 s2)) = g == g2 && s == s2
+  (Some (LinearRingGeometry _ _)) == (Some _) = False
 
 withSomeGeometry :: Some Geometry -> (forall a . Geometry a -> b) -> b
 withSomeGeometry (Some p) f = f p
@@ -90,14 +113,14 @@ data GeometryConstructionError
   | InvalidPolygon
 
 data Geometry a where
-  PointGeometry ::Point -> SRID -> Geometry Point
-  LineStringGeometry ::LineString -> SRID -> Geometry LineString
-  LinearRingGeometry ::LinearRing -> SRID -> Geometry LinearRing
-  PolygonGeometry ::Polygon -> SRID -> Geometry Polygon
-  MultiPointGeometry ::MultiPoint -> SRID -> Geometry MultiPoint
-  MultiLineStringGeometry ::MultiLineString -> SRID -> Geometry MultiLineString
-  MultiPolygonGeometry ::MultiPolygon -> SRID -> Geometry MultiPolygon
-  {-CollectionGeometry :: GeometryCollection -> Geometry GeometryCollection-}
+  PointGeometry :: Point -> SRID -> Geometry Point
+  LineStringGeometry :: LineString -> SRID -> Geometry LineString
+  LinearRingGeometry :: LinearRing -> SRID -> Geometry LinearRing
+  PolygonGeometry :: Polygon -> SRID -> Geometry Polygon
+  MultiPointGeometry :: MultiPoint -> SRID -> Geometry MultiPoint
+  MultiLineStringGeometry :: MultiLineString -> SRID -> Geometry MultiLineString
+  MultiPolygonGeometry :: MultiPolygon -> SRID -> Geometry MultiPolygon
+  CollectionGeometry :: GeometryCollection -> SRID -> Geometry GeometryCollection
 
 deriving instance Eq (Geometry a)
 deriving instance Show (Geometry a)
@@ -137,18 +160,18 @@ point = Point
 
 -- A LinearRing is a LineString that is closed
 newtype LinearRing = LinearRing {
-  coordinateSequenceLinearRing :: CoordinateSequence } deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
+  coordinateSequenceLinearRing :: CoordinateSequence } deriving (Read, Ord, Eq, Data, Typeable, Generic)
 
-linearRing :: CoordinateSequence -> Validation GeometryConstructionError LinearRing
-linearRing  = validate InvalidLinearRing mkRing
-  where
-    mkRing vec = case V.length vec of
-      0 -> Just $ LinearRing vec                  
-      1 -> Nothing
-      2 -> Nothing
-      3 -> Nothing
-      _ -> if V.head vec == V.last vec then Just $ LinearRing vec else Nothing
-      
+instance Show LinearRing where
+  show (LinearRing vec) = 
+    let inner = intercalate ", " $ show <$> V.toList vec
+    in "[" ++ inner ++ "]"
+
+linearRing :: CoordinateSequence -> Either GeometryConstructionError LinearRing
+linearRing vec
+  | 1 <= V.length vec && V.length vec < 4 = Left InvalidLinearRing
+  | V.head vec /= V.last vec = Left InvalidLinearRing
+  | otherwise = Right $ LinearRing vec
 
 instance Sem.Semigroup LinearRing where
   (<>) (LinearRing a) (LinearRing b) = LinearRing (a <> b)
@@ -157,17 +180,18 @@ instance Monoid LinearRing where
   mempty = LinearRing V.empty
 
 newtype LineString = LineString {
-  coordinateSequenceLineString :: CoordinateSequence } deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
+  coordinateSequenceLineString :: CoordinateSequence } deriving (Read, Ord, Eq, Data, Typeable, Generic)
 
+instance Show LineString where
+  show (LineString vec) = 
+    let inner = intercalate ", " $ show <$> V.toList vec
+    in "[" ++ inner ++ "]"
 
-lineString :: CoordinateSequence -> Validation GeometryConstructionError LineString
-lineString  = validate InvalidLineString mkLine
-  where
-    mkLine vec = case V.length vec of
-                  0 -> Just $ LineString vec
-                  1 -> Nothing
-                  2 -> if V.head vec == V.last vec then Nothing else Just $ LineString vec
-                  _ -> Just $ LineString vec
+lineString :: CoordinateSequence -> Either GeometryConstructionError LineString
+lineString  vec
+  | V.length vec == 1 = Left InvalidLineString
+  | V.length vec == 2 && V.last vec == V.head vec = Left InvalidLineString
+  | otherwise = Right $ LineString vec
 
 instance Sem.Semigroup LineString where
   (<>) (LineString a) (LineString b) = LineString (a <> b)
@@ -179,9 +203,15 @@ instance Monoid LineString where
 newtype Polygon = Polygon (V.Vector LinearRing)
  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
 
--- TODO: do correct polygon validation
-polygon :: V.Vector LinearRing -> Validation GeometryConstructionError Polygon
-polygon = validate InvalidPolygon (Just . Polygon)
+polygon :: V.Vector LinearRing -> Either GeometryConstructionError Polygon
+polygon vec = 
+    let shell = maybe V.empty coordinateSequenceLinearRing $ vec V.!? 0
+        holes = coordinateSequenceLinearRing <$> if V.null vec then V.empty else V.tail vec
+    in 
+      do
+        _ <- if V.null shell && V.any (not . V.null) holes then Left InvalidPolygon else Right ()
+        return . Polygon  $ V.cons (LinearRing shell) (fmap LinearRing holes)
+  
 
 newtype MultiPoint = MultiPoint (V.Vector Point)
  deriving (Read, Ord, Show, Eq, Data, Typeable, Generic)
@@ -206,6 +236,12 @@ newtype MultiPolygon = MultiPolygon (V.Vector Polygon)
 
 multiPolygon :: V.Vector Polygon -> MultiPolygon
 multiPolygon = MultiPolygon
+
+newtype GeometryCollection = GeometryCollection (V.Vector (Some Geometry))
+ deriving (Show, Eq, Typeable, Generic)
+
+geometryCollection :: V.Vector (Some Geometry) -> GeometryCollection
+geometryCollection  = GeometryCollection
 
 -- | Returns the distance from the origin of LineString to the point projected on the geometry (that is to a point of the line the closest to the given point).
 project :: Geometry LineString -> Geometry Point -> Double
@@ -266,6 +302,14 @@ convertGeometryToRaw = \case
   MultiPointGeometry      mp  s -> convertMultiPointToRaw mp s
   MultiLineStringGeometry ml  s -> convertMultiLineStringToRaw ml s
   MultiPolygonGeometry    mp  s -> convertMultiPolygonToRaw mp s
+  CollectionGeometry      gc  s -> convertGeometryCollectionToRaw gc s
+
+convertSomeGeometryToRaw
+  :: (R.Geometry a, R.CoordSeqInput a ~ cb, RC.CoordinateSequence cb)
+  => Some Geometry
+  -> Geos a
+convertSomeGeometryToRaw sg = withSomeGeometry sg convertGeometryToRaw
+
 
 convertPointToRaw :: R.Geometry b => Point -> Maybe Int -> Geos b
 convertPointToRaw (Point c) s = do
@@ -319,6 +363,14 @@ convertMultiPolygonToRaw (MultiPolygon vp) s = do
   vr <- flip convertPolygonToRaw s `V.mapM` vp
   R.createMultiPolygon (V.toList vr) >>= R.setSRID s
 
+convertGeometryCollectionToRaw :: R.Geometry a => GeometryCollection -> SRID -> Geos a
+convertGeometryCollectionToRaw (GeometryCollection vp) s = do
+  vr <- convertSomeGeometryToRaw `V.mapM` vp
+  R.createMultiPolygon (V.toList vr) >>= R.setSRID s
+
+
+
+
 setCoordinateSequence
   :: RC.CoordinateSequence a => a -> Int -> Coordinate -> Geos ()
 setCoordinateSequence cs i (Coordinate2 x y) =
@@ -360,8 +412,9 @@ convertGeometryFromRaw rg = do
     R.MultiPolygonTypeId -> do
       mp <- convertMultiPolygonFromRaw rg
       return $ Some (MultiPolygonGeometry mp s)
-    R.GeometryCollectionTypeId ->
-      error "GeometryCollection currently unsupported"
+    R.GeometryCollectionTypeId -> do
+      gc <- convertGeometryCollectionFromRaw rg
+      return $ Some (CollectionGeometry gc s)
 
 
 -- The following methods are useful when the type of a (Some Geometry) is known a priori
@@ -401,6 +454,11 @@ ensureMultiPolygon :: Some Geometry -> Maybe (Geometry MultiPolygon)
 ensureMultiPolygon = mapSomeGeometry $ \case
   g@(MultiPolygonGeometry _ _) -> Just g
   _                            -> Nothing
+
+ensureGeometryCollection :: Some Geometry -> Maybe (Geometry GeometryCollection)
+ensureGeometryCollection = mapSomeGeometry $ \case
+  g@(CollectionGeometry _ _) -> Just g
+  _ -> Nothing
 
 getPosition :: RC.CoordinateSequence a => a -> Int -> Geos Coordinate
 getPosition cs i = do
@@ -482,6 +540,15 @@ convertMultiPolygonFromRaw
 convertMultiPolygonFromRaw g = do
   ng <- R.getNumGeometries g
   MultiPolygon <$> V.generateM ng (convertPolygonFromRaw <=< getGeometryN g)
+
+
+convertGeometryCollectionFromRaw 
+  :: (R.Geometry a, R.CoordSeqInput a ~ ca, RC.CoordinateSequence ca)
+  => a
+  -> Geos GeometryCollection
+convertGeometryCollectionFromRaw g = do
+  ng <- R.getNumGeometries g
+  GeometryCollection <$> V.generateM ng (convertGeometryFromRaw <=< getGeometryN g)
 
 area :: Geometry a -> Double
 area g = runGeos $ do
