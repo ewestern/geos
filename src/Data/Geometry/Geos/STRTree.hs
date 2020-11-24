@@ -17,14 +17,12 @@ module Data.Geometry.Geos.STRTree
   , toList
   , toVector
   , fromList
-  , empty
-  , build
-  , insert
+  , unfoldr_
+  , unfoldr
   , fromFoldable
   , fromFoldable_
   , lookup
   , RT.STRTree
-  , RT.STRTreeBuilder
   )
 where
 
@@ -55,17 +53,23 @@ toVector = foldr V.cons V.empty
 fromList :: Storable b => [(Geometry a, b)] -> RT.STRTree b
 fromList = fromFoldable
 
-empty :: RT.STRTreeBuilder a
-empty = runGeos $ RT.createSTRTreeBuilder 10
+unfoldr :: Storable a => (b -> Maybe ((Geometry g, a), b)) -> b -> RT.STRTree a
+unfoldr = unfoldr_ 10
 
-build :: RT.STRTreeBuilder a -> RT.STRTree a
-build = runGeos . RT.build
-
-insert :: Storable a => Geometry b -> a -> RT.STRTreeBuilder a -> ()
-insert geom item tree = runGeos $ do
-  rg :: RG.GeomConst <- convertGeometryToRaw geom
-  RT.insert tree rg item
-  return ()
+unfoldr_ :: Storable a => Int -> (b -> Maybe ((Geometry g, a), b)) -> b -> RT.STRTree a
+unfoldr_ capacity func initial = runGeos $ do
+  builder' <- RT.createSTRTreeBuilder capacity
+  go builder' func initial
+  where
+    go builder f init' =
+      case f init' of
+        Just ((geom, item), next) -> do
+          rg :: RG.GeomConst <- convertGeometryToRaw geom
+          RT.insert builder rg item
+          go builder f next
+        Nothing -> do
+          tree <- RT.build builder
+          pure tree
 
 {-|
 `fromFoldable` creates an STRTree with a default node capacity of 10. For finer-grained control over the node capacity, `fromFoldable_` accepts a node-capacity argument.

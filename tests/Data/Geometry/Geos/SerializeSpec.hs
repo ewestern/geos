@@ -27,12 +27,6 @@ multiLineString1 = MultiLineStringGeometry (fromRight $ makeMultiLineString  [[(
 multiLineStringNoSRID = MultiLineStringGeometry (fromRight $ makeMultiLineString  [[(544066.685319362, 6892760.57728029), (544051.856441192, 6892739.65385582), (544035.191589876, 6892723.54713431), (544034.932084016, 6892723.39918434)]]) Nothing
 
 
---loadThingsFromFile :: FilePath -> IO [Some Geometry]
---loadThingsFromFile fp = do
---  rows <- BS8.readFile fp
---  return $ catMaybes $ readHex <$> (BS8.lines rows)
-
-
 serializeSpec = describe "Serialize" $ do
   describe "readHex" $ do
     it "should convert a WKB bytestring to a geometry" $ (readHex multiLineStringWKB >>= ensureMultiLineString)  `shouldBe` Just multiLineString1

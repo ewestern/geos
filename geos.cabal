@@ -1,7 +1,7 @@
 cabal-version:       2.2
 name:                geos
 
-version:             0.3.0
+version:             0.4.0
 
 synopsis:  Bindings for GEOS.
 
@@ -116,6 +116,7 @@ test-suite test
     , Data.Geometry.Geos.Raw.Topology
     , Data.Geometry.Geos.Raw.STRTree
     , Data.Geometry.Geos.Raw.Prepared
+    , Data.Geometry.Geos.Prepared
     , Data.Geometry.Geos.Relatable
     , Data.Geometry.Geos.Serialize
     , Data.Geometry.Geos.Topology
@@ -123,6 +124,7 @@ test-suite test
     , Data.Geometry.Geos.TopologySpec
     , Data.Geometry.Geos.RelatableSpec
     , Data.Geometry.Geos.SerializeSpec
+    , Data.Geometry.Geos.STRTreeSpec
     , Helpers
 
 source-repository head
