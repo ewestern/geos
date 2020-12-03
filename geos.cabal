@@ -1,7 +1,7 @@
 cabal-version:       2.2
 name:                geos
 
-version:             0.4.0
+version:             0.4.1
 
 synopsis:  Bindings for GEOS.
 
@@ -50,9 +50,7 @@ Library
     , Data.Geometry.Geos.Prepared
     , Data.Geometry.Geos.STRTree
     , Data.Geometry.Geos.Relatable
-
-  other-modules:
-      Data.Geometry.Geos.Raw.Base
+    , Data.Geometry.Geos.Raw.Base
     , Data.Geometry.Geos.Raw.CoordSeq
     , Data.Geometry.Geos.Raw.Geometry
     , Data.Geometry.Geos.Raw.Serialize
