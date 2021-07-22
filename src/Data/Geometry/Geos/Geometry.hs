@@ -9,24 +9,25 @@
 module Data.Geometry.Geos.Geometry
   ( Geometry(..)
   , GeometryConstructionError
-  , Point
+  , Point(..)
   , point
-  , LinearRing
+  , LinearRing(..)
   , linearRing
-  , LineString
+  , LineString(..)
   , lineString
-  , Polygon
+  , Polygon(..)
   , polygon
-  , MultiPoint
+  , MultiPoint(..)
   , multiPoint
-  , MultiLineString
+  , MultiLineString(..)
   , multiLineString
-  , MultiPolygon
+  , MultiPolygon(..)
   , multiPolygon
   , GeometryCollection
   , geometryCollection
   , Some(..)
-  , Coordinate
+  , Coordinate(..)
+  , CoordinateSequence
   , coordinate2
   , coordinate3
   , SRID
