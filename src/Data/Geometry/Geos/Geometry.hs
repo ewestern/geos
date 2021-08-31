@@ -111,6 +111,7 @@ data GeometryConstructionError
   = InvalidLinearRing
   | InvalidLineString
   | InvalidPolygon
+  deriving Show
 
 data Geometry a where
   PointGeometry :: Point -> SRID -> Geometry Point
